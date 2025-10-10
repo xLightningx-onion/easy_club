@@ -1,0 +1,56 @@
+<%= form_with model: [:club, member] do |form| %>
+  <% if member.errors.any? %>
+    <div class="alert alert-danger">
+      <h2><%= pluralize(member.errors.count, "error") %> prohibited this member from being saved:</h2>
+      <ul>
+        <% member.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :first_name %>
+    <%= form.text_field :first_name %>
+  </div>
+
+  <div class="field">
+    <%= form.label :last_name %>
+    <%= form.text_field :last_name %>
+  </div>
+
+  <div class="field">
+    <%= form.label :dob, "Date of birth" %>
+    <%= form.date_field :dob %>
+  </div>
+
+  <div class="field">
+    <%= form.label :gender %>
+    <%= form.select :gender, [["Female", "female"], ["Male", "male"], ["Other", "other"]], include_blank: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :role %>
+    <%= form.select :role, [["Player", "player"], ["Coach", "coach"], ["Official", "official"], ["Volunteer", "volunteer"]] %>
+  </div>
+
+  <div class="field">
+    <%= form.label :user_id, "Linked user" %>
+    <%= form.collection_select :user_id, current_club.users, :id, :email, include_blank: "Unlinked" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :safeguarding_flag, "Safeguarding flag" %>
+    <%= form.check_box :safeguarding_flag %>
+  </div>
+
+  <div class="field">
+    <%= form.label :safeguarding_reason %>
+    <%= form.text_area :safeguarding_reason %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit %>
+  </div>
+<% end %>

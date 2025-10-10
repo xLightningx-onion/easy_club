@@ -1,0 +1,20 @@
+<h1>Consent Types</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Key</th>
+      <th>Version</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @consent_types.each do |ct| %>
+      <tr>
+        <td><%= ct.key %></td>
+        <td><%= ct.version %></td>
+        <td><%= simple_format(ct.body_markdown) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

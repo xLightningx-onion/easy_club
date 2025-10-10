@@ -1,0 +1,54 @@
+<section>
+  <header class="page-header">
+    <h1>Fixtures for <%= @team.name %></h1>
+    <%= link_to "Back to team", club_team_path(@team) %>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Opponent</th>
+        <th>Venue</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @fixtures.each do |fixture| %>
+        <tr>
+          <td><%= link_to fixture.match_date || "TBC", club_fixture_path(fixture) %></td>
+          <td><%= fixture.opponent %></td>
+          <td><%= fixture.venue %></td>
+          <td><%= fixture.status.humanize %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <section class="fixture-form">
+    <h2>Create fixture</h2>
+    <%= form_with model: [:club, @team, @fixture] do |form| %>
+      <% if @fixture.errors.any? %>
+        <div class="alert alert-danger">
+          <%= @fixture.errors.full_messages.to_sentence %>
+        </div>
+      <% end %>
+
+      <div class="field">
+        <%= form.label :match_date %>
+        <%= form.date_field :match_date %>
+      </div>
+      <div class="field">
+        <%= form.label :opponent %>
+        <%= form.text_field :opponent %>
+      </div>
+      <div class="field">
+        <%= form.label :venue %>
+        <%= form.text_field :venue %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Create" %>
+      </div>
+    <% end %>
+  </section>
+</section>

@@ -1,0 +1,31 @@
+<% content_for :title, "Audit log · Admin" %>
+<% content_for :page_heading, "Audit log" %>
+
+<section class="card">
+  <% if @audits.blank? %>
+    <p class="empty-state">No audits recorded yet.</p>
+  <% else %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Action</th>
+          <th>Auditable</th>
+          <th>Changes</th>
+          <th>At</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @audits.each do |audit| %>
+          <tr>
+            <td><%= audit.user&.email || "System" %></td>
+            <td><%= audit.action %></td>
+            <td><%= audit.auditable_type %>#<%= audit.auditable_id %></td>
+            <td><pre class="code-inline"><%= audit.audited_changes %></pre></td>
+            <td><%= audit.created_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

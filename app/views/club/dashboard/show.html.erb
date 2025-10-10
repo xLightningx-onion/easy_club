@@ -1,0 +1,45 @@
+<section class="dashboard">
+  <h1>Club Dashboard</h1>
+
+  <div class="dashboard__panels">
+    <div class="dashboard__panel">
+      <h2>Recent Members</h2>
+      <ul>
+        <% @members.each do |member| %>
+          <li>
+            <%= member.full_name.presence || "Unnamed member" %>
+          </li>
+        <% end %>
+      </ul>
+      <%= link_to "View all members", club_members_path %>
+    </div>
+
+    <div class="dashboard__panel">
+      <h2>Outstanding Invoices</h2>
+      <ul>
+        <% @invoices.each do |invoice| %>
+          <li>
+            <%= link_to invoice.number, club_invoice_path(invoice) %>
+            —
+            <%= number_to_currency(invoice.total_cents / 100.0, unit: invoice.total_currency) %>
+            (due <%= invoice.due_at&.to_date || "TBC" %>)
+          </li>
+        <% end %>
+      </ul>
+      <%= link_to "Go to invoices", club_invoices_path %>
+    </div>
+
+    <div class="dashboard__panel">
+      <h2>Upcoming Fixtures</h2>
+      <ul>
+        <% @fixtures.each do |fixture| %>
+          <li>
+            <%= link_to fixture.team.name, club_fixture_path(fixture) %> vs <%= fixture.opponent %> on
+            <%= fixture.match_date || "TBC" %>
+          </li>
+        <% end %>
+      </ul>
+      <%= link_to "Manage fixtures", club_teams_path %>
+    </div>
+  </div>
+</section>

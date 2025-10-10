@@ -1,0 +1,35 @@
+<h1>New broadcast</h1>
+
+<%= form_with model: [:club, @broadcast] do |form| %>
+  <% if @broadcast.errors.any? %>
+    <div class="alert alert-danger"><%= @broadcast.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :title %>
+    <%= form.text_field :title %>
+  </div>
+  <div class="field">
+    <%= form.label :channel %>
+    <%= form.select :channel, [["Email", "email"], ["WhatsApp", "whatsapp"]] %>
+  </div>
+  <div class="field">
+    <%= form.label :template_id, "Template" %>
+    <%= form.collection_select :template_id, @templates, :id, :name, include_blank: "Custom" %>
+  </div>
+  <div class="field">
+    <%= form.label :body %>
+    <%= form.text_area :body, rows: 8 %>
+  </div>
+  <div class="field">
+    <%= form.label :audience_type, "Audience" %>
+    <%= form.select :audience_type, [["All members", "all_members"], ["Role", "role"]], include_blank: "All" %>
+  </div>
+  <div class="field">
+    <%= form.label :audience_filter, "Audience filter (JSON)" %>
+    <%= form.text_area :audience_filter, rows: 3, placeholder: '{"role":"parent"}' %>
+  </div>
+  <div class="actions">
+    <%= form.submit "Queue broadcast" %>
+  </div>
+<% end %>

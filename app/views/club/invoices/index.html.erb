@@ -1,0 +1,30 @@
+<section>
+  <header class="page-header">
+    <h1>Invoices</h1>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Number</th>
+        <th>Member</th>
+        <th>Status</th>
+        <th>Due</th>
+        <th>Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @invoices.each do |invoice| %>
+        <tr class="invoice-row invoice-row--<%= invoice.status %>">
+          <td><%= link_to invoice.number, club_invoice_path(invoice) %></td>
+          <td><%= invoice.member.full_name %></td>
+          <td><%= invoice.status.humanize %></td>
+          <td><%= invoice.due_at&.to_date || "N/A" %></td>
+          <td><%= number_to_currency(invoice.total_cents / 100.0, unit: invoice.total_currency) %></td>
+          <td><%= link_to "Download", download_club_invoice_path(invoice, format: :pdf) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

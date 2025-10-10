@@ -1,0 +1,49 @@
+<% content_for :title, "Admin Dashboard · Easy Club" %>
+<% content_for :page_heading, "Dashboard" %>
+
+<section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+  <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <header class="mb-3 flex items-center justify-between">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Recently added clubs</h2>
+      <%= link_to "View", admin_clubs_path, class: "text-xs text-slate-500 hover:text-slate-700" %>
+    </header>
+    <ul class="space-y-2 text-sm">
+      <% @clubs.each do |club| %>
+        <li>
+          <%= link_to club.name, admin_club_path(club), class: "font-medium text-slate-900 hover:text-slate-700" %>
+        </li>
+      <% end %>
+    </ul>
+  </article>
+
+  <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <header class="mb-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Recent invoices</h2>
+    </header>
+    <ul class="space-y-2 text-sm">
+      <% @recent_invoices.each do |invoice| %>
+        <li class="flex items-center justify-between gap-2">
+          <div>
+            <div class="text-slate-900"><%= link_to invoice.number, admin_invoice_path(invoice), class: "font-medium hover:text-slate-700" %></div>
+            <div class="text-xs text-slate-500"><%= invoice.club.name %></div>
+          </div>
+          <span class="text-sm font-semibold text-slate-900"><%= number_to_currency(invoice.total_cents / 100.0, unit: invoice.total_currency) %></span>
+        </li>
+      <% end %>
+    </ul>
+  </article>
+
+  <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <header class="mb-3">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Recent members</h2>
+    </header>
+    <ul class="space-y-2 text-sm">
+      <% @recent_members.each do |member| %>
+        <li>
+          <div class="font-medium text-slate-900"><%= member.full_name.presence || "Unnamed member" %></div>
+          <div class="text-xs text-slate-500"><%= member.club.name %></div>
+        </li>
+      <% end %>
+    </ul>
+  </article>
+</section>

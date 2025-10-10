@@ -1,0 +1,27 @@
+<section>
+  <header class="page-header">
+    <h1>Broadcasts</h1>
+    <%= link_to "New broadcast", new_club_broadcast_path, class: "button" %>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Channel</th>
+        <th>Scheduled</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @broadcasts.each do |broadcast| %>
+        <tr>
+          <td><%= link_to broadcast.title, club_broadcast_path(broadcast) %></td>
+          <td><%= broadcast.status.humanize %></td>
+          <td><%= broadcast.channel %></td>
+          <td><%= broadcast.scheduled_at || "Immediate" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

@@ -1,0 +1,27 @@
+<section>
+  <header class="page-header">
+    <h1>Teams</h1>
+    <%= link_to "New team", new_club_team_path, class: "button" %>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Season</th>
+        <th>Age band</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @teams.each do |team| %>
+        <tr>
+          <td><%= link_to team.name, club_team_path(team) %></td>
+          <td><%= team.season&.name %></td>
+          <td><%= team.age_band&.name %></td>
+          <td><%= link_to "Edit", edit_club_team_path(team) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

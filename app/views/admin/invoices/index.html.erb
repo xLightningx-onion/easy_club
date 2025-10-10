@@ -1,0 +1,34 @@
+<% content_for :title, "Invoices · Admin" %>
+<% content_for :page_heading, "Invoices" %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Recent invoices</h2>
+    <%= link_to "Reconciliation", reconciliation_admin_invoices_path, class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+  </header>
+
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Club</th>
+        <th class="px-4 py-3">Number</th>
+        <th class="px-4 py-3">Member</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3 text-right">Total</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      <% @invoices.each do |invoice| %>
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-600"><%= invoice.club.name %></td>
+          <td class="px-4 py-3 font-medium text-slate-900"><%= link_to invoice.number, admin_invoice_path(invoice), class: "hover:text-slate-700" %></td>
+          <td class="px-4 py-3 text-slate-600"><%= invoice.member.full_name %></td>
+          <td class="px-4 py-3">
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= invoice.status_open? ? 'bg-amber-50 text-amber-700' : invoice.status_past_due? ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700' %>"><%= invoice.status.humanize %></span>
+          </td>
+          <td class="px-4 py-3 text-right font-semibold text-slate-900"><%= number_to_currency(invoice.total_cents / 100.0, unit: invoice.total_currency) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

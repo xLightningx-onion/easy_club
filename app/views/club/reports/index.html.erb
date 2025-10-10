@@ -1,0 +1,26 @@
+<section class="reports">
+  <h1>Reports</h1>
+
+  <article>
+    <h2>Finance</h2>
+    <pre><%= JSON.pretty_generate(@finance_metrics) %></pre>
+    <%= link_to "Download CSV", finance_club_reports_path(format: :csv), class: "button" %>
+  </article>
+
+  <article>
+    <h2>Participation</h2>
+    <pre><%= JSON.pretty_generate(@participation_metrics) %></pre>
+    <%= link_to "Download CSV", participation_club_reports_path(format: :csv), class: "button" %>
+  </article>
+
+  <article>
+    <h2>Compliance</h2>
+    <pre><%= JSON.pretty_generate(@compliance_metrics) %></pre>
+    <%= link_to "Download CSV", compliance_club_reports_path(format: :csv), class: "button" %>
+  </article>
+
+  <article>
+    <h2>AR Aging</h2>
+    <%= link_to "Download CSV", ar_aging_club_reports_path(format: :csv), class: "button" %>
+  </article>
+</section>

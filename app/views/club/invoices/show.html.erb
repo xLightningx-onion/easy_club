@@ -1,0 +1,83 @@
+<section class="invoice">
+  <header>
+    <h1>Invoice <%= @invoice.number %></h1>
+    <div>
+      <%= link_to "Download PDF", download_club_invoice_path(@invoice, format: :pdf), class: "button" %>
+    </div>
+  </header>
+
+  <dl class="invoice__summary">
+    <dt>Status</dt>
+    <dd><%= @invoice.status.humanize %></dd>
+    <dt>Member</dt>
+    <dd><%= link_to @invoice.member.full_name, club_member_path(@invoice.member) %></dd>
+    <dt>Due date</dt>
+    <dd><%= @invoice.due_at&.to_date || "N/A" %></dd>
+    <dt>Total</dt>
+    <dd><%= number_to_currency(@invoice.total_cents / 100.0, unit: @invoice.total_currency) %></dd>
+  </dl>
+
+  <section>
+    <h2>Line items</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Quantity</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @invoice.invoice_items.each do |item| %>
+          <tr>
+            <td><%= item.description || item.product&.name %></td>
+            <td><%= item.quantity %></td>
+            <td><%= number_to_currency(item.amount_cents / 100.0, unit: item.amount_currency) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Totals</h2>
+    <ul>
+      <li>Subtotal: <%= number_to_currency(@invoice.subtotal_cents / 100.0, unit: @invoice.subtotal_currency) %></li>
+      <li>Discounts: <%= number_to_currency(@invoice.discount_cents / 100.0, unit: @invoice.discount_currency) %></li>
+      <li>VAT: <%= number_to_currency(@invoice.vat_cents / 100.0, unit: @invoice.vat_currency) %></li>
+      <li><strong>Total:</strong> <%= number_to_currency(@invoice.total_cents / 100.0, unit: @invoice.total_currency) %></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Payments</h2>
+    <ul>
+      <% @payments.each do |payment| %>
+        <li><%= payment.method %> — <%= payment.status.humanize %> — <%= number_to_currency(payment.amount_cents / 100.0, unit: payment.amount_currency) %></li>
+      <% end %>
+    </ul>
+  </section>
+
+  <% if @invoice.status_open? || @invoice.status_past_due? %>
+    <section class="payment-form">
+      <h2>Pay invoice</h2>
+      <%= form_with url: pay_club_invoice_path(@invoice), scope: :payment, method: :post do |form| %>
+        <div class="field">
+          <%= form.label :method %>
+          <%= form.select :method, [["Card", "card"], ["Instant EFT", "instant_eft"], ["Voucher", "voucher"], ["Wallet", "wallet"]] %>
+        </div>
+        <div class="field">
+          <%= form.label :token, "Payment token / reference" %>
+          <%= form.text_field :token %>
+        </div>
+        <div class="field">
+          <%= form.label :voucher, "Voucher code" %>
+          <%= form.text_field :voucher %>
+        </div>
+        <div class="actions">
+          <%= form.submit "Submit payment" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+</section>

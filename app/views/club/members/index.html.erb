@@ -1,0 +1,27 @@
+<section>
+  <header class="page-header">
+    <h1>Members</h1>
+    <%= link_to "New member", new_club_member_path, class: "button" %>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Guardian</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @members.each do |member| %>
+        <tr>
+          <td><%= link_to member.full_name.presence || "Unnamed", club_member_path(member) %></td>
+          <td><%= member.role.titleize %></td>
+          <td><%= member.guardians.map(&:email).join(", ") %></td>
+          <td><%= link_to "Edit", edit_club_member_path(member) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

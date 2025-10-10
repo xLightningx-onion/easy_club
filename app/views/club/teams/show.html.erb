@@ -1,0 +1,48 @@
+<section class="team" data-controller="squad" data-team-id="<%= @team.id %>">
+  <header class="team__header">
+    <h1><%= @team.name %></h1>
+    <div class="actions">
+      <%= link_to "Edit", edit_club_team_path(@team), class: "button" %>
+      <%= link_to "Delete", club_team_path(@team), class: "button button--danger", data: { turbo_method: :delete, turbo_confirm: "Delete this team?" } %>
+      <%= link_to "Match sheet PDF", match_sheet_club_team_path(@team, format: :pdf), class: "button" %>
+    </div>
+  </header>
+
+  <section class="team__details">
+    <p><strong>Season:</strong> <%= @team.season&.name || "Unassigned" %></p>
+    <p><strong>Age band:</strong> <%= @team.age_band&.name || "All" %></p>
+  </section>
+
+  <section class="team__roster" data-team-id="<%= @team.id %>">
+    <div class="team__pool" data-squad-target="pool">
+      <h2>Eligible players</h2>
+      <ul>
+        <% @eligible_members.each do |member| %>
+          <li>
+            <%= member.full_name %>
+            <button type="button"
+                    data-action="click->squad#add"
+                    data-squad-member-id="<%= member.id %>">
+              Add to squad
+            </button>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="team__squad" id="squad" data-squad-target="squad">
+      <h2>Selected squad</h2>
+      <%= render partial: "squad", locals: { team_memberships: @team_memberships } %>
+    </div>
+  </section>
+
+  <section class="team__fixtures">
+    <h2>Fixtures</h2>
+    <ul>
+      <% @fixtures.each do |fixture| %>
+        <li><%= link_to fixture.match_date || "TBC", club_fixture_path(fixture) %> — vs <%= fixture.opponent %></li>
+      <% end %>
+    </ul>
+    <%= link_to "Manage fixtures", club_team_fixtures_path(@team), class: "button" %>
+  </section>
+</section>

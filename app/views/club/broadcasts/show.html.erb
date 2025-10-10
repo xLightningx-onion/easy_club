@@ -1,0 +1,16 @@
+<section>
+  <header class="page-header">
+    <h1><%= @broadcast.title %></h1>
+  </header>
+
+  <dl>
+    <dt>Status</dt>
+    <dd><%= @broadcast.status.humanize %></dd>
+    <dt>Channel</dt>
+    <dd><%= @broadcast.channel %></dd>
+    <dt>Audience</dt>
+    <dd><%= @broadcast.audience_type || "All" %></dd>
+    <dt>Body</dt>
+    <dd><pre><%= @broadcast.body %></pre></dd>
+  </dl>
+</section>

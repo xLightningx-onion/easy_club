@@ -1,0 +1,54 @@
+<% content_for :title, "#{@broadcast.title} · Admin" %>
+<% content_for :page_heading, @broadcast.title %>
+
+<section class="card">
+  <header class="card__header">
+    <h2>Broadcast details</h2>
+    <% unless @broadcast.status_approved? %>
+      <%= button_to "Approve", approve_admin_broadcast_path(@broadcast), method: :post, class: "button" %>
+    <% end %>
+  </header>
+
+  <dl class="definition-list">
+    <div>
+      <dt>Club</dt>
+      <dd><%= @broadcast.club.name %></dd>
+    </div>
+    <div>
+      <dt>Status</dt>
+      <dd><span class="status status--<%= @broadcast.status %>"><%= @broadcast.status.humanize %></span></dd>
+    </div>
+    <div>
+      <dt>Channel</dt>
+      <dd><%= @broadcast.channel %></dd>
+    </div>
+    <div>
+      <dt>Scheduled</dt>
+      <dd><%= @broadcast.scheduled_at || "Immediate" %></dd>
+    </div>
+  </dl>
+
+  <article class="card__body">
+    <h3>Body</h3>
+    <pre class="code-block"><%= @broadcast.body %></pre>
+  </article>
+</section>
+
+<section class="card">
+  <header class="card__header">
+    <h2>Update status</h2>
+  </header>
+  <%= form_with model: [:admin, @broadcast], method: :patch do |form| %>
+    <div class="field">
+      <%= form.label :status %>
+      <%= form.select :status, Broadcast.statuses.keys %>
+    </div>
+    <div class="field">
+      <%= form.label :scheduled_at %>
+      <%= form.datetime_field :scheduled_at %>
+    </div>
+    <div class="actions">
+      <%= form.submit "Update" %>
+    </div>
+  <% end %>
+</section>

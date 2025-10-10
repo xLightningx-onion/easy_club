@@ -1,0 +1,37 @@
+<% content_for :title, "Broadcasts · Admin" %>
+<% content_for :page_heading, "Broadcast approvals" %>
+
+<section class="card">
+  <header class="card__header">
+    <h2>Pending and sent broadcasts</h2>
+  </header>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Club</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Channel</th>
+        <th>Scheduled</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @broadcasts.each do |broadcast| %>
+        <tr>
+          <td><%= broadcast.club.name %></td>
+          <td><%= link_to broadcast.title, admin_broadcast_path(broadcast) %></td>
+          <td><span class="status status--<%= broadcast.status %>"><%= broadcast.status.humanize %></span></td>
+          <td><%= broadcast.channel %></td>
+          <td><%= broadcast.scheduled_at || "Immediate" %></td>
+          <td class="actions">
+            <% unless broadcast.status_approved? %>
+              <%= button_to "Approve", approve_admin_broadcast_path(broadcast), method: :post, class: "button" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

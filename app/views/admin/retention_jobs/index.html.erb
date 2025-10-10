@@ -1,0 +1,43 @@
+<% content_for :title, "Retention jobs · Admin" %>
+<% content_for :page_heading, "Retention jobs" %>
+
+<section class="card">
+  <header class="card__header">
+    <h2>Trigger a job</h2>
+  </header>
+  <%= form_with url: admin_retention_jobs_path, method: :post, class: "form-inline" do |form| %>
+    <div class="field">
+      <%= form.label :club_id, "Club" %>
+      <%= form.collection_select :club_id, Club.order(:name), :id, :name %>
+    </div>
+    <div class="actions">
+      <%= form.submit "Queue retention job" %>
+    </div>
+  <% end %>
+</section>
+
+<section class="card">
+  <header class="card__header">
+    <h2>Recent runs</h2>
+  </header>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Club</th>
+        <th>Status</th>
+        <th>Report</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @report_runs.each do |run| %>
+        <tr>
+          <td><%= run.club.name %></td>
+          <td><span class="status status--<%= run.status %>"><%= run.status.humanize %></span></td>
+          <td><%= run.report_name %></td>
+          <td><%= run.created_at %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

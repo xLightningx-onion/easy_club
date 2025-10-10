@@ -1,0 +1,12 @@
+<% if flash.any? %>
+  <div class="space-y-2 mb-4">
+    <% flash.each do |type, message| %>
+      <% colour = case type.to_s
+                 when "notice" then "bg-emerald-50 text-emerald-800 border border-emerald-100"
+                 when "alert" then "bg-rose-50 text-rose-800 border border-rose-100"
+                 else "bg-slate-100 text-slate-800 border border-slate-200"
+                 end %>
+      <div class="rounded px-4 py-2 text-sm <%= colour %>"><%= message %></div>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,64 @@
+<% content_for :title, "Invoice #{@invoice.number} · Admin" %>
+<% content_for :page_heading, "Invoice #{@invoice.number}" %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Invoice overview</h2>
+    <%= link_to "View in club", club_invoice_path(@invoice), class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+  </header>
+
+  <dl class="grid gap-4 px-4 py-4 text-sm text-slate-600 md:grid-cols-2">
+    <div>
+      <dt class="font-medium text-slate-500">Club</dt>
+      <dd class="text-slate-900"><%= @invoice.club.name %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Member</dt>
+      <dd class="text-slate-900"><%= @invoice.member.full_name %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Status</dt>
+      <dd>
+        <% badge = @invoice.status_paid? ? "bg-emerald-50 text-emerald-700" : @invoice.status_past_due? ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700" %>
+        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge %>"><%= @invoice.status.humanize %></span>
+      </dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Due</dt>
+      <dd class="text-slate-900"><%= @invoice.due_at || "—" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Total</dt>
+      <dd class="text-lg font-semibold text-slate-900"><%= number_to_currency(@invoice.total_cents / 100.0, unit: @invoice.total_currency) %></dd>
+    </div>
+  </dl>
+</section>
+
+<section class="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Payments</h2>
+  </header>
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Method</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Amount</th>
+        <th class="px-4 py-3">Recorded</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      <% @invoice.payments.each do |payment| %>
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-600"><%= payment.method %></td>
+          <td class="px-4 py-3">
+            <% badge = payment.status_succeeded? ? "bg-emerald-50 text-emerald-700" : payment.status_failed? ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700" %>
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge %>"><%= payment.status.humanize %></span>
+          </td>
+          <td class="px-4 py-3 text-slate-900"><%= number_to_currency(payment.amount_cents / 100.0, unit: payment.amount_currency) %></td>
+          <td class="px-4 py-3 text-slate-500"><%= payment.created_at %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

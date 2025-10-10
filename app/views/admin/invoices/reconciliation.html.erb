@@ -1,0 +1,34 @@
+<% content_for :title, "Payments reconciliation · Admin" %>
+<% content_for :page_heading, "Payments reconciliation" %>
+
+<section class="card">
+  <header class="card__header">
+    <h2>Recent payment events</h2>
+    <%= link_to "Back to invoices", admin_invoices_path, class: "button" %>
+  </header>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Method</th>
+        <th>Status</th>
+        <th class="numeric">Amount</th>
+        <th>Invoice</th>
+        <th>Received</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @payments.each do |payment| %>
+        <tr>
+          <td><%= payment.provider %></td>
+          <td><%= payment.method %></td>
+          <td><span class="status status--<%= payment.status %>"><%= payment.status.humanize %></span></td>
+          <td class="numeric"><%= number_to_currency(payment.amount_cents / 100.0, unit: payment.amount_currency) %></td>
+          <td><%= link_to payment.invoice.number, admin_invoice_path(payment.invoice) %></td>
+          <td><%= payment.created_at %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

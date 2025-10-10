@@ -1,0 +1,47 @@
+<section class="member-profile">
+  <header>
+    <h1><%= @member.full_name.presence || "Member" %></h1>
+    <div>
+      <%= link_to "Edit", edit_club_member_path(@member), class: "button" %>
+      <%= link_to "Delete", club_member_path(@member), data: { turbo_method: :delete, turbo_confirm: "Delete this member?" }, class: "button button--danger" %>
+    </div>
+  </header>
+
+  <dl>
+    <dt>Role</dt>
+    <dd><%= @member.role.titleize %></dd>
+    <dt>Date of birth</dt>
+    <dd><%= @member.dob || "Unknown" %></dd>
+    <dt>Gender</dt>
+    <dd><%= @member.gender || "Not specified" %></dd>
+    <dt>Safeguarding flag</dt>
+    <dd><%= @member.safeguarding_flag? ? "Yes" : "No" %></dd>
+    <% if @member.safeguarding_reason.present? %>
+      <dt>Safeguarding reason</dt>
+      <dd><%= @member.safeguarding_reason %></dd>
+    <% end %>
+  </dl>
+
+  <section>
+    <h2>Consents</h2>
+    <%= link_to "Manage consents", club_member_consents_path(@member) %>
+  </section>
+
+  <section>
+    <h2>Teams</h2>
+    <ul>
+      <% @team_memberships.each do |tm| %>
+        <li><%= link_to tm.team.name, club_team_path(tm.team) %> (<%= tm.role.titleize %>)</li>
+      <% end %>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Invoices</h2>
+    <ul>
+      <% @invoices.each do |invoice| %>
+        <li><%= link_to invoice.number, club_invoice_path(invoice) %> — <%= invoice.status.humanize %></li>
+      <% end %>
+    </ul>
+  </section>
+</section>

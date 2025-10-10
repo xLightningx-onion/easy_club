@@ -1,0 +1,17 @@
+<h1>Record consent</h1>
+
+<%= form_with model: [ :club, @member, @consent ] do |form| %>
+  <div class="field">
+    <%= form.label :consent_type_id, "Consent type" %>
+    <%= form.collection_select :consent_type_id, @consent_types, :id, :key, { prompt: "Choose consent" }, {} %>
+  </div>
+
+  <div class="field">
+    <%= form.label :accepted %>
+    <%= form.select :accepted, [["Accepted", true], ["Declined", false]] %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit "Save" %>
+  </div>
+<% end %>

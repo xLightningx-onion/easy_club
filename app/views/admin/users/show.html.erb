@@ -1,0 +1,34 @@
+<% content_for :title, "#{@user.email} · Admin" %>
+<% content_for :page_heading, @user.email %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">User details</h2>
+    <%= link_to "Edit", edit_admin_user_path(@user), class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+  </header>
+
+  <dl class="grid gap-4 px-4 py-4 text-sm text-slate-600 md:grid-cols-2">
+    <div>
+      <dt class="font-medium text-slate-500">Staff</dt>
+      <dd class="text-slate-900"><%= @user.staff? ? "Yes" : "No" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Role</dt>
+      <dd class="text-slate-900"><%= @user.role %></dd>
+    </div>
+  </dl>
+</section>
+
+<section class="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Club roles</h2>
+  </header>
+  <ul class="divide-y divide-slate-100 text-sm">
+    <% @club_roles.each do |role| %>
+      <li class="flex items-center justify-between px-4 py-3">
+        <span class="font-medium text-slate-900"><%= role.club.name %></span>
+        <span class="text-slate-500"><%= role.role %></span>
+      </li>
+    <% end %>
+  </ul>
+</section>

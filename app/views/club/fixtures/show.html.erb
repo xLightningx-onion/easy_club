@@ -1,0 +1,70 @@
+<section class="fixture-detail">
+  <header>
+    <h1>Fixture vs <%= @fixture.opponent %></h1>
+    <%= link_to "Back to team", club_team_path(@fixture.team) %>
+  </header>
+
+  <dl>
+    <dt>Date</dt>
+    <dd><%= @fixture.match_date || "TBC" %></dd>
+    <dt>Venue</dt>
+    <dd><%= @fixture.venue || "TBC" %></dd>
+    <dt>Status</dt>
+    <dd><%= @fixture.status.humanize %></dd>
+  </dl>
+
+  <%= form_with model: [:club, @fixture], method: :patch do |form| %>
+    <fieldset>
+      <legend>Update details</legend>
+      <div class="field">
+        <%= form.label :match_date %>
+        <%= form.date_field :match_date %>
+      </div>
+      <div class="field">
+        <%= form.label :venue %>
+        <%= form.text_field :venue %>
+      </div>
+      <div class="field">
+        <%= form.label :status %>
+        <%= form.select :status, [["Scheduled", "scheduled"], ["Played", "played"], ["Cancelled", "cancelled"]] %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Save" %>
+      </div>
+    </fieldset>
+  <% end %>
+
+  <section class="availability">
+    <h2>Availability</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @availability_records.each do |availability| %>
+          <tr>
+            <td><%= availability.member.full_name %></td>
+            <td><%= availability.status.humanize %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <%= form_with url: availability_club_fixture_path(@fixture), scope: :availability, method: :patch do |form| %>
+      <div class="field">
+        <%= form.label :member_id, "Member" %>
+        <%= form.collection_select :member_id, @squad_members, :id, :full_name %>
+      </div>
+      <div class="field">
+        <%= form.label :status %>
+        <%= form.select :status, [["Yes", "yes"], ["No", "no"], ["Maybe", "maybe"]] %>
+      </div>
+      <div class="actions">
+        <%= form.submit "Update availability" %>
+      </div>
+    <% end %>
+  </section>
+</section>

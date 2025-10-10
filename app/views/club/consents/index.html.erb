@@ -1,0 +1,24 @@
+<h1>Consents for <%= @member.full_name.presence || "Member" %></h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Consent</th>
+      <th>Status</th>
+      <th>Accepted at</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @consents.each do |consent| %>
+      <tr>
+        <td><%= consent.consent_type.key.humanize %></td>
+        <td><%= consent.accepted? ? "Accepted" : "Pending" %></td>
+        <td><%= consent.accepted_at || "—" %></td>
+        <td><%= link_to "Update", new_club_member_consent_path(@member, consent_type_id: consent.consent_type_id) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= link_to "Record new consent", new_club_member_consent_path(@member), class: "button" %>

@@ -1,0 +1,31 @@
+<%= form_with model: [:club, @team] do |form| %>
+  <% if @team.errors.any? %>
+    <div class="alert alert-danger">
+      <h2><%= pluralize(@team.errors.count, "error") %> prevented saving:</h2>
+      <ul>
+        <% @team.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name %>
+  </div>
+
+  <div class="field">
+    <%= form.label :season_id, "Season" %>
+    <%= form.collection_select :season_id, @seasons, :id, :name, prompt: "Select season" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :age_band_id, "Age band" %>
+    <%= form.collection_select :age_band_id, @age_bands, :id, :name, include_blank: true %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit %>
+  </div>
+<% end %>

@@ -1,0 +1,40 @@
+<% content_for :title, "#{@club.name} · Admin" %>
+<% content_for :page_heading, @club.name %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Club details</h2>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= link_to "Edit", edit_admin_club_path(@club), class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+      <%= button_to "Impersonate", impersonate_admin_club_path(@club), method: :post, class: "rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <%= button_to "Delete", admin_club_path(@club), method: :delete, data: { turbo_confirm: "Delete this club?" }, class: "rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500" %>
+    </div>
+  </header>
+
+  <dl class="grid gap-4 px-4 py-4 text-sm text-slate-600 md:grid-cols-2">
+    <div>
+      <dt class="font-medium text-slate-500">Subdomain</dt>
+      <dd class="text-slate-900"><%= @club.subdomain.presence || "—" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Primary domain</dt>
+      <dd class="text-slate-900"><%= @club.primary_domain.presence || "—" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Sender email</dt>
+      <dd class="text-slate-900"><%= @club.sender_email.presence || "—" %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Members</dt>
+      <dd class="text-slate-900"><%= @members_count %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Invoices</dt>
+      <dd class="text-slate-900"><%= @invoices_count %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Payments processed</dt>
+      <dd class="text-slate-900"><%= @payments_total.format %></dd>
+    </div>
+  </dl>
+</section>

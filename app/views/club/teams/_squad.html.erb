@@ -1,0 +1,12 @@
+<ul>
+  <% team_memberships.each do |membership| %>
+    <li>
+      <%= membership.member.full_name %> (<%= membership.role.titleize %>)
+      <button type="button"
+              data-action="click->squad#remove"
+              data-squad-team-membership-id="<%= membership.id %>">
+        Remove
+      </button>
+    </li>
+  <% end %>
+</ul>
