@@ -23,7 +23,7 @@
           <td class="px-4 py-3 text-slate-600"><%= club.primary_domain.presence || club.subdomain.presence || "—" %></td>
           <td class="px-4 py-3 text-slate-600"><%= club.members.size %></td>
           <td class="px-4 py-3 text-right">
-            <%= button_to "Impersonate", impersonate_admin_club_path(club), method: :post, class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
+            <%= button_to "Impersonate", impersonate_admin_club_path(club), method: :post, form: { class: "inline" }, class: "text-sm font-medium text-slate-600 hover:text-slate-900" %>
           </td>
         </tr>
       <% end %>

@@ -1,33 +1,36 @@
 <% content_for :title, "Broadcasts · Admin" %>
 <% content_for :page_heading, "Broadcast approvals" %>
 
-<section class="card">
-  <header class="card__header">
-    <h2>Pending and sent broadcasts</h2>
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Pending and sent broadcasts</h2>
   </header>
 
-  <table class="data-table">
-    <thead>
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
       <tr>
-        <th>Club</th>
-        <th>Title</th>
-        <th>Status</th>
-        <th>Channel</th>
-        <th>Scheduled</th>
-        <th></th>
+        <th class="px-4 py-3">Club</th>
+        <th class="px-4 py-3">Title</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Channel</th>
+        <th class="px-4 py-3">Scheduled</th>
+        <th class="px-4 py-3 text-right">Actions</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody class="divide-y divide-slate-100">
       <% @broadcasts.each do |broadcast| %>
-        <tr>
-          <td><%= broadcast.club.name %></td>
-          <td><%= link_to broadcast.title, admin_broadcast_path(broadcast) %></td>
-          <td><span class="status status--<%= broadcast.status %>"><%= broadcast.status.humanize %></span></td>
-          <td><%= broadcast.channel %></td>
-          <td><%= broadcast.scheduled_at || "Immediate" %></td>
-          <td class="actions">
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-600"><%= broadcast.club.name %></td>
+          <td class="px-4 py-3 font-medium text-slate-900"><%= link_to broadcast.title, admin_broadcast_path(broadcast), class: "hover:text-slate-700" %></td>
+          <td class="px-4 py-3">
+            <% badge = broadcast.status_approved? ? "bg-emerald-50 text-emerald-700" : broadcast.status_pending_approval? ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600" %>
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge %>"><%= broadcast.status.humanize %></span>
+          </td>
+          <td class="px-4 py-3 text-slate-600"><%= broadcast.channel %></td>
+          <td class="px-4 py-3 text-slate-500"><%= broadcast.scheduled_at || "Immediate" %></td>
+          <td class="px-4 py-3 text-right">
             <% unless broadcast.status_approved? %>
-              <%= button_to "Approve", approve_admin_broadcast_path(broadcast), method: :post, class: "button" %>
+              <%= button_to "Approve", approve_admin_broadcast_path(broadcast), method: :post, form: { class: "inline" }, class: "rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800" %>
             <% end %>
           </td>
         </tr>

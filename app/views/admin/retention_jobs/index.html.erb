@@ -1,41 +1,46 @@
 <% content_for :title, "Retention jobs · Admin" %>
 <% content_for :page_heading, "Retention jobs" %>
 
-<section class="card">
-  <header class="card__header">
-    <h2>Trigger a job</h2>
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Trigger a job</h2>
   </header>
-  <%= form_with url: admin_retention_jobs_path, method: :post, class: "form-inline" do |form| %>
-    <div class="field">
-      <%= form.label :club_id, "Club" %>
-      <%= form.collection_select :club_id, Club.order(:name), :id, :name %>
-    </div>
-    <div class="actions">
-      <%= form.submit "Queue retention job" %>
-    </div>
-  <% end %>
+  <div class="px-4 py-4">
+    <%= form_with url: admin_retention_jobs_path, method: :post, class: "grid gap-4 md:grid-cols-3" do |form| %>
+      <div class="md:col-span-2">
+        <%= form.label :club_id, "Club", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.collection_select :club_id, @clubs, :id, :name, {}, class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+      <div class="md:flex md:items-end">
+        <%= form.submit "Queue retention job", class: "w-full rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+      </div>
+    <% end %>
+  </div>
 </section>
 
-<section class="card">
-  <header class="card__header">
-    <h2>Recent runs</h2>
+<section class="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Recent runs</h2>
   </header>
-  <table class="data-table">
-    <thead>
+  <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
       <tr>
-        <th>Club</th>
-        <th>Status</th>
-        <th>Report</th>
-        <th>Created</th>
+        <th class="px-4 py-3">Club</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Report</th>
+        <th class="px-4 py-3">Created</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody class="divide-y divide-slate-100">
       <% @report_runs.each do |run| %>
-        <tr>
-          <td><%= run.club.name %></td>
-          <td><span class="status status--<%= run.status %>"><%= run.status.humanize %></span></td>
-          <td><%= run.report_name %></td>
-          <td><%= run.created_at %></td>
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-600"><%= run.club.name %></td>
+          <td class="px-4 py-3">
+            <% badge = run.status_ready? ? "bg-emerald-50 text-emerald-700" : run.status_failed? ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700" %>
+            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge %>"><%= run.status.humanize %></span>
+          </td>
+          <td class="px-4 py-3 text-slate-600"><%= run.report_name %></td>
+          <td class="px-4 py-3 text-slate-500"><%= run.created_at %></td>
         </tr>
       <% end %>
     </tbody>

@@ -34,8 +34,17 @@
           <h1 class="text-2xl font-semibold text-slate-900"><%= content_for(:page_heading) || "Admin" %></h1>
           <div class="flex items-center gap-3 text-sm text-slate-600">
             <span>Signed in as <strong class="font-semibold text-slate-900"><%= current_user.email %></strong></span>
-            <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "rounded bg-slate-200 px-3 py-1 text-slate-800 hover:bg-slate-300" %>
+            <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "rounded bg-slate-200 px-3 py-1 text-slate-800 hover:bg-slate-300" %>
           </div>
+          <nav class="-mx-1 flex flex-wrap gap-2 text-xs font-medium text-slate-600 sm:hidden">
+            <%= link_to "Dashboard", admin_dashboard_path, class: sidebar_link_classes(admin_dashboard_path, variant: :light) %>
+            <%= link_to "Clubs", admin_clubs_path, class: sidebar_link_classes(admin_clubs_path, variant: :light) %>
+            <%= link_to "Users", admin_users_path, class: sidebar_link_classes(admin_users_path, variant: :light) %>
+            <%= link_to "Invoices", admin_invoices_path, class: sidebar_link_classes(admin_invoices_path, variant: :light) %>
+            <%= link_to "Broadcasts", admin_broadcasts_path, class: sidebar_link_classes(admin_broadcasts_path, variant: :light) %>
+            <%= link_to "Audits", admin_audits_path, class: sidebar_link_classes(admin_audits_path, variant: :light) %>
+            <%= link_to "Retention", admin_retention_jobs_path, class: sidebar_link_classes(admin_retention_jobs_path, variant: :light) %>
+          </nav>
         </header>
 
         <div class="px-6 py-6">

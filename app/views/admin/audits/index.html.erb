@@ -1,28 +1,28 @@
 <% content_for :title, "Audit log · Admin" %>
 <% content_for :page_heading, "Audit log" %>
 
-<section class="card">
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
   <% if @audits.blank? %>
-    <p class="empty-state">No audits recorded yet.</p>
+    <p class="px-4 py-6 text-sm text-slate-500">No audits recorded yet.</p>
   <% else %>
-    <table class="data-table">
-      <thead>
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
         <tr>
-          <th>User</th>
-          <th>Action</th>
-          <th>Auditable</th>
-          <th>Changes</th>
-          <th>At</th>
+          <th class="px-4 py-3">User</th>
+          <th class="px-4 py-3">Action</th>
+          <th class="px-4 py-3">Auditable</th>
+          <th class="px-4 py-3">Changes</th>
+          <th class="px-4 py-3">At</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-slate-100">
         <% @audits.each do |audit| %>
-          <tr>
-            <td><%= audit.user&.email || "System" %></td>
-            <td><%= audit.action %></td>
-            <td><%= audit.auditable_type %>#<%= audit.auditable_id %></td>
-            <td><pre class="code-inline"><%= audit.audited_changes %></pre></td>
-            <td><%= audit.created_at %></td>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 text-slate-600"><%= audit.user&.email || "System" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= audit.action %></td>
+            <td class="px-4 py-3 text-slate-600"><%= audit.auditable_type %>#<%= audit.auditable_id %></td>
+            <td class="px-4 py-3 text-slate-600"><pre class="whitespace-pre-wrap rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700"><%= audit.audited_changes %></pre></td>
+            <td class="px-4 py-3 text-slate-500"><%= audit.created_at %></td>
           </tr>
         <% end %>
       </tbody>

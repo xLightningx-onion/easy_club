@@ -3,6 +3,7 @@
 class Admin::RetentionJobsController < BaseController
   def index
     @report_runs = ReportRun.order(created_at: :desc).limit(50)
+    @clubs = Club.order(:name)
   end
 
   def create

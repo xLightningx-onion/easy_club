@@ -1,54 +1,61 @@
 <% content_for :title, "#{@broadcast.title} · Admin" %>
 <% content_for :page_heading, @broadcast.title %>
 
-<section class="card">
-  <header class="card__header">
-    <h2>Broadcast details</h2>
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Broadcast details</h2>
     <% unless @broadcast.status_approved? %>
-      <%= button_to "Approve", approve_admin_broadcast_path(@broadcast), method: :post, class: "button" %>
+      <%= button_to "Approve", approve_admin_broadcast_path(@broadcast), method: :post, form: { class: "inline" }, class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
     <% end %>
   </header>
 
-  <dl class="definition-list">
+  <dl class="grid gap-4 px-4 py-4 text-sm text-slate-600 md:grid-cols-2">
     <div>
-      <dt>Club</dt>
-      <dd><%= @broadcast.club.name %></dd>
+      <dt class="font-medium text-slate-500">Club</dt>
+      <dd class="text-slate-900"><%= @broadcast.club.name %></dd>
     </div>
     <div>
-      <dt>Status</dt>
-      <dd><span class="status status--<%= @broadcast.status %>"><%= @broadcast.status.humanize %></span></dd>
+      <dt class="font-medium text-slate-500">Status</dt>
+      <dd>
+        <% badge = @broadcast.status_approved? ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700" %>
+        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge %>"><%= @broadcast.status.humanize %></span>
+      </dd>
     </div>
     <div>
-      <dt>Channel</dt>
-      <dd><%= @broadcast.channel %></dd>
+      <dt class="font-medium text-slate-500">Channel</dt>
+      <dd class="text-slate-900"><%= @broadcast.channel %></dd>
     </div>
     <div>
-      <dt>Scheduled</dt>
-      <dd><%= @broadcast.scheduled_at || "Immediate" %></dd>
+      <dt class="font-medium text-slate-500">Scheduled</dt>
+      <dd class="text-slate-900"><%= @broadcast.scheduled_at || "Immediate" %></dd>
     </div>
   </dl>
 
-  <article class="card__body">
-    <h3>Body</h3>
-    <pre class="code-block"><%= @broadcast.body %></pre>
+  <article class="border-t border-slate-200 px-4 py-4">
+    <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Body</h3>
+    <pre class="whitespace-pre-wrap rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"><%= @broadcast.body %></pre>
   </article>
 </section>
 
-<section class="card">
-  <header class="card__header">
-    <h2>Update status</h2>
+<section class="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Update status</h2>
   </header>
-  <%= form_with model: [:admin, @broadcast], method: :patch do |form| %>
-    <div class="field">
-      <%= form.label :status %>
-      <%= form.select :status, Broadcast.statuses.keys %>
-    </div>
-    <div class="field">
-      <%= form.label :scheduled_at %>
-      <%= form.datetime_field :scheduled_at %>
-    </div>
-    <div class="actions">
-      <%= form.submit "Update" %>
-    </div>
-  <% end %>
+  <div class="px-4 py-4">
+    <%= form_with model: [:admin, @broadcast], method: :patch do |form| %>
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <%= form.label :status, class: "block text-sm font-medium text-slate-700" %>
+          <%= form.select :status, Broadcast.statuses.keys, {}, class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+        </div>
+        <div>
+          <%= form.label :scheduled_at, class: "block text-sm font-medium text-slate-700" %>
+          <%= form.datetime_field :scheduled_at, class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+        </div>
+      </div>
+      <div class="mt-6">
+        <%= form.submit "Update", class: "rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+      </div>
+    <% end %>
+  </div>
 </section>
