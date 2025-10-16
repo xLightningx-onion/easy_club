@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Admin::ClubsController < BaseController
+class Admin::ClubsController < Admin::BaseController
   before_action :set_club, only: %i[show edit update destroy impersonate]
 
   def index

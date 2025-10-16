@@ -1,3 +1,4 @@
+require "sidekiq/web"
 Rails.application.routes.draw do
   devise_for :users
 
@@ -37,14 +38,17 @@ Rails.application.routes.draw do
         get :ar_aging
       end
     end
+    root "dashboard"
   end
 
   namespace :admin do
+    mount Sidekiq::Web => "/sidekiq" # access it at http://localhost:3000/sidekiq
     resource :dashboard, only: :show
     resources :clubs do
       post :impersonate, on: :member
     end
     resources :users
+    resources :members, only: %i[index show]
 
     resources :invoices, only: %i[index show] do
       collection { get :reconciliation }
@@ -61,6 +65,7 @@ Rails.application.routes.draw do
       resources :payments, only: :create
       resources :whatsapp, only: :create
     end
+    root "dashboard"
   end
 
   root "club/dashboard#show"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Admin::BroadcastsController < BaseController
+class Admin::BroadcastsController < Admin::BaseController
   before_action :set_broadcast, only: %i[show update approve]
 
   def index

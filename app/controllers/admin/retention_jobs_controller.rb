@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Admin::RetentionJobsController < BaseController
+class Admin::RetentionJobsController < Admin::BaseController
   def index
     @report_runs = ReportRun.order(created_at: :desc).limit(50)
     @clubs = Club.order(:name)

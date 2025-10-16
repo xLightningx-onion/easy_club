@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Admin::InvoicesController < BaseController
+class Admin::InvoicesController < Admin::BaseController
   before_action :set_invoice, only: :show
 
   def index
