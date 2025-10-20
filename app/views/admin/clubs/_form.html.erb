@@ -35,7 +35,7 @@
             <%= link_to "Remove Image", remove_file_admin_club_path(@club, file_name: 'logo', target_link: 'club-logo-image'), class: "text-decoration-none text-danger", remote: true, data: { confirm: "Are you sure you want to remove the club's logo?" } %>
           </div>
         <% end %>
-          <div class="w-100 dropzone dropzone-default dz-clickable" data-controller="dropzone" data-dropzone-max-file-size="5" data-dropzone-max-files="1" data-dropzone-accepted-files=".jpg,.jpeg,.png,.gif" data-crop-image data-crop-image-aspect-ratio="16 / 9">
+          <div class="w-100 dropzone dropzone-default dz-clickable" data-controller="dropzone" data-dropzone-max-file-size="10" data-dropzone-max-files="1" data-dropzone-accepted-files=".jpg,.jpeg,.png,.gif" data-crop-image data-crop-image-aspect-ratio="1 / 1">
             <%= form.file_field :logo, direct_upload: true, data: { dropzone_target: 'input' } %>
             <div class="dropzone-msg dz-message needsclick">
                 <i class="bi bi-file-earmark-arrow-down-fill fa-2xl text-grey-darker text-center mb-2"></i>
