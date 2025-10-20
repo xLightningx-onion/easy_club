@@ -1,0 +1,115 @@
+<% content_for :title, "#{@order.number} · Orders · Admin" %>
+<% content_for :page_heading, @order.number %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">Order overview</h2>
+      <p class="text-sm text-slate-500">Submitted <%= @order.submitted_at || @order.created_at %></p>
+    </div>
+    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold <%= @order.status_paid? ? "bg-emerald-50 text-emerald-700" : @order.status_pending_payment? ? "bg-amber-50 text-amber-700" : @order.status_cancelled? ? "bg-rose-50 text-rose-700" : "bg-slate-200 text-slate-700" %>"><%= @order.status.humanize %></span>
+  </header>
+
+  <dl class="grid gap-4 px-4 py-6 text-sm text-slate-600 md:grid-cols-2">
+    <div>
+      <dt class="font-medium text-slate-500">Club</dt>
+      <dd class="text-slate-900"><%= @order.club.name %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Customer</dt>
+      <dd class="text-slate-900"><%= @order.user.email %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Subtotal</dt>
+      <dd class="text-slate-900"><%= number_to_currency(@order.subtotal_cents / 100.0, unit: @order.subtotal_currency) %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Discounts</dt>
+      <dd class="text-slate-900"><%= number_to_currency(@order.discount_cents / 100.0, unit: @order.discount_currency) %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Total</dt>
+      <dd class="text-lg font-semibold text-slate-900"><%= number_to_currency(@order.total_cents / 100.0, unit: @order.total_currency) %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Payment method</dt>
+      <dd class="text-slate-900"><%= @order.payment_method&.masked_label || "Not saved" %></dd>
+    </div>
+  </dl>
+</section>
+
+<section class="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Order items</h2>
+  </header>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Member</th>
+          <th class="px-4 py-3">Plan</th>
+          <th class="px-4 py-3 text-right">Quantity</th>
+          <th class="px-4 py-3 text-right">Unit price</th>
+          <th class="px-4 py-3 text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @order_items.each do |item| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 text-slate-600"><%= item.member.display_name %></td>
+            <td class="px-4 py-3 text-slate-900">
+              <div class="font-semibold"><%= item.product&.name || item.description || "Plan" %></div>
+              <div class="text-xs text-slate-500"><%= item.plan.plan_type.humanize %></div>
+            </td>
+            <td class="px-4 py-3 text-right text-slate-600"><%= item.quantity %></td>
+            <td class="px-4 py-3 text-right text-slate-600"><%= number_to_currency(item.unit_price_cents / 100.0, unit: item.unit_price_currency) %></td>
+            <td class="px-4 py-3 text-right font-semibold text-slate-900"><%= number_to_currency(item.total_price_cents / 100.0, unit: item.total_price_currency) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="border-b border-slate-200 px-4 py-3">
+    <h2 class="text-base font-semibold text-slate-900">Payment transactions</h2>
+  </header>
+
+  <% if @transactions.any? %>
+    <ul class="divide-y divide-slate-100 text-sm">
+      <% @transactions.each do |transaction| %>
+        <li class="px-4 py-4">
+          <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p class="font-semibold text-slate-900">PayGate <%= transaction.request_reference || transaction.id %></p>
+              <p class="text-xs text-slate-500">Processed <%= transaction.processed_at || transaction.created_at %></p>
+            </div>
+            <div class="flex items-center gap-3">
+              <% badge = case transaction.status
+                when "succeeded" then "bg-emerald-50 text-emerald-700"
+                when "pending" then "bg-amber-50 text-amber-700"
+                when "failed" then "bg-rose-50 text-rose-700"
+                else "bg-slate-200 text-slate-700"
+              end %>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <%= badge %>"><%= transaction.status.humanize %></span>
+              <span class="text-sm font-semibold text-slate-900">
+                <%= number_to_currency(transaction.amount_cents / 100.0, unit: transaction.amount_currency) %>
+              </span>
+            </div>
+          </div>
+          <div class="mt-2 text-xs text-slate-500">
+            Card: <%= transaction.payment_method&.masked_label || "Not stored" %>
+          </div>
+          <% if transaction.response_reference.present? %>
+            <div class="mt-1 text-xs text-slate-500">
+              Gateway reference: <%= transaction.response_reference %>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="px-4 py-6 text-sm text-slate-500">No payment transactions recorded yet.</div>
+  <% end %>
+</section>

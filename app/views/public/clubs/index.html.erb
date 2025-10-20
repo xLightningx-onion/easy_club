@@ -1,0 +1,67 @@
+<% content_for :title, "Find a Club · Easy Club" %>
+
+<section class="mx-auto max-w-5xl space-y-8 px-4 py-10">
+  <header class="space-y-3 text-center">
+    <h1 class="text-3xl font-semibold text-slate-900">Discover Clubs</h1>
+    <p class="text-slate-600">Browse publicly listed clubs and explore their locations before joining.</p>
+  </header>
+
+  <% if Settings.google.places_api_key.present? && @clubs_with_location.any? %>
+    <div
+      class="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow"
+      data-controller="clubs-map"
+      data-clubs-map-api-key-value="<%= Settings.google.places_api_key %>"
+      data-clubs-map-clubs-value='<%= @clubs_with_location.map { |club|
+        {
+          id: club.id,
+          name: club.name,
+          lat: club.latitude&.to_f,
+          lng: club.longitude&.to_f,
+          address_line1: club.address_line1,
+          city: club.city,
+          region: club.region,
+          country: club.country
+        }
+      }.to_json.html_safe %>'
+    >
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          data-action="clubs-map#locateMe"
+          data-clubs-map-target="locateButton"
+        >
+          Use my current location
+        </button>
+        <p class="text-xs text-slate-500" data-clubs-map-target="status"></p>
+      </div>
+      <div data-clubs-map-target="map" class="h-80 w-full rounded border border-slate-200"></div>
+    </div>
+  <% else %>
+    <div class="rounded border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+      Map preview unavailable until clubs add location details and a Places API key is configured.
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <% @clubs.each do |club| %>
+      <article class="rounded border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="text-xl font-semibold text-slate-900">
+          <%= link_to club.name, public_club_path(club), class: "hover:text-slate-700" %>
+        </h2>
+        <% if club.location? %>
+          <p class="mt-2 text-sm text-slate-600">
+            <%= [club.address_line1, club.city, club.region, club.country].compact_blank.join(", ") %>
+          </p>
+        <% else %>
+          <p class="mt-2 text-sm text-slate-500">Location not provided yet.</p>
+        <% end %>
+        <% if club.settings.dig("finance", "currency") %>
+          <p class="mt-2 text-xs uppercase tracking-wide text-slate-400">
+            Default currency: <%= club.settings.dig("finance", "currency") %>
+          </p>
+        <% end %>
+      </article>
+    <% end %>
+  </div>
+</section>

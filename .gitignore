@@ -94,3 +94,6 @@
 
       # Ignore Good Job dashboard assets (if any)
       /public/good_job
+config/settings.local.yml
+config/settings/*.local.yml
+config/environments/*.local.yml

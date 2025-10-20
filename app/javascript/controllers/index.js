@@ -9,3 +9,12 @@ application.register("hello", HelloController)
 
 import SquadController from "./squad_controller"
 application.register("squad", SquadController)
+
+import LocationPickerController from "./location_picker_controller"
+application.register("location-picker", LocationPickerController)
+
+import ClubsMapController from "./clubs_map_controller"
+application.register("clubs-map", ClubsMapController)
+
+import DropzoneController from "./dropzone_controller"
+application.register("dropzone", DropzoneController)

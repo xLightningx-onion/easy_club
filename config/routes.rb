@@ -4,6 +4,10 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
+  scope module: :public, as: :public do
+    resources :clubs, only: %i[index show], path: "clubs"
+  end
+
   namespace :club do
     resource :dashboard, only: :show
 
@@ -38,6 +42,11 @@ Rails.application.routes.draw do
         get :ar_aging
       end
     end
+    resources :plans, only: :index
+    resource :cart, only: :show do
+      resources :items, controller: "cart_items", only: %i[create update destroy]
+    end
+    resource :checkout, only: :create
     root "dashboard"
   end
 
@@ -46,9 +55,11 @@ Rails.application.routes.draw do
     resource :dashboard, only: :show
     resources :clubs do
       post :impersonate, on: :member
+      get :remove_file, on: :member
     end
     resources :users
     resources :members, only: %i[index show]
+    resources :orders, only: %i[index show]
 
     resources :invoices, only: %i[index show] do
       collection { get :reconciliation }
@@ -65,6 +76,7 @@ Rails.application.routes.draw do
       resources :payments, only: :create
       resources :whatsapp, only: :create
     end
+
     root "dashboard"
   end
 

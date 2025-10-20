@@ -1,0 +1,52 @@
+<% content_for :title, "Orders · Admin" %>
+<% content_for :page_heading, "Orders" %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">Recent orders</h2>
+      <p class="text-sm text-slate-500">Newest orders appear first. Showing the latest 100.</p>
+    </div>
+  </header>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Order</th>
+          <th class="px-4 py-3">Club</th>
+          <th class="px-4 py-3">Customer</th>
+          <th class="px-4 py-3 text-right">Items</th>
+          <th class="px-4 py-3 text-right">Total</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Submitted</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @orders.each do |order| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-semibold text-slate-900">
+              <%= link_to order.number, admin_order_path(order), class: "hover:text-slate-700" %>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= order.club.name %></td>
+            <td class="px-4 py-3 text-slate-600"><%= order.user.email %></td>
+            <td class="px-4 py-3 text-right text-slate-600"><%= order.order_items.sum(:quantity) %></td>
+            <td class="px-4 py-3 text-right font-semibold text-slate-900">
+              <%= number_to_currency(order.total_cents / 100.0, unit: order.total_currency) %>
+            </td>
+            <td class="px-4 py-3">
+              <% badge = case order.status
+                when "paid" then "bg-emerald-50 text-emerald-700"
+                when "pending_payment" then "bg-amber-50 text-amber-700"
+                when "cancelled" then "bg-rose-50 text-rose-700"
+                else "bg-slate-100 text-slate-600"
+              end %>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <%= badge %>"><%= order.status.humanize %></span>
+            </td>
+            <td class="px-4 py-3 text-slate-500"><%= order.submitted_at || order.created_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

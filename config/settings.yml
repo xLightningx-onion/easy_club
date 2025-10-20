@@ -1,0 +1,18 @@
+# Bunny CDN/Storage (used by ActiveStorage Bunny service)
+bunny:
+  access_key: <%= ENV.fetch("BUNNY_ACCESS_KEY") %>
+  api_key: <%= ENV.fetch("BUNNY_API_KEY") %>
+  storage_zone: <%= ENV.fetch("BUNNY_STORAGE_ZONE") %>
+  region: <%= ENV.fetch("BUNNY_REGION", "") %>
+  cdn: <%= ENV.fetch("BUNNY_CDN_ENDPOINT") %>
+
+paygate:
+  pay_host:
+    endpoint: <%= ENV.fetch("PAYGATE_PAY_HOST_ENDPOINT", "https://secure.paygate.co.za/payhost/process.trans") %>
+    merchant_id: <%= ENV.fetch("PAYGATE_MERCHANT_ID") %>
+    encryption_key: <%= ENV.fetch("PAYGATE_ENCRYPTION_KEY") %>
+    return_url: <%= ENV.fetch("PAYGATE_RETURN_URL") %>
+    notify_url: <%= ENV.fetch("PAYGATE_NOTIFY_URL") %>
+
+google:
+  places_api_key: <%= ENV.fetch("GOOGLE_PLACES_API_KEY", "") %>

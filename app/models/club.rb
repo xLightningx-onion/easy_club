@@ -3,6 +3,9 @@
 class Club < ApplicationRecord
   thread_mattr_accessor :current_id
 
+  has_one_attached :logo
+  has_one_attached :banner
+
   has_many :club_roles, dependent: :destroy
   has_many :users, through: :club_roles
   has_many :members, dependent: :destroy
@@ -15,6 +18,10 @@ class Club < ApplicationRecord
   has_many :payments, dependent: :destroy
   has_many :vouchers, dependent: :destroy
   has_many :wallets, dependent: :destroy
+  has_many :carts, dependent: :destroy
+  has_many :orders, dependent: :destroy
+  has_many :payment_transactions, through: :orders
+  has_many :payment_methods, dependent: :destroy
   has_many :teams, dependent: :destroy
   has_many :fixtures, dependent: :destroy
   has_many :templates, dependent: :destroy
@@ -33,5 +40,14 @@ class Club < ApplicationRecord
 
   def self.current
     find_by(id: current_id) if current_id
+  end
+
+  scope :publicly_listed, -> { where(public_listing: true) }
+
+  validates :latitude, numericality: true, allow_nil: true
+  validates :longitude, numericality: true, allow_nil: true
+
+  def location?
+    latitude.present? && longitude.present?
   end
 end

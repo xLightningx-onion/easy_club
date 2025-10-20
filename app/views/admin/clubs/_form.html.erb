@@ -26,6 +26,135 @@
       <%= form.label :logo, class: "block text-sm font-medium text-slate-700" %>
       <%= form.text_field :logo, class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
     </div>
+    <div class="">
+      <%= form.label :logo, "Logo (1:1)", class: "form-label text-uppercase" %>
+      <div class="d-flex gap-3">
+        <% if @club.logo.attached? %>
+          <div id="club-logo-image" class="w-25 text-center flex-col align-items-center">
+            <%= image_tag(@club.logo&.url, class: 'w-100 rounded') %>
+            <%= link_to "Remove Image", remove_file_admin_club_path(@club, file_name: 'logo', target_link: 'club-logo-image'), class: "text-decoration-none text-danger", remote: true, data: { confirm: "Are you sure you want to remove the club's logo?" } %>
+          </div>
+        <% end %>
+          <div class="w-100 dropzone dropzone-default dz-clickable" data-controller="dropzone" data-dropzone-max-file-size="5" data-dropzone-max-files="1" data-dropzone-accepted-files=".jpg,.jpeg,.png,.gif" data-crop-image data-crop-image-aspect-ratio="16 / 9">
+            <%= form.file_field :logo, direct_upload: true, data: { dropzone_target: 'input' } %>
+            <div class="dropzone-msg dz-message needsclick">
+                <i class="bi bi-file-earmark-arrow-down-fill fa-2xl text-grey-darker text-center mb-2"></i>
+                <p class="mb-1 text-s text-center">
+                    Drop files Here of <span class="text-blue-subtle">click to upload</span>
+                </p>
+                <p class="mb-1 text-s text-center">
+                    .jpg, .jpeg, .png, .gif
+                </p>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6 rounded border border-slate-200 bg-slate-50 p-4">
+    <label class="mb-2 block text-sm font-medium text-slate-700">Public visibility</label>
+    <p class="mb-3 text-sm text-slate-500">Public clubs appear on the public directory and map. Uncheck to keep this club private.</p>
+    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+      <%= form.check_box :public_listing %>
+      <span>List this club publicly</span>
+    </label>
+  </div>
+
+  <div
+    class="mt-6 space-y-4 rounded border border-slate-200 bg-slate-50 p-4"
+    data-controller="location-picker"
+    data-location-picker-api-key-value="<%= Settings.google.places_api_key %>"
+    data-location-picker-latitude-value="<%= @club.latitude %>"
+    data-location-picker-longitude-value="<%= @club.longitude %>"
+    data-location-picker-location-name-value="<%= @club.location_name %>"
+    data-location-picker-address-line1-value="<%= @club.address_line1 %>"
+    data-location-picker-address-line2-value="<%= @club.address_line2 %>"
+    data-location-picker-city-value="<%= @club.city %>"
+    data-location-picker-region-value="<%= @club.region %>"
+    data-location-picker-postal-code-value="<%= @club.postal_code %>"
+    data-location-picker-country-value="<%= @club.country %>"
+    data-location-picker-place-id-value="<%= @club.google_place_id %>"
+  >
+    <header>
+      <h2 class="text-sm font-medium text-slate-700">Club location</h2>
+      <p class="text-xs text-slate-500">Search for the club’s address, then fine-tune the marker if needed.</p>
+    </header>
+
+    <div class="space-y-2">
+      <label class="block text-sm font-medium text-slate-700" for="club-location-search">Search address</label>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <input
+          id="club-location-search"
+          type="text"
+          placeholder="Start typing an address or place"
+          class="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring"
+          data-location-picker-target="searchInput"
+        >
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          data-action="location-picker#useCurrentLocation"
+          data-location-picker-target="useCurrentLocationButton"
+        >
+          Use current location
+        </button>
+      </div>
+      <p class="text-xs text-slate-500" data-location-picker-target="statusMessage"></p>
+    </div>
+
+    <div class="h-64 w-full overflow-hidden rounded border border-slate-300" data-location-picker-target="map"></div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Location name</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="locationName" readonly>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Address line 1</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="addressLine1" readonly>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Address line 2</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="addressLine2" readonly>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">City</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="city" readonly>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Region/State</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="region" readonly>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Postal code</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="postalCode" readonly>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Country</label>
+        <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="country" readonly>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Latitude</label>
+          <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="latitudeDisplay" readonly>
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-wide text-slate-500">Longitude</label>
+          <input type="text" class="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" data-location-picker-target="longitudeDisplay" readonly>
+        </div>
+      </div>
+    </div>
+
+    <%= form.hidden_field :location_name, data: { location_picker_target: "locationNameField" } %>
+    <%= form.hidden_field :address_line1, data: { location_picker_target: "addressLine1Field" } %>
+    <%= form.hidden_field :address_line2, data: { location_picker_target: "addressLine2Field" } %>
+    <%= form.hidden_field :city, data: { location_picker_target: "cityField" } %>
+    <%= form.hidden_field :region, data: { location_picker_target: "regionField" } %>
+    <%= form.hidden_field :postal_code, data: { location_picker_target: "postalCodeField" } %>
+    <%= form.hidden_field :country, data: { location_picker_target: "countryField" } %>
+    <%= form.hidden_field :latitude, data: { location_picker_target: "latitudeField" } %>
+    <%= form.hidden_field :longitude, data: { location_picker_target: "longitudeField" } %>
+    <%= form.hidden_field :google_place_id, data: { location_picker_target: "placeIdField" } %>
   </div>
 
   <div class="mt-6">

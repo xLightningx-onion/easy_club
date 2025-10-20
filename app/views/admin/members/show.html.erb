@@ -1,0 +1,366 @@
+<% full_name = @member.full_name.presence || "Member" %>
+<% content_for :title, "#{full_name} · Admin" %>
+<% content_for :page_heading, full_name %>
+
+<% membership_status, membership_badge = if @team_memberships.any?
+  ["Active membership", "bg-emerald-50 text-emerald-700"]
+else
+  ["No memberships", "bg-rose-50 text-rose-700"]
+end %>
+
+<% initials = full_name.split.map { |part| part[0] }.join.upcase[0, 2] %>
+
+<div class="grid gap-6 xl:grid-cols-[320px_1fr]">
+  <aside class="space-y-6">
+    <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="flex flex-col items-center gap-4 border-b border-slate-200 px-6 py-6">
+        <div class="flex h-24 w-24 items-center justify-center rounded-full bg-slate-200 text-3xl font-semibold text-slate-600">
+          <%= initials.presence || "M" %>
+        </div>
+        <div class="text-center">
+          <h2 class="text-xl font-semibold text-slate-900"><%= full_name %></h2>
+          <p class="text-sm text-slate-500"><%= @member.club.name %></p>
+        </div>
+        <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold <%= membership_badge %>"><%= membership_status %></span>
+      </header>
+
+      <dl class="space-y-4 px-6 py-6 text-sm text-slate-600">
+        <div>
+          <dt class="font-medium text-slate-500">Member ID</dt>
+          <dd class="text-slate-900 font-mono text-xs break-all"><%= @member.id %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Role</dt>
+          <dd class="text-slate-900"><%= @member.role.titleize %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Date of birth</dt>
+          <dd class="text-slate-900"><%= @member.dob || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Gender</dt>
+          <dd class="text-slate-900"><%= @member.gender.presence || "Not specified" %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Safeguarding</dt>
+          <dd class="text-slate-900">
+            <% if @member.safeguarding_flag? %>
+              <span class="inline-flex rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">Flagged</span>
+              <% if @member.safeguarding_reason.present? %>
+                <div class="mt-2 text-xs text-rose-600"><%= @member.safeguarding_reason %></div>
+              <% end %>
+            <% else %>
+              <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Clear</span>
+            <% end %>
+          </dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Last updated</dt>
+          <dd class="text-slate-900"><%= @member.updated_at %></dd>
+        </div>
+      </dl>
+
+      <footer class="flex flex-col gap-3 border-t border-slate-200 px-6 py-6">
+        <%= link_to "New Invoice", admin_invoices_path(member_id: @member.id), class: "inline-flex w-full items-center justify-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+        <%= link_to "View club profile", admin_club_path(@member.club), class: "inline-flex w-full items-center justify-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      </footer>
+    </section>
+
+    <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="border-b border-slate-200 px-6 py-4">
+        <h2 class="text-base font-semibold text-slate-900">Contact</h2>
+        <p class="text-sm text-slate-500">Primary account holders and guardians.</p>
+      </header>
+      <div class="space-y-4 px-6 py-4 text-sm text-slate-600">
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Account</h3>
+          <% if @member.user.present? %>
+            <p class="mt-1 text-slate-900"><%= link_to @member.user.email, admin_user_path(@member.user), class: "font-medium text-slate-900 hover:text-slate-700" %></p>
+            <p class="text-xs text-slate-500">Linked user</p>
+          <% else %>
+            <p class="mt-1 text-slate-500">No user linked.</p>
+          <% end %>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Guardians</h3>
+          <% if @guardianships.any? %>
+            <ul class="mt-2 space-y-2">
+              <% @guardianships.each do |guardianship| %>
+                <li>
+                  <p class="font-medium text-slate-900"><%= guardianship.guardian.email %></p>
+                  <p class="text-xs text-slate-500"><%= guardianship.relationship.presence || "Guardian" %></p>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="mt-1 text-slate-500">No guardians recorded.</p>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <div class="space-y-6">
+    <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="flex flex-col gap-4 border-b border-slate-200 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <nav class="flex flex-wrap gap-2 text-sm font-medium text-slate-600">
+          <%= link_to "Overview", "#overview", class: "rounded px-3 py-1 hover:bg-slate-100" %>
+          <%= link_to "Memberships", "#memberships", class: "rounded px-3 py-1 hover:bg-slate-100" %>
+          <%= link_to "Orders & Transactions", "#transactions", class: "rounded px-3 py-1 hover:bg-slate-100" %>
+          <%= link_to "Consents", "#consents", class: "rounded px-3 py-1 hover:bg-slate-100" %>
+          <%= link_to "History", "#history", class: "rounded px-3 py-1 hover:bg-slate-100" %>
+        </nav>
+        <%= link_to "+ New Invoice", admin_invoices_path(member_id: @member.id), class: "inline-flex items-center justify-center rounded bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-500" %>
+      </header>
+      <div class="px-6 py-6 text-sm text-slate-600">
+        <p>Select a section to jump directly to key information for this member.</p>
+      </div>
+    </section>
+
+    <section id="overview" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="border-b border-slate-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-slate-900">Member overview</h2>
+      </header>
+      <dl class="grid gap-4 px-6 py-6 text-sm text-slate-600 md:grid-cols-2">
+        <div>
+          <dt class="font-medium text-slate-500">Club</dt>
+          <dd class="text-slate-900"><%= @member.club.name %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Joined</dt>
+          <dd class="text-slate-900"><%= @member.created_at %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Teams</dt>
+          <dd class="text-slate-900"><%= @team_memberships.size %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Invoices</dt>
+          <dd class="text-slate-900"><%= @invoices.size %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Outstanding balance</dt>
+          <dd class="text-slate-900">
+            <% outstanding = @invoices.select { |invoice| invoice.status_open? || invoice.status_past_due? }.sum { |invoice| invoice.total_cents } %>
+            <%= number_to_currency(outstanding / 100.0, unit: @invoices.first&.total_currency || "ZAR") %>
+          </dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Last payment</dt>
+          <dd class="text-slate-900"><%= @payments.first&.created_at || "No payments recorded" %></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section id="memberships" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="border-b border-slate-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-slate-900">Team memberships</h2>
+      </header>
+      <% if @team_memberships.any? %>
+        <ul class="divide-y divide-slate-100 text-sm">
+          <% @team_memberships.each do |membership| %>
+            <li class="flex flex-col gap-2 px-6 py-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p class="font-medium text-slate-900"><%= membership.team.name %></p>
+                <p class="text-xs text-slate-500">Role: <%= membership.role.titleize %></p>
+              </div>
+              <div class="text-xs text-slate-500">
+                Joined <%= membership.created_at.to_date %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="px-6 py-6 text-sm text-slate-500">This member is not assigned to any teams yet.</div>
+      <% end %>
+    </section>
+
+    <section id="transactions" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="flex flex-col gap-2 border-b border-slate-200 px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Orders & transactions</h2>
+          <p class="text-sm text-slate-500">Recent checkout orders and the invoices linked to this member.</p>
+        </div>
+        <%= link_to "+ New Invoice", admin_invoices_path(member_id: @member.id), class: "inline-flex items-center justify-center rounded bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-500" %>
+      </header>
+      <div class="space-y-6 px-6 py-6">
+        <% if @orders.any? %>
+          <div class="space-y-3">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Checkout orders</h3>
+            <% @orders.each do |order| %>
+              <article class="rounded border border-slate-200 bg-white p-4 shadow-sm">
+                <header class="flex flex-col gap-2 border-b border-slate-100 pb-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-900">
+                      <%= link_to order.number, admin_order_path(order), class: "hover:text-slate-700" %>
+                    </h4>
+                    <p class="text-xs text-slate-500">Submitted <%= order.submitted_at || order.created_at %></p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <% badge = case order.status
+                      when "paid" then "bg-emerald-100 text-emerald-800"
+                      when "pending_payment" then "bg-amber-100 text-amber-800"
+                      when "cancelled" then "bg-rose-100 text-rose-800"
+                      else "bg-slate-100 text-slate-600"
+                    end %>
+                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <%= badge %>"><%= order.status.humanize %></span>
+                    <span class="text-sm font-semibold text-slate-900"><%= number_to_currency(order.total_cents / 100.0, unit: order.total_currency) %></span>
+                  </div>
+                </header>
+                <div class="mt-3 grid gap-3 text-xs text-slate-600 md:grid-cols-4">
+                  <div>
+                    <p class="font-medium text-slate-500">Items</p>
+                    <p class="text-slate-900"><%= order.order_items.sum(:quantity) %></p>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-500">Payment method</p>
+                    <p class="text-slate-900"><%= order.payment_method&.masked_label || "Not stored" %></p>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-500">Last transaction</p>
+                    <p class="text-slate-900"><%= order.payment_transactions.order(processed_at: :desc).first&.status&.humanize || "—" %></p>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-500">Updated</p>
+                    <p class="text-slate-900"><%= order.updated_at %></p>
+                  </div>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-slate-500">No checkout orders recorded for this member yet.</p>
+        <% end %>
+
+        <% if @invoices.any? %>
+          <div class="space-y-4">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Invoices</h3>
+          <% @invoices.each do |invoice| %>
+            <article class="rounded border border-slate-200 bg-slate-50 p-4">
+              <header class="flex flex-col gap-2 border-b border-slate-200 pb-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 class="text-sm font-semibold text-slate-900">
+                    <%= link_to invoice.number, admin_invoice_path(invoice), class: "hover:text-slate-700" %>
+                  </h3>
+                  <p class="text-xs text-slate-500">Issued <%= invoice.created_at.to_date %></p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <% badge = invoice.status_paid? ? "bg-emerald-100 text-emerald-800" : invoice.status_past_due? ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800" %>
+                  <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <%= badge %>"><%= invoice.status.humanize %></span>
+                  <span class="text-sm font-semibold text-slate-900"><%= number_to_currency(invoice.total_cents / 100.0, unit: invoice.total_currency) %></span>
+                </div>
+              </header>
+              <div class="grid gap-4 py-3 text-xs text-slate-600 md:grid-cols-4">
+                <div>
+                  <p class="font-medium text-slate-500">Due</p>
+                  <p class="text-slate-900"><%= invoice.due_at || "—" %></p>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-500">Items</p>
+                  <p class="text-slate-900"><%= invoice.invoice_items.sum(&:quantity) %></p>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-500">Family account</p>
+                  <p class="text-slate-900"><%= invoice.family_account&.email || "—" %></p>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-500">Updated</p>
+                  <p class="text-slate-900"><%= invoice.updated_at %></p>
+                </div>
+              </div>
+              <% if invoice.payments.any? %>
+                <div class="rounded border border-slate-200 bg-white">
+                  <table class="min-w-full divide-y divide-slate-200 text-xs">
+                    <thead class="bg-slate-100 text-left font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th class="px-3 py-2">Payment</th>
+                        <th class="px-3 py-2">Status</th>
+                        <th class="px-3 py-2">Amount</th>
+                        <th class="px-3 py-2">Received</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <% invoice.payments.each do |payment| %>
+                        <tr class="hover:bg-slate-50">
+                          <td class="px-3 py-2 text-slate-600"><%= payment.method || payment.provider %></td>
+                          <td class="px-3 py-2">
+                            <% badge = payment.status_succeeded? ? "bg-emerald-100 text-emerald-800" : payment.status_failed? ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800" %>
+                            <span class="inline-flex rounded-full px-2 py-0.5 font-semibold <%= badge %>"><%= payment.status.humanize %></span>
+                          </td>
+                          <td class="px-3 py-2 text-slate-900"><%= number_to_currency(payment.amount_cents / 100.0, unit: payment.amount_currency) %></td>
+                          <td class="px-3 py-2 text-slate-500"><%= payment.created_at %></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              <% else %>
+                <p class="rounded border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-500">No payments recorded for this invoice yet.</p>
+              <% end %>
+            </article>
+          <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-slate-500">No invoices have been created for this member yet.</p>
+        <% end %>
+      </div>
+    </section>
+
+    <section id="consents" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="border-b border-slate-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-slate-900">Consents</h2>
+      </header>
+      <% if @consents.any? %>
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Consent</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Accepted</th>
+              <th class="px-4 py-3">Accepted by</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @consents.each do |consent| %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 text-slate-900"><%= consent.consent_type.key.humanize %> v<%= consent.consent_type.version %></td>
+                <td class="px-4 py-3">
+                  <% badge = consent.accepted? ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800" %>
+                  <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold <%= badge %>"><%= consent.accepted? ? "Accepted" : "Pending" %></span>
+                </td>
+                <td class="px-4 py-3 text-slate-600"><%= consent.accepted_at || "—" %></td>
+                <td class="px-4 py-3 text-slate-600"><%= consent.accepted_by_id || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="px-6 py-6 text-sm text-slate-500">No consent records on file.</div>
+      <% end %>
+    </section>
+
+    <section id="history" class="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <header class="border-b border-slate-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-slate-900">Audit history</h2>
+        <p class="text-sm text-slate-500">Most recent profile changes from the audit log.</p>
+      </header>
+      <% if @audit_entries.any? %>
+        <ul class="divide-y divide-slate-100 text-sm">
+          <% @audit_entries.each do |audit| %>
+            <li class="px-6 py-4">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="font-medium text-slate-900"><%= audit.action.titleize %></p>
+                  <p class="text-xs text-slate-500"><%= audit.audited_changes.keys.join(", ") %></p>
+                </div>
+                <span class="text-xs text-slate-500"><%= audit.created_at %></span>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="px-6 py-6 text-sm text-slate-500">No recent audit activity for this member.</div>
+      <% end %>
+    </section>
+  </div>
+</div>

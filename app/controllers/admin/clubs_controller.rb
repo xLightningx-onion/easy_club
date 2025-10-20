@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Admin::ClubsController < Admin::BaseController
-  before_action :set_club, only: %i[show edit update destroy impersonate]
+  before_action :set_club, only: %i[show edit update destroy impersonate remove_file]
 
   def index
     @clubs = Club.includes(:members).order(:name)
@@ -46,6 +46,17 @@ class Admin::ClubsController < Admin::BaseController
     redirect_to root_path, notice: "Now impersonating #{@club.name}."
   end
 
+  def remove_file
+    file_name = params[:file_name]
+    if file_name == "logo"
+      @club.update(logo: nil)
+    elsif file_name == "banner"
+      club.update(logo: nil)
+    end
+    render cable_ready: cable_car
+                          .remove("##{params[:target_link]}")
+  end
+
   private
 
   def set_club
@@ -53,7 +64,27 @@ class Admin::ClubsController < Admin::BaseController
   end
 
   def club_params
-    params.require(:club).permit(:name, :subdomain, :primary_domain, :sender_email, :logo, color_palette: {}, settings: {})
+    params.require(:club).permit(
+      :name,
+      :subdomain,
+      :primary_domain,
+      :sender_email,
+      :logo,
+      :banner,
+      :public_listing,
+      :location_name,
+      :address_line1,
+      :address_line2,
+      :city,
+      :region,
+      :postal_code,
+      :country,
+      :latitude,
+      :longitude,
+      :google_place_id,
+      color_palette: {},
+      settings: {}
+    )
   end
 
   def default_currency

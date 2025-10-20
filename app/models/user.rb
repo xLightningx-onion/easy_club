@@ -11,6 +11,10 @@ class User < ApplicationRecord
   has_many :guardianships, foreign_key: :guardian_id, dependent: :destroy
   has_many :guarded_members, through: :guardianships, source: :member
   has_many :wallets, dependent: :destroy
+  has_many :carts, dependent: :destroy
+  has_many :orders, dependent: :restrict_with_exception
+  has_many :payment_transactions, through: :orders
+  has_many :payment_methods, dependent: :destroy
 
   enum :role, {
     parent: "parent",

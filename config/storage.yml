@@ -6,6 +6,15 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+bunny:
+  service: Bunny
+  access_key: <%= Settings.bunny.access_key %>
+  # the API key for cache purging
+  api_key: <%= Settings.bunny.api_key %>
+  storage_zone: <%= Settings.bunny.storage_zone %>
+  region: <%= Settings.bunny.region %>
+  cdn: <%= Settings.bunny.cdn %>
+
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
 #   service: S3

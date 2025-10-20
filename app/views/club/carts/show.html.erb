@@ -1,0 +1,89 @@
+<section class="cart">
+  <header class="cart__header">
+    <h1>Your cart</h1>
+    <div class="cart__actions">
+      <%= link_to "Browse plans", club_plans_path, class: "cart__link" %>
+    </div>
+  </header>
+
+  <% if @cart_items.empty? %>
+    <p class="cart__empty">Your cart is currently empty.</p>
+  <% else %>
+    <div class="cart__table-wrapper">
+      <table class="cart__table">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Plan</th>
+            <th class="cart__numeric">Quantity</th>
+            <th class="cart__numeric">Price</th>
+            <th class="cart__numeric">Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @cart_items.each do |item| %>
+            <% plan = item.plan %>
+            <% product = plan&.product %>
+            <tr>
+              <td><%= item.member.display_name %></td>
+              <td>
+                <strong><%= product&.name || "Plan" %></strong>
+                <% if plan&.plan_type_recurring? %>
+                  <div class="cart__meta">Recurring every <%= plan.interval_months %> month(s)</div>
+                <% elsif plan&.plan_type_installments? %>
+                  <div class="cart__meta"><%= plan.installments_count %> installments</div>
+                <% end %>
+              </td>
+              <td class="cart__numeric">
+                <%= form_with url: club_cart_item_path(item), method: :patch, class: "cart__quantity-form", local: true do %>
+                  <%= hidden_field_tag :member_id, item.member_id %>
+                  <%= hidden_field_tag :plan_id, item.plan_id %>
+                  <%= number_field_tag :quantity, item.quantity, min: 0, class: "cart__input" %>
+                  <%= submit_tag "Update", class: "cart__button" %>
+                <% end %>
+              </td>
+              <td class="cart__numeric">
+                <%= number_to_currency(item.unit_price_cents / 100.0, unit: item.unit_price_currency) %>
+              </td>
+              <td class="cart__numeric">
+                <%= number_to_currency(item.total_price_cents / 100.0, unit: item.total_price_currency) %>
+              </td>
+              <td class="cart__actions">
+                <%= button_to "Remove", club_cart_item_path(item), method: :delete, class: "cart__remove", data: { turbo_confirm: "Remove this item?" } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="cart__summary">
+      <div class="cart__total">
+        <span>Total</span>
+        <strong><%= number_to_currency(@cart.total_cents / 100.0, unit: @cart.total_currency) %></strong>
+      </div>
+      <div class="cart__checkout">
+        <%= form_with url: club_checkout_path, method: :post, local: true, class: "cart__checkout-form" do %>
+          <% if @payment_methods.any? %>
+            <div class="cart__field">
+              <label class="cart__label" for="payment_method_id">Saved card</label>
+              <%= select_tag :payment_method_id,
+                    options_from_collection_for_select(@payment_methods, :id, :masked_label),
+                    include_blank: "Use a new card",
+                    class: "cart__select" %>
+            </div>
+          <% end %>
+          <div class="cart__field">
+            <label class="cart__checkbox">
+              <%= check_box_tag :save_card, "1", false %>
+              Save this card for future payments
+            </label>
+          </div>
+          <p class="cart__hint">You will complete the payment securely without leaving Easy Club.</p>
+          <%= submit_tag "Checkout", class: "cart__checkout-button" %>
+        <% end %>
+      </div>
+    </footer>
+  <% end %>
+</section>

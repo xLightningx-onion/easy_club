@@ -16,7 +16,43 @@ club = Club.find_or_create_by!(name: "Acme FC") do |record|
   }
 end
 
+club.update!(
+  location_name: "Acme FC Training Ground",
+  address_line1: "123 Main Road",
+  city: "Johannesburg",
+  region: "Gauteng",
+  postal_code: "2000",
+  country: "South Africa",
+  latitude: -26.204100,
+  longitude: 28.047300,
+  google_place_id: club.google_place_id.presence || "sample-acme-fc-training-ground"
+)
+
+cape_club = Club.find_or_create_by!(name: "Cape Town Lightning") do |record|
+  record.sender_email = "contact@capetownlightning.example"
+  record.color_palette = { "primary" => "#2563EB" }
+  record.settings = {
+    "finance" => { "currency" => "ZAR", "vat_rate" => 0.15 },
+    "payments" => { "provider" => "mock" }
+  }
+end
+
+cape_club.update!(
+  location_name: "Cape Town Lightning Clubhouse",
+  address_line1: "45 Beach Road",
+  city: "Cape Town",
+  region: "Western Cape",
+  postal_code: "8001",
+  country: "South Africa",
+  latitude: -33.924870,
+  longitude: 18.424055,
+  google_place_id: cape_club.google_place_id.presence || "sample-cape-town-lightning"
+)
+
 ClubRole.find_or_create_by!(club:, user: staff) do |role|
+  role.role = :admin
+end
+ClubRole.find_or_create_by!(club: cape_club, user: staff) do |role|
   role.role = :admin
 end
 
@@ -46,5 +82,35 @@ Club.with_current(club) do
     template.subject = "Invoice payment reminder"
     template.body = "Hello {{guardian_name}}, your invoice {{invoice_number}} is due on {{invoice_due_at}}."
     template.variables = %w[guardian_name invoice_number invoice_due_at]
+  end
+
+  [
+    {
+      first_name: "Damian",
+      last_name: "Giulietti",
+      dob: Date.new(2010, 9, 12),
+      gender: "male",
+      role: :player
+    },
+    {
+      first_name: "Naledi",
+      last_name: "Mokoena",
+      dob: Date.new(2008, 4, 3),
+      gender: "female",
+      role: :coach,
+      safeguarding_flag: true,
+      safeguarding_reason: "Awaiting updated background check."
+    },
+    {
+      first_name: "Alex",
+      last_name: "Pretorius",
+      dob: Date.new(2012, 1, 27),
+      gender: "non_binary",
+      role: :player
+    }
+  ].each do |attributes|
+    Member.find_or_create_by!(club:, first_name: attributes[:first_name], last_name: attributes[:last_name]) do |member|
+      member.assign_attributes(attributes)
+    end
   end
 end

@@ -1,0 +1,36 @@
+<% content_for :title, "Members · Admin" %>
+<% content_for :page_heading, "Members" %>
+
+<section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">All members</h2>
+      <p class="text-sm text-slate-500">Search coming soon — browse by club for now.</p>
+    </div>
+  </header>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Name</th>
+          <th class="px-4 py-3">Club</th>
+          <th class="px-4 py-3">Role</th>
+          <th class="px-4 py-3">Created</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @members.each do |member| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-900">
+              <%= link_to member.full_name.presence || "Unnamed member", admin_member_path(member), class: "hover:text-slate-700" %>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= member.club.name %></td>
+            <td class="px-4 py-3 text-slate-600"><%= member.role.titleize %></td>
+            <td class="px-4 py-3 text-slate-500"><%= member.created_at&.to_date %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
