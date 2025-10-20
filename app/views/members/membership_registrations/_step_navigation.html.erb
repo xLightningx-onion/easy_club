@@ -1,0 +1,9 @@
+<ol class="flex w-full max-w-md justify-between text-xs font-semibold uppercase tracking-wide text-white/70">
+  <% Members::MembershipRegistrationsController::STEPS.each_with_index do |step_name, index| %>
+    <% position = index + 1 %>
+    <li class="flex flex-col items-center gap-2">
+      <span class="text-[10px] text-white/60"><%= step_name.titleize %></span>
+      <span class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold <%= step_name == current_step ? "bg-white text-slate-900" : "bg-white/10 text-white/80" %>"><%= position %></span>
+    </li>
+  <% end %>
+</ol>

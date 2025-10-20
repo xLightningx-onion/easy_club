@@ -1,5 +1,6 @@
 require "sidekiq/web"
 Rails.application.routes.draw do
+  resource :example, constraints: -> { Rails.env.development? }
   devise_for :users
 
   get "up" => "rails/health#show", as: :rails_health_check
@@ -55,7 +56,17 @@ Rails.application.routes.draw do
     resource :dashboard, only: :show
     resources :clubs do
       post :impersonate, on: :member
-      get :remove_file, on: :member
+      patch :remove_file, on: :member
+      resources :membership_types,
+                module: :clubs,
+                except: %i[index] do
+        resources :price_tiers,
+                  module: :membership_types,
+                  except: %i[index show]
+      end
+      resources :membership_questions,
+                module: :clubs,
+                except: %i[index]
     end
     resources :users
     resources :members, only: %i[index show]
@@ -80,5 +91,14 @@ Rails.application.routes.draw do
     root "dashboard"
   end
 
-  root "club/dashboard#show"
+  namespace :members do
+    resource :selection, only: :new do
+      get :search
+    end
+    resource :dashboards
+    get "" => "dashboards#index"
+    resource :membership_registration, only: %i[show update]
+  end
+
+  root "members/dashboards#index"
 end

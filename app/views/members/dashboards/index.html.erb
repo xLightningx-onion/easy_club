@@ -1,0 +1,135 @@
+<% greeting_name = current_user.first_name.presence || current_user.email.split("@").first %>
+
+<section
+  class="mx-auto max-w-5xl space-y-10 px-4 py-10"
+  data-controller="modal membership-start"
+  data-membership-start-url-value="<%= members_membership_registration_path %>"
+  data-action="turbo:submit-end->modal#handleSubmitEnd memberships-selection:club-selected@window->membership-start#begin"
+>
+  <header class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg">
+    <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+    <div class="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">My Profile</p>
+        <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Hi <%= greeting_name %></h1>
+      </div>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          class="flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100"
+          data-action="modal#open"
+          data-modal-url="<%= new_members_selection_path %>"
+          data-modal-title="Select a club"
+        >
+          Add New Membership
+        </button>
+        <%= link_to "My Account",
+          "",
+          class: "flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10" %>
+      </div>
+    </div>
+  </header>
+
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-slate-900">My Memberships</h2>
+      <% if @membership_profiles.any? %>
+        <span class="text-xs font-medium uppercase tracking-wide text-slate-400"><%= pluralize(@membership_profiles.count, "active membership") %></span>
+      <% end %>
+    </div>
+
+    <% if @membership_profiles.any? %>
+      <div class="grid gap-4">
+        <% @membership_profiles.each do |membership| %>
+          <% club = membership.club %>
+          <article class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition hover:border-slate-300">
+            <div class="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+              <% if club&.logo&.attached? %>
+                <%= image_tag serve_image_remote_url(club.logo, resize_spec: "resize_to_fill", size_curves: [112, 112]), alt: "#{club.name} logo", class: "h-full w-full object-cover" %>
+              <% else %>
+                <div class="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <%= club&.name&.first(2) || "CL" %>
+                </div>
+              <% end %>
+            </div>
+            <div class="flex flex-1 flex-col gap-1">
+              <p class="text-sm font-semibold text-slate-900"><%= club&.name || "Club pending" %></p>
+              <p class="text-sm text-slate-500"><%= membership.full_name.presence || "Member profile" %></p>
+            </div>
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-600">
+              ✓
+            </span>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+        <p class="text-sm font-medium text-slate-700">No memberships yet</p>
+        <p class="mt-1 text-sm text-slate-500">Tap “Add New Membership” above to get started.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-slate-900">My Club Shops</h2>
+      <% if @known_clubs.any? %>
+        <span class="text-xs font-medium uppercase tracking-wide text-slate-400"><%= pluralize(@known_clubs.count, "club") %></span>
+      <% end %>
+    </div>
+
+    <% if @known_clubs.any? %>
+      <div class="flex flex-wrap gap-4">
+        <% @known_clubs.each do |club| %>
+          <%= link_to "#",
+            class: "flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300" do %>
+            <% if club.logo&.attached? %>
+              <%= image_tag serve_image_remote_url(club.logo, resize_spec: "resize_to_fill", size_curves: [128, 128]), alt: "#{club.name} logo", class: "h-14 w-14 rounded-xl object-cover" %>
+            <% else %>
+              <span class="text-sm font-semibold uppercase text-slate-500"><%= club.name.first(2) %></span>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+        <p class="text-sm text-slate-500">You’ll see your favourite club shops here once you join a club.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div
+    class="fixed inset-0 z-50 hidden"
+    data-modal-target="wrapper"
+    data-action="keydown.esc->modal#close"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+      <div class="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-xl">
+        <header class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Select a club</h3>
+          <button
+            type="button"
+            class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            data-action="modal#close"
+            aria-label="Close modal"
+            data-modal-initial-focus
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+        <div class="px-5 py-6">
+          <turbo-frame
+            id="members_selection_modal"
+            data-modal-target="frame"
+            loading="lazy"
+          ></turbo-frame>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

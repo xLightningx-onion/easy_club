@@ -17,7 +17,7 @@ class User < ApplicationRecord
   has_many :payment_methods, dependent: :destroy
 
   enum :role, {
-    parent: "parent",
+    member: "member",
     coach: "coach",
     manager: "manager",
     finance: "finance",

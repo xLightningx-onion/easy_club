@@ -1,0 +1,15 @@
+<% if membership_questions.any? %>
+  <div class="divide-y divide-slate-200">
+    <% membership_questions.each_with_index do |membership_question, index| %>
+      <%= render "admin/clubs/membership_questions/question",
+                 club:,
+                 membership_question: membership_question,
+                 index: index + 1 %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="px-4 py-10 text-center text-sm text-slate-500">
+    <p class="font-medium text-slate-700">No custom questions yet</p>
+    <p class="mt-1 text-xs text-slate-500">Use the button above to add the first question that members will answer during checkout.</p>
+  </div>
+<% end %>

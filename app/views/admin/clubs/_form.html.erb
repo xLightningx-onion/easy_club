@@ -23,29 +23,34 @@
       <%= form.text_field :primary_domain, placeholder: "acmefc.example", class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
     </div>
     <div class="md:col-span-2">
-      <%= form.label :logo, class: "block text-sm font-medium text-slate-700" %>
-      <%= form.text_field :logo, class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
-    </div>
-    <div class="">
-      <%= form.label :logo, "Logo (1:1)", class: "form-label text-uppercase" %>
-      <div class="d-flex gap-3">
+      <%= form.label :logo, "Logo (1:1)", class: "block text-sm font-medium text-slate-700" %>
+      <div class="flex gap-3">
         <% if @club.logo.attached? %>
-          <div id="club-logo-image" class="w-25 text-center flex-col align-items-center">
+          <div id="club-logo-image" class="w-[15%] text-center flex-col align-items-center">
             <%= image_tag(@club.logo&.url, class: 'w-100 rounded') %>
-            <%= link_to "Remove Image", remove_file_admin_club_path(@club, file_name: 'logo', target_link: 'club-logo-image'), class: "text-decoration-none text-danger", remote: true, data: { confirm: "Are you sure you want to remove the club's logo?" } %>
+            <%#= link_to "Remove Image", remove_file_admin_club_path(@club, file_name: 'logo', target_link: 'club-logo-image'), class: "text-decoration-none text-danger", remote: true, data: { turbo: false, confirm: "Are you sure you want to remove the club's logo?" } %>
+            <%= link_to "Remove Image",
+            remove_file_admin_club_path(@club,
+              file_name: "logo",
+              target_dom_id: "club-logo-image"),
+            class: "text-decoration-none text-danger",
+            data: {
+              turbo_method: :patch,
+              turbo_confirm: "Are you sure you want to remove the club's logo?"
+            } %>
           </div>
         <% end %>
-          <div class="w-100 dropzone dropzone-default dz-clickable" data-controller="dropzone" data-dropzone-max-file-size="10" data-dropzone-max-files="1" data-dropzone-accepted-files=".jpg,.jpeg,.png,.gif" data-crop-image data-crop-image-aspect-ratio="1 / 1">
-            <%= form.file_field :logo, direct_upload: true, data: { dropzone_target: 'input' } %>
-            <div class="dropzone-msg dz-message needsclick">
-                <i class="bi bi-file-earmark-arrow-down-fill fa-2xl text-grey-darker text-center mb-2"></i>
-                <p class="mb-1 text-s text-center">
-                    Drop files Here of <span class="text-blue-subtle">click to upload</span>
-                </p>
-                <p class="mb-1 text-s text-center">
-                    .jpg, .jpeg, .png, .gif
-                </p>
-            </div>
+        <div class="w-full dropzone dropzone-default dz-clickable" data-controller="dropzone" data-dropzone-max-file-size="10" data-dropzone-max-files="1" data-dropzone-accepted-files=".jpg,.jpeg,.png,.gif" data-crop-image data-crop-image-aspect-ratio="1 / 1">
+          <%= form.file_field :logo, direct_upload: true, data: { dropzone_target: 'input' } %>
+          <div class="dropzone-msg dz-message needsclick">
+              <i class="bi bi-file-earmark-arrow-down-fill fa-2xl text-grey-darker text-center mb-2"></i>
+              <p class="mb-1 text-sm text-center">
+                  Drop files Here of <span class="text-blue-subtle">click to upload</span>
+              </p>
+              <p class="mb-1 text-sm text-center">
+                  .jpg, .jpeg, .png, .gif
+              </p>
+          </div>
         </div>
       </div>
     </div>
@@ -58,6 +63,42 @@
       <%= form.check_box :public_listing %>
       <span>List this club publicly</span>
     </label>
+  </div>
+
+  <div
+    class="mt-6 space-y-4 rounded border border-slate-200 bg-slate-50 p-4"
+    data-controller="club-questions"
+  >
+    <header>
+      <h2 class="text-sm font-medium text-slate-700">Membership questions</h2>
+      <p class="text-xs text-slate-500">
+        Capture any extra details members must provide during checkout. Mark questions as required to enforce completion.
+      </p>
+    </header>
+
+    <div class="<%= @club.membership_questions.any? ? "hidden" : "" %> text-sm text-slate-500" data-club-questions-target="emptyState">
+      No custom questions yet. Add one to collect additional information from members.
+    </div>
+
+    <div class="space-y-4" data-club-questions-target="list">
+      <%= form.fields_for :membership_questions do |question_fields| %>
+        <%= render "membership_question_fields", f: question_fields %>
+      <% end %>
+    </div>
+
+    <template data-club-questions-target="template">
+      <%= form.fields_for :membership_questions, MembershipQuestion.new, child_index: "NEW_RECORD" do |question_fields| %>
+        <%= render "membership_question_fields", f: question_fields %>
+      <% end %>
+    </template>
+
+    <button
+      type="button"
+      class="inline-flex items-center rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+      data-action="club-questions#add"
+    >
+      Add question
+    </button>
   </div>
 
   <div

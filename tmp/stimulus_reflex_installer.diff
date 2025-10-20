@@ -1,0 +1,957 @@
+diff --git a/Gemfile b/Gemfile
+index c945073..7efad7d 100644
+--- a/Gemfile
++++ b/Gemfile
+@@ -116,4 +116,8 @@ end
+ gem "config"
+ 
+ # Bunny CDN
+-gem "active_storage_bunny"
++gem "active_storage_bunny",
++    git: "git@github.com:xLightningx-onion/active_storage_bunny.git",
++    branch: "fix/direct-upload-and-upload_options"
++
++gem "redis-session-store", "~> 0.11.5"
+diff --git a/Gemfile.lock b/Gemfile.lock
+index f849f4c..41bfa25 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -1,3 +1,12 @@
++GIT
++  remote: git@github.com:xLightningx-onion/active_storage_bunny.git
++  revision: f5df8cf5afa79fcf62aa7dee975cc7c74867eeec
++  branch: fix/direct-upload-and-upload_options
++  specs:
++    active_storage_bunny (1.0.6)
++      bunny_storage_client (~> 1.0)
++      rails (>= 6.0, < 9.0)
++
+ GEM
+   remote: https://rubygems.org/
+   specs:
+@@ -46,9 +55,6 @@ GEM
+       erubi (~> 1.11)
+       rails-dom-testing (~> 2.2)
+       rails-html-sanitizer (~> 1.6)
+-    active_storage_bunny (1.0.1)
+-      bunny_storage_client (~> 1.0)
+-      rails (>= 6.0, < 9.0)
+     activejob (8.0.3)
+       activesupport (= 8.0.3)
+       globalid (>= 0.3.6)
+@@ -164,7 +170,7 @@ GEM
+     drb (2.2.3)
+     ed25519 (1.4.0)
+     encryptor (3.0.0)
+-    erb (5.0.3)
++    erb (5.1.1)
+     erubi (1.13.1)
+     et-orbi (1.4.0)
+       tzinfo
+@@ -367,6 +373,9 @@ GEM
+       redis-client (>= 0.22.0)
+     redis-client (0.26.1)
+       connection_pool
++    redis-session-store (0.11.6)
++      actionpack (>= 5.2.4.1, < 9)
++      redis (>= 3, < 6)
+     regexp_parser (2.11.3)
+     reline (0.6.2)
+       io-console (~> 0.5)
+@@ -533,7 +542,7 @@ PLATFORMS
+ 
+ DEPENDENCIES
+   action_policy
+-  active_storage_bunny
++  active_storage_bunny!
+   annotate
+   attr_encrypted
+   audited (~> 5.4)
+@@ -570,6 +579,7 @@ DEPENDENCIES
+   rack-attack
+   rails (~> 8.0.2, >= 8.0.2.1)
+   redis (~> 5.0)
++  redis-session-store (~> 0.11.5)
+   roo
+   rspec-rails
+   rubocop-rails-omakase
+diff --git a/app/channels/application_cable/channel.rb b/app/channels/application_cable/channel.rb
+index 9aec230..81852da 100644
+--- a/app/channels/application_cable/channel.rb
++++ b/app/channels/application_cable/channel.rb
+@@ -2,5 +2,7 @@
+ 
+ module ApplicationCable
+   class Channel < ActionCable::Channel::Base
++    include CableReady::Broadcaster
++
+   end
+ end
+diff --git a/app/controllers/application_controller.rb b/app/controllers/application_controller.rb
+index db02784..ff4f5cb 100644
+--- a/app/controllers/application_controller.rb
++++ b/app/controllers/application_controller.rb
+@@ -1,4 +1,6 @@
+ class ApplicationController < ActionController::Base
++
++    include CableReady::Broadcaster
+   include ActionPolicy::Controller
+ 
+   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
+diff --git a/app/jobs/application_job.rb b/app/jobs/application_job.rb
+index d394c3d..9299c62 100644
+--- a/app/jobs/application_job.rb
++++ b/app/jobs/application_job.rb
+@@ -1,4 +1,6 @@
+ class ApplicationJob < ActiveJob::Base
++
++    include CableReady::Broadcaster
+   # Automatically retry jobs that encountered a deadlock
+   # retry_on ActiveRecord::Deadlocked
+ 
+diff --git a/app/models/application_record.rb b/app/models/application_record.rb
+index b63caeb..cab2dce 100644
+--- a/app/models/application_record.rb
++++ b/app/models/application_record.rb
+@@ -1,3 +1,6 @@
+ class ApplicationRecord < ActiveRecord::Base
++  include CableReady::Updatable
++
++    include CableReady::Broadcaster
+   primary_abstract_class
+ end
+diff --git a/config/environments/development.rb b/config/environments/development.rb
+index 0daf236..54907a5 100644
+--- a/config/environments/development.rb
++++ b/config/environments/development.rb
+@@ -1,6 +1,16 @@
+ require "active_support/core_ext/integer/time"
+ 
+ Rails.application.configure do
++
++config.session_store :redis_session_store,
++  serializer: :json,
++  on_redis_down: ->(*a) { Rails.logger.error("Redis down! #{a.inspect}") },
++  redis: {
++    expire_after: 120.minutes,
++    key_prefix: "session:",
++    url: ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" }
++  }
++  config.action_controller.default_url_options = {host: "localhost", port: 3000}
+   # Settings specified here will take precedence over those in config/application.rb.
+ 
+   # Make code changes take effect immediately without server restart.
+@@ -26,7 +36,9 @@ Rails.application.configure do
+   end
+ 
+   # Change to :null_store to avoid any caching.
+-  config.cache_store = :memory_store
++config.cache_store = :redis_cache_store, {
++  url: ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" }
++}
+ 
+   # Store uploaded files on the local file system (see config/storage.yml for options).
+   config.active_storage.service = :bunny
+diff --git a/config/routes.rb b/config/routes.rb
+index ca84390..62633da 100644
+--- a/config/routes.rb
++++ b/config/routes.rb
+@@ -1,5 +1,6 @@
+ require "sidekiq/web"
+ Rails.application.routes.draw do
++  resource :example, constraints: -> { Rails.env.development? }
+   devise_for :users
+ 
+   get "up" => "rails/health#show", as: :rails_health_check
+diff --git a/log/development.log b/log/development.log
+index a1314f0..08378bb 100644
+--- a/log/development.log
++++ b/log/development.log
+@@ -10114,3 +10114,692 @@ puma (7.0.4) lib/puma/request.rb:100:in 'Puma::Request#handle_request'
+ puma (7.0.4) lib/puma/server.rb:506:in 'Puma::Server#process_client'
+ puma (7.0.4) lib/puma/server.rb:265:in 'block in Puma::Server#run'
+ puma (7.0.4) lib/puma/thread_pool.rb:173:in 'block in Puma::ThreadPool#spawn_thread'
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:37:20 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (41.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++  [1m[36mUser Load (4.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.8ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (1.6ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 40.8ms | GC: 0.8ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 42.0ms | GC: 0.9ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.5ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 56.9ms | GC: 1.9ms)
++Completed 200 OK in 477ms (Views: 49.3ms | ActiveRecord: 125.9ms (3 queries, 0 cached) | GC: 85.6ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:37:23 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:37:33 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 38759, "checksum" => "HiKO1y3eB7bgsWW4wjfdcg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 38759, "checksum" => "HiKO1y3eB7bgsWW4wjfdcg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (9.3ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('c40dqcyddpvjsu9z7lilcmkijqgh', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 38759, 'HiKO1y3eB7bgsWW4wjfdcg==', '2025-10-20 08:37:33.564674') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (1.2ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.8ms) [0m[34mGenerated URL for file at key: c40dqcyddpvjsu9z7lilcmkijqgh (https://storage.bunnycdn.com/easyclub/c40dqcyddpvjsu9z7lilcmkijqgh)[0m
++Completed 500 Internal Server Error in 121ms (ActiveRecord: 21.0ms (1 query, 0 cached) | GC: 1.1ms)
++
++
++  
++NotImplementedError (NotImplementedError):
++  
++activestorage (8.0.3) lib/active_storage/service.rb:161:in 'ActiveStorage::Service#custom_metadata_headers'
++active_storage_bunny (8a9738e79bf0) lib/active_storage/service/bunny_service.rb:96:in 'ActiveStorage::Service::BunnyService#headers_for_direct_upload'
++activestorage (8.0.3) app/models/active_storage/blob.rb:227:in 'ActiveStorage::Blob#service_headers_for_direct_upload'
++activestorage (8.0.3) app/controllers/active_storage/direct_uploads_controller.rb:20:in 'ActiveStorage::DirectUploadsController#direct_upload_json'
++activestorage (8.0.3) app/controllers/active_storage/direct_uploads_controller.rb:9:in 'ActiveStorage::DirectUploadsController#create'
++actionpack (8.0.3) lib/action_controller/metal/basic_implicit_render.rb:8:in 'ActionController::BasicImplicitRender#send_action'
++actionpack (8.0.3) lib/abstract_controller/base.rb:215:in 'AbstractController::Base#process_action'
++actionpack (8.0.3) lib/action_controller/metal/rendering.rb:193:in 'ActionController::Rendering#process_action'
++actionpack (8.0.3) lib/abstract_controller/callbacks.rb:261:in 'block in AbstractController::Callbacks#process_action'
++activesupport (8.0.3) lib/active_support/callbacks.rb:120:in 'block in ActiveSupport::Callbacks#run_callbacks'
++turbo-rails (2.0.17) lib/turbo-rails.rb:24:in 'Turbo.with_request_id'
++turbo-rails (2.0.17) app/controllers/concerns/turbo/request_id_tracking.rb:10:in 'Turbo::RequestIdTracking#turbo_tracking_request_id'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++audited (5.8.0) lib/audited/sweeper.rb:16:in 'Audited::Sweeper#around'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++audited (5.8.0) lib/audited/sweeper.rb:16:in 'Audited::Sweeper#around'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++actiontext (8.0.3) lib/action_text/rendering.rb:25:in 'ActionText::Rendering::ClassMethods#with_renderer'
++actiontext (8.0.3) lib/action_text/engine.rb:71:in 'block (4 levels) in <class:Engine>'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'BasicObject#instance_exec'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++activesupport (8.0.3) lib/active_support/callbacks.rb:140:in 'ActiveSupport::Callbacks#run_callbacks'
++actionpack (8.0.3) lib/abstract_controller/callbacks.rb:260:in 'AbstractController::Callbacks#process_action'
++actionpack (8.0.3) lib/action_controller/metal/rescue.rb:27:in 'ActionController::Rescue#process_action'
++actionpack (8.0.3) lib/action_controller/metal/instrumentation.rb:76:in 'block in ActionController::Instrumentation#process_action'
++activesupport (8.0.3) lib/active_support/notifications.rb:210:in 'block in ActiveSupport::Notifications.instrument'
++activesupport (8.0.3) lib/active_support/notifications/instrumenter.rb:58:in 'ActiveSupport::Notifications::Instrumenter#instrument'
++activesupport (8.0.3) lib/active_support/notifications.rb:210:in 'ActiveSupport::Notifications.instrument'
++actionpack (8.0.3) lib/action_controller/metal/instrumentation.rb:75:in 'ActionController::Instrumentation#process_action'
++actionpack (8.0.3) lib/action_controller/metal/params_wrapper.rb:259:in 'ActionController::ParamsWrapper#process_action'
++activerecord (8.0.3) lib/active_record/railties/controller_runtime.rb:39:in 'ActiveRecord::Railties::ControllerRuntime#process_action'
++actionpack (8.0.3) lib/abstract_controller/base.rb:152:in 'AbstractController::Base#process'
++actionview (8.0.3) lib/action_view/rendering.rb:40:in 'ActionView::Rendering#process'
++actionpack (8.0.3) lib/action_controller/metal.rb:252:in 'ActionController::Metal#dispatch'
++actionpack (8.0.3) lib/action_controller/metal.rb:335:in 'ActionController::Metal.dispatch'
++actionpack (8.0.3) lib/action_dispatch/routing/route_set.rb:67:in 'ActionDispatch::Routing::RouteSet::Dispatcher#dispatch'
++actionpack (8.0.3) lib/action_dispatch/routing/route_set.rb:50:in 'ActionDispatch::Routing::RouteSet::Dispatcher#serve'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:53:in 'block in ActionDispatch::Journey::Router#serve'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:133:in 'block in ActionDispatch::Journey::Router#find_routes'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:126:in 'Array#each'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:126:in 'ActionDispatch::Journey::Router#find_routes'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:34:in 'ActionDispatch::Journey::Router#serve'
++actionpack (8.0.3) lib/action_dispatch/routing/route_set.rb:908:in 'ActionDispatch::Routing::RouteSet#call'
++railties (8.0.3) lib/rails/engine/lazy_route_set.rb:60:in 'Rails::Engine::LazyRouteSet#call'
++rack-attack (6.7.0) lib/rack/attack.rb:127:in 'Rack::Attack#call'
++warden (1.2.9) lib/warden/manager.rb:36:in 'block in Warden::Manager#call'
++warden (1.2.9) lib/warden/manager.rb:34:in 'Kernel#catch'
++warden (1.2.9) lib/warden/manager.rb:34:in 'Warden::Manager#call'
++rack (3.2.3) lib/rack/tempfile_reaper.rb:20:in 'Rack::TempfileReaper#call'
++rack (3.2.3) lib/rack/etag.rb:29:in 'Rack::ETag#call'
++rack (3.2.3) lib/rack/conditional_get.rb:44:in 'Rack::ConditionalGet#call'
++rack (3.2.3) lib/rack/head.rb:15:in 'Rack::Head#call'
++actionpack (8.0.3) lib/action_dispatch/http/permissions_policy.rb:38:in 'ActionDispatch::PermissionsPolicy::Middleware#call'
++actionpack (8.0.3) lib/action_dispatch/http/content_security_policy.rb:38:in 'ActionDispatch::ContentSecurityPolicy::Middleware#call'
++rack-session (2.1.1) lib/rack/session/abstract/id.rb:274:in 'Rack::Session::Abstract::Persisted#context'
++rack-session (2.1.1) lib/rack/session/abstract/id.rb:268:in 'Rack::Session::Abstract::Persisted#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/cookies.rb:706:in 'ActionDispatch::Cookies#call'
++activerecord (8.0.3) lib/active_record/migration.rb:670:in 'ActiveRecord::Migration::CheckPending#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/callbacks.rb:31:in 'block in ActionDispatch::Callbacks#call'
++activesupport (8.0.3) lib/active_support/callbacks.rb:100:in 'ActiveSupport::Callbacks#run_callbacks'
++actionpack (8.0.3) lib/action_dispatch/middleware/callbacks.rb:30:in 'ActionDispatch::Callbacks#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/executor.rb:16:in 'ActionDispatch::Executor#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/actionable_exceptions.rb:18:in 'ActionDispatch::ActionableExceptions#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/debug_exceptions.rb:31:in 'ActionDispatch::DebugExceptions#call'
++web-console (4.2.1) lib/web_console/middleware.rb:132:in 'WebConsole::Middleware#call_app'
++web-console (4.2.1) lib/web_console/middleware.rb:28:in 'block in WebConsole::Middleware#call'
++web-console (4.2.1) lib/web_console/middleware.rb:17:in 'Kernel#catch'
++web-console (4.2.1) lib/web_console/middleware.rb:17:in 'WebConsole::Middleware#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'
++railties (8.0.3) lib/rails/rack/logger.rb:41:in 'Rails::Rack::Logger#call_app'
++railties (8.0.3) lib/rails/rack/logger.rb:29:in 'Rails::Rack::Logger#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/remote_ip.rb:96:in 'ActionDispatch::RemoteIp#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/request_id.rb:34:in 'ActionDispatch::RequestId#call'
++rack (3.2.3) lib/rack/method_override.rb:28:in 'Rack::MethodOverride#call'
++rack (3.2.3) lib/rack/runtime.rb:24:in 'Rack::Runtime#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/server_timing.rb:61:in 'block in ActionDispatch::ServerTiming#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/server_timing.rb:26:in 'ActionDispatch::ServerTiming::Subscriber#collect_events'
++actionpack (8.0.3) lib/action_dispatch/middleware/server_timing.rb:60:in 'ActionDispatch::ServerTiming#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/executor.rb:16:in 'ActionDispatch::Executor#call'
++propshaft (1.3.1) lib/propshaft/server.rb:37:in 'Propshaft::Server#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/static.rb:27:in 'ActionDispatch::Static#call'
++rack (3.2.3) lib/rack/sendfile.rb:131:in 'Rack::Sendfile#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/host_authorization.rb:143:in 'ActionDispatch::HostAuthorization#call'
++railties (8.0.3) lib/rails/engine.rb:535:in 'Rails::Engine#call'
++puma (7.0.4) lib/puma/configuration.rb:299:in 'Puma::Configuration::ConfigMiddleware#call'
++puma (7.0.4) lib/puma/request.rb:101:in 'block in Puma::Request#handle_request'
++puma (7.0.4) lib/puma/thread_pool.rb:346:in 'Puma::ThreadPool#with_force_shutdown'
++puma (7.0.4) lib/puma/request.rb:100:in 'Puma::Request#handle_request'
++puma (7.0.4) lib/puma/server.rb:506:in 'Puma::Server#process_client'
++puma (7.0.4) lib/puma/server.rb:265:in 'block in Puma::Server#run'
++puma (7.0.4) lib/puma/thread_pool.rb:173:in 'block in Puma::ThreadPool#spawn_thread'
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:41:37 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (31.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (2.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (6.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (1.0ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 26.0ms | GC: 0.5ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 26.9ms | GC: 0.5ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.2ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 34.5ms | GC: 1.2ms)
++Completed 200 OK in 302ms (Views: 29.5ms | ActiveRecord: 55.5ms (3 queries, 0 cached) | GC: 54.3ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:41:38 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:41:43 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (3.0ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('b2k0ga9szf2xifn1073deav6sgcl', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:41:43.283027') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.9ms) [0m[34mGenerated URL for file at key: b2k0ga9szf2xifn1073deav6sgcl (https://storage.bunnycdn.com/easyclub/b2k0ga9szf2xifn1073deav6sgcl)[0m
++Completed 500 Internal Server Error in 69ms (ActiveRecord: 12.1ms (1 query, 0 cached) | GC: 2.6ms)
++
++
++  
++NotImplementedError (NotImplementedError):
++  
++activestorage (8.0.3) lib/active_storage/service.rb:161:in 'ActiveStorage::Service#custom_metadata_headers'
++active_storage_bunny (8a9738e79bf0) lib/active_storage/service/bunny_service.rb:96:in 'ActiveStorage::Service::BunnyService#headers_for_direct_upload'
++activestorage (8.0.3) app/models/active_storage/blob.rb:227:in 'ActiveStorage::Blob#service_headers_for_direct_upload'
++activestorage (8.0.3) app/controllers/active_storage/direct_uploads_controller.rb:20:in 'ActiveStorage::DirectUploadsController#direct_upload_json'
++activestorage (8.0.3) app/controllers/active_storage/direct_uploads_controller.rb:9:in 'ActiveStorage::DirectUploadsController#create'
++actionpack (8.0.3) lib/action_controller/metal/basic_implicit_render.rb:8:in 'ActionController::BasicImplicitRender#send_action'
++actionpack (8.0.3) lib/abstract_controller/base.rb:215:in 'AbstractController::Base#process_action'
++actionpack (8.0.3) lib/action_controller/metal/rendering.rb:193:in 'ActionController::Rendering#process_action'
++actionpack (8.0.3) lib/abstract_controller/callbacks.rb:261:in 'block in AbstractController::Callbacks#process_action'
++activesupport (8.0.3) lib/active_support/callbacks.rb:120:in 'block in ActiveSupport::Callbacks#run_callbacks'
++turbo-rails (2.0.17) lib/turbo-rails.rb:24:in 'Turbo.with_request_id'
++turbo-rails (2.0.17) app/controllers/concerns/turbo/request_id_tracking.rb:10:in 'Turbo::RequestIdTracking#turbo_tracking_request_id'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++audited (5.8.0) lib/audited/sweeper.rb:16:in 'Audited::Sweeper#around'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++audited (5.8.0) lib/audited/sweeper.rb:16:in 'Audited::Sweeper#around'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++actiontext (8.0.3) lib/action_text/rendering.rb:25:in 'ActionText::Rendering::ClassMethods#with_renderer'
++actiontext (8.0.3) lib/action_text/engine.rb:71:in 'block (4 levels) in <class:Engine>'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'BasicObject#instance_exec'
++activesupport (8.0.3) lib/active_support/callbacks.rb:129:in 'block in ActiveSupport::Callbacks#run_callbacks'
++activesupport (8.0.3) lib/active_support/callbacks.rb:140:in 'ActiveSupport::Callbacks#run_callbacks'
++actionpack (8.0.3) lib/abstract_controller/callbacks.rb:260:in 'AbstractController::Callbacks#process_action'
++actionpack (8.0.3) lib/action_controller/metal/rescue.rb:27:in 'ActionController::Rescue#process_action'
++actionpack (8.0.3) lib/action_controller/metal/instrumentation.rb:76:in 'block in ActionController::Instrumentation#process_action'
++activesupport (8.0.3) lib/active_support/notifications.rb:210:in 'block in ActiveSupport::Notifications.instrument'
++activesupport (8.0.3) lib/active_support/notifications/instrumenter.rb:58:in 'ActiveSupport::Notifications::Instrumenter#instrument'
++activesupport (8.0.3) lib/active_support/notifications.rb:210:in 'ActiveSupport::Notifications.instrument'
++actionpack (8.0.3) lib/action_controller/metal/instrumentation.rb:75:in 'ActionController::Instrumentation#process_action'
++actionpack (8.0.3) lib/action_controller/metal/params_wrapper.rb:259:in 'ActionController::ParamsWrapper#process_action'
++activerecord (8.0.3) lib/active_record/railties/controller_runtime.rb:39:in 'ActiveRecord::Railties::ControllerRuntime#process_action'
++actionpack (8.0.3) lib/abstract_controller/base.rb:152:in 'AbstractController::Base#process'
++actionview (8.0.3) lib/action_view/rendering.rb:40:in 'ActionView::Rendering#process'
++actionpack (8.0.3) lib/action_controller/metal.rb:252:in 'ActionController::Metal#dispatch'
++actionpack (8.0.3) lib/action_controller/metal.rb:335:in 'ActionController::Metal.dispatch'
++actionpack (8.0.3) lib/action_dispatch/routing/route_set.rb:67:in 'ActionDispatch::Routing::RouteSet::Dispatcher#dispatch'
++actionpack (8.0.3) lib/action_dispatch/routing/route_set.rb:50:in 'ActionDispatch::Routing::RouteSet::Dispatcher#serve'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:53:in 'block in ActionDispatch::Journey::Router#serve'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:133:in 'block in ActionDispatch::Journey::Router#find_routes'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:126:in 'Array#each'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:126:in 'ActionDispatch::Journey::Router#find_routes'
++actionpack (8.0.3) lib/action_dispatch/journey/router.rb:34:in 'ActionDispatch::Journey::Router#serve'
++actionpack (8.0.3) lib/action_dispatch/routing/route_set.rb:908:in 'ActionDispatch::Routing::RouteSet#call'
++railties (8.0.3) lib/rails/engine/lazy_route_set.rb:60:in 'Rails::Engine::LazyRouteSet#call'
++rack-attack (6.7.0) lib/rack/attack.rb:127:in 'Rack::Attack#call'
++warden (1.2.9) lib/warden/manager.rb:36:in 'block in Warden::Manager#call'
++warden (1.2.9) lib/warden/manager.rb:34:in 'Kernel#catch'
++warden (1.2.9) lib/warden/manager.rb:34:in 'Warden::Manager#call'
++rack (3.2.3) lib/rack/tempfile_reaper.rb:20:in 'Rack::TempfileReaper#call'
++rack (3.2.3) lib/rack/etag.rb:29:in 'Rack::ETag#call'
++rack (3.2.3) lib/rack/conditional_get.rb:44:in 'Rack::ConditionalGet#call'
++rack (3.2.3) lib/rack/head.rb:15:in 'Rack::Head#call'
++actionpack (8.0.3) lib/action_dispatch/http/permissions_policy.rb:38:in 'ActionDispatch::PermissionsPolicy::Middleware#call'
++actionpack (8.0.3) lib/action_dispatch/http/content_security_policy.rb:38:in 'ActionDispatch::ContentSecurityPolicy::Middleware#call'
++rack-session (2.1.1) lib/rack/session/abstract/id.rb:274:in 'Rack::Session::Abstract::Persisted#context'
++rack-session (2.1.1) lib/rack/session/abstract/id.rb:268:in 'Rack::Session::Abstract::Persisted#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/cookies.rb:706:in 'ActionDispatch::Cookies#call'
++activerecord (8.0.3) lib/active_record/migration.rb:670:in 'ActiveRecord::Migration::CheckPending#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/callbacks.rb:31:in 'block in ActionDispatch::Callbacks#call'
++activesupport (8.0.3) lib/active_support/callbacks.rb:100:in 'ActiveSupport::Callbacks#run_callbacks'
++actionpack (8.0.3) lib/action_dispatch/middleware/callbacks.rb:30:in 'ActionDispatch::Callbacks#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/executor.rb:16:in 'ActionDispatch::Executor#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/actionable_exceptions.rb:18:in 'ActionDispatch::ActionableExceptions#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/debug_exceptions.rb:31:in 'ActionDispatch::DebugExceptions#call'
++web-console (4.2.1) lib/web_console/middleware.rb:132:in 'WebConsole::Middleware#call_app'
++web-console (4.2.1) lib/web_console/middleware.rb:28:in 'block in WebConsole::Middleware#call'
++web-console (4.2.1) lib/web_console/middleware.rb:17:in 'Kernel#catch'
++web-console (4.2.1) lib/web_console/middleware.rb:17:in 'WebConsole::Middleware#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'
++railties (8.0.3) lib/rails/rack/logger.rb:41:in 'Rails::Rack::Logger#call_app'
++railties (8.0.3) lib/rails/rack/logger.rb:29:in 'Rails::Rack::Logger#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/remote_ip.rb:96:in 'ActionDispatch::RemoteIp#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/request_id.rb:34:in 'ActionDispatch::RequestId#call'
++rack (3.2.3) lib/rack/method_override.rb:28:in 'Rack::MethodOverride#call'
++rack (3.2.3) lib/rack/runtime.rb:24:in 'Rack::Runtime#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/server_timing.rb:61:in 'block in ActionDispatch::ServerTiming#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/server_timing.rb:26:in 'ActionDispatch::ServerTiming::Subscriber#collect_events'
++actionpack (8.0.3) lib/action_dispatch/middleware/server_timing.rb:60:in 'ActionDispatch::ServerTiming#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/executor.rb:16:in 'ActionDispatch::Executor#call'
++propshaft (1.3.1) lib/propshaft/server.rb:37:in 'Propshaft::Server#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/static.rb:27:in 'ActionDispatch::Static#call'
++rack (3.2.3) lib/rack/sendfile.rb:131:in 'Rack::Sendfile#call'
++actionpack (8.0.3) lib/action_dispatch/middleware/host_authorization.rb:143:in 'ActionDispatch::HostAuthorization#call'
++railties (8.0.3) lib/rails/engine.rb:535:in 'Rails::Engine#call'
++puma (7.0.4) lib/puma/configuration.rb:299:in 'Puma::Configuration::ConfigMiddleware#call'
++puma (7.0.4) lib/puma/request.rb:101:in 'block in Puma::Request#handle_request'
++puma (7.0.4) lib/puma/thread_pool.rb:346:in 'Puma::ThreadPool#with_force_shutdown'
++puma (7.0.4) lib/puma/request.rb:100:in 'Puma::Request#handle_request'
++puma (7.0.4) lib/puma/server.rb:506:in 'Puma::Server#process_client'
++puma (7.0.4) lib/puma/server.rb:265:in 'block in Puma::Server#run'
++puma (7.0.4) lib/puma/thread_pool.rb:173:in 'block in Puma::ThreadPool#spawn_thread'
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:42:25 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (2.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (0.9ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (2.0ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (8.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 40.4ms | GC: 0.0ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 46.0ms | GC: 0.0ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.3ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 63.2ms | GC: 0.0ms)
++Completed 200 OK in 317ms (Views: 51.4ms | ActiveRecord: 55.2ms (3 queries, 0 cached) | GC: 49.2ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:42:26 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:42:31 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (3.1ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('hdcbe59r2g3c23qeax2cr2mo5a24', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:42:31.389669') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.9ms) [0m[34mGenerated URL for file at key: hdcbe59r2g3c23qeax2cr2mo5a24 (https://storage.bunnycdn.com/easyclub/hdcbe59r2g3c23qeax2cr2mo5a24)[0m
++Completed 200 OK in 70ms (Views: 0.2ms | ActiveRecord: 11.5ms (1 query, 0 cached) | GC: 0.0ms)
++
++
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++  [1m[36mActiveRecord::SchemaMigration Load (43.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:45:04 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (4.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (1.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (1.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 41.4ms | GC: 2.9ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 42.5ms | GC: 3.0ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.3ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 54.5ms | GC: 5.8ms)
++Completed 200 OK in 345ms (Views: 39.5ms | ActiveRecord: 95.7ms (3 queries, 0 cached) | GC: 58.3ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:45:05 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:45:13 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (3.4ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('wa0u10o23s2hpiy28dlslvr741m2', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:45:13.756957') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (1.1ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.9ms) [0m[34mGenerated URL for file at key: wa0u10o23s2hpiy28dlslvr741m2 (https://storage.bunnycdn.com/easyclub/wa0u10o23s2hpiy28dlslvr741m2)[0m
++Completed 200 OK in 70ms (Views: 0.2ms | ActiveRecord: 15.5ms (1 query, 0 cached) | GC: 0.0ms)
++
++
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:47:07 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (2.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (1.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (1.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 26.6ms | GC: 2.3ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 27.6ms | GC: 2.5ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.2ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 37.2ms | GC: 5.1ms)
++Completed 200 OK in 237ms (Views: 30.5ms | ActiveRecord: 41.9ms (3 queries, 0 cached) | GC: 41.5ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:47:08 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++  [1m[36mActiveRecord::SchemaMigration Load (3.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:47:19 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (10.8ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('pkxozwai6j8t86nzgyq2iw05sysi', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:47:19.241209') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.9ms) [0m[34mGenerated URL for file at key: pkxozwai6j8t86nzgyq2iw05sysi (https://storage.bunnycdn.com/easyclub/pkxozwai6j8t86nzgyq2iw05sysi)[0m
++Completed 200 OK in 83ms (Views: 0.2ms | ActiveRecord: 16.7ms (1 query, 0 cached) | GC: 0.0ms)
++
++
++Started PATCH "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a" for ::1 at 2025-10-20 10:47:25 +0200
++Processing by Admin::ClubsController#update as TURBO_STREAM
++  Parameters: {"authenticity_token" => "[FILTERED]", "club" => {"name" => "Acme FC", "sender_email" => "[FILTERED]", "subdomain" => "", "primary_domain" => "", "logo" => "eyJfcmFpbHMiOnsiZGF0YSI6IjYwMWNhZjkyLTgyZDYtNDFhYy1iOGMzLTI2ODFlNGI1YjhiZSIsInB1ciI6ImJsb2JfaWQifX0=--67bc917bf8092533f6f5e9ea1352b25a94951e18", "public_listing" => "1", "location_name" => "277 Main Rd", "address_line1" => "277 Main Road", "address_line2" => "Walmer", "city" => "Gqeberha", "region" => "Eastern Cape", "postal_code" => "6065", "country" => "South Africa", "latitude" => "-33.981837", "longitude" => "25.565615", "google_place_id" => "ChIJWzv9ZvbReh4R4iAcFZx_kj0"}, "web_form_name" => "", "web_form_page" => "http://localhost:3000/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit", "commit" => "Save club", "id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (1.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (1.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Blob Load (1.5ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = '601caf92-82d6-41ac-b8c3-2681e4b5b8be' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mTRANSACTION (1.8ms)[0m  [1m[31mROLLBACK /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++Completed 500 Internal Server Error in 56ms (ActiveRecord: 5.8ms (3 queries, 0 cached) | GC: 0.0ms)
++
++
++  
++NotImplementedError (NotImplementedError):
++  
++app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:49:25 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (1.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++  [1m[36mActiveRecord::SchemaMigration Load (1.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (1.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.7ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (1.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 31.4ms | GC: 2.3ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 32.2ms | GC: 2.3ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.2ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 43.0ms | GC: 5.4ms)
++Completed 200 OK in 288ms (Views: 34.1ms | ActiveRecord: 54.9ms (3 queries, 0 cached) | GC: 54.9ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:49:26 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:49:32 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (4.5ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('n13ef9gbr2bmvpg9fzlnz1nmgm4i', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:49:32.167172') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (1.3ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (1.0ms) [0m[34mGenerated URL for file at key: n13ef9gbr2bmvpg9fzlnz1nmgm4i (https://storage.bunnycdn.com/easyclub/n13ef9gbr2bmvpg9fzlnz1nmgm4i)[0m
++Completed 200 OK in 86ms (Views: 0.4ms | ActiveRecord: 20.0ms (1 query, 0 cached) | GC: 0.0ms)
++
++
++Started PATCH "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a" for ::1 at 2025-10-20 10:49:35 +0200
++Processing by Admin::ClubsController#update as TURBO_STREAM
++  Parameters: {"authenticity_token" => "[FILTERED]", "club" => {"name" => "Acme FC", "sender_email" => "[FILTERED]", "subdomain" => "", "primary_domain" => "", "logo" => "eyJfcmFpbHMiOnsiZGF0YSI6ImU4OGEyOGQwLTUxNGMtNDQxMy04YjQ4LTkzOTc4ZDkwNmI4MCIsInB1ciI6ImJsb2JfaWQifX0=--d17623e9f3d7deb6ae79f165802f4331b4e78b2a", "public_listing" => "1", "location_name" => "277 Main Rd", "address_line1" => "277 Main Road", "address_line2" => "Walmer", "city" => "Gqeberha", "region" => "Eastern Cape", "postal_code" => "6065", "country" => "South Africa", "latitude" => "-33.981837", "longitude" => "25.565615", "google_place_id" => "ChIJWzv9ZvbReh4R4iAcFZx_kj0"}, "web_form_name" => "", "web_form_page" => "http://localhost:3000/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit", "commit" => "Save club", "id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (1.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (1.9ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Blob Load (1.4ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'e88a28d0-514c-4413-8b48-93978d906b80' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mTRANSACTION (26.6ms)[0m  [1m[31mROLLBACK /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++Completed 500 Internal Server Error in 89ms (ActiveRecord: 31.2ms (3 queries, 0 cached) | GC: 0.0ms)
++
++
++  
++NoMethodError (private method 'download_chunk' called for an instance of ActiveStorage::Service::BunnyService):
++  
++app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++  [1m[36mActiveRecord::SchemaMigration Load (2.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:51:44 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (1.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.6ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (0.7ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 25.7ms | GC: 2.2ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 26.6ms | GC: 2.2ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.2ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 37.7ms | GC: 5.4ms)
++Completed 200 OK in 296ms (Views: 33.7ms | ActiveRecord: 35.2ms (3 queries, 0 cached) | GC: 56.2ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:51:45 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:51:49 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (3.5ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('jpm0gxd3j3twizbsc9ziif89bo03', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:51:49.528724') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.8ms) [0m[34mGenerated URL for file at key: jpm0gxd3j3twizbsc9ziif89bo03 (https://storage.bunnycdn.com/easyclub/jpm0gxd3j3twizbsc9ziif89bo03)[0m
++Completed 200 OK in 64ms (Views: 0.1ms | ActiveRecord: 12.3ms (1 query, 0 cached) | GC: 1.0ms)
++
++
++Started PATCH "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a" for ::1 at 2025-10-20 10:51:52 +0200
++Processing by Admin::ClubsController#update as TURBO_STREAM
++  Parameters: {"authenticity_token" => "[FILTERED]", "club" => {"name" => "Acme FC", "sender_email" => "[FILTERED]", "subdomain" => "", "primary_domain" => "", "logo" => "eyJfcmFpbHMiOnsiZGF0YSI6ImVhZDIyOWMyLTQ3NDYtNGUwMS04NTg3LTQ4OWY3ZjZiZGI0MiIsInB1ciI6ImJsb2JfaWQifX0=--74ad07b62e9dd4a314fc825f4e674ebe0b8fa1db", "public_listing" => "1", "location_name" => "277 Main Rd", "address_line1" => "277 Main Road", "address_line2" => "Walmer", "city" => "Gqeberha", "region" => "Eastern Cape", "postal_code" => "6065", "country" => "South Africa", "latitude" => "-33.981837", "longitude" => "25.565615", "google_place_id" => "ChIJWzv9ZvbReh4R4iAcFZx_kj0"}, "web_form_name" => "", "web_form_page" => "http://localhost:3000/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit", "commit" => "Save club", "id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (1.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Blob Load (1.4ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ead229c2-4746-4e01-8587-489f7f6bdb42' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mTRANSACTION (0.4ms)[0m  [1m[31mROLLBACK /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++Completed 500 Internal Server Error in 44ms (ActiveRecord: 3.8ms (3 queries, 0 cached) | GC: 0.4ms)
++
++
++  
++ArgumentError (wrong number of arguments (given 2, expected 1; required keyword: range)):
++  
++app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Set [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_ENCRYPTION_KEY[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, and [36mGOOGLE_PLACES_API_KEY[0m
++[dotenv] Loaded [33m.env[0m
++  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:53:52 +0200
++  [1m[36mActiveRecord::SchemaMigration Load (2.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (1.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.8ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (7.7ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  Rendered admin/clubs/_form.html.erb (Duration: 59.8ms | GC: 2.4ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 60.9ms | GC: 2.5ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.4ms | GC: 0.1ms)
++  Rendered layout layouts/admin.html.erb (Duration: 73.3ms | GC: 5.5ms)
++Completed 200 OK in 356ms (Views: 39.2ms | ActiveRecord: 77.8ms (3 queries, 0 cached) | GC: 60.9ms)
++
++
++Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-20 10:53:53 +0200
++  
++ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
++  
++Started POST "/rails/active_storage/direct_uploads" for ::1 at 2025-10-20 10:53:58 +0200
++Processing by ActiveStorage::DirectUploadsController#create as JSON
++  Parameters: {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}, "direct_upload" => {"blob" => {"filename" => "AntiSpam_Brochure.jpg", "content_type" => "image/jpeg", "byte_size" => 72158, "checksum" => "udzfMPuNe1gd6vuP0IqRDg=="}}}
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mActiveStorage::Blob Create (4.2ms)[0m  [1m[32mINSERT INTO "active_storage_blobs" ("key", "filename", "content_type", "metadata", "service_name", "byte_size", "checksum", "created_at") VALUES ('hzg64am7o1qn9fwzqdp8iu8vfwpr', 'AntiSpam_Brochure.jpg', 'image/jpeg', NULL, 'bunny', 72158, 'udzfMPuNe1gd6vuP0IqRDg==', '2025-10-20 08:53:58.810744') RETURNING "id" /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++  [1m[36mTRANSACTION (1.0ms)[0m  [1m[35mCOMMIT /*action='create',application='EasyClub',controller='direct_uploads'*/[0m
++[36m  Bunny Storage (0.8ms) [0m[34mGenerated URL for file at key: hzg64am7o1qn9fwzqdp8iu8vfwpr (https://storage.bunnycdn.com/easyclub/hzg64am7o1qn9fwzqdp8iu8vfwpr)[0m
++Completed 200 OK in 64ms (Views: 0.2ms | ActiveRecord: 12.2ms (1 query, 0 cached) | GC: 0.0ms)
++
++
++Started PATCH "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a" for ::1 at 2025-10-20 10:54:02 +0200
++Processing by Admin::ClubsController#update as TURBO_STREAM
++  Parameters: {"authenticity_token" => "[FILTERED]", "club" => {"name" => "Acme FC", "sender_email" => "[FILTERED]", "subdomain" => "", "primary_domain" => "", "logo" => "eyJfcmFpbHMiOnsiZGF0YSI6ImVjNTY1NjA1LWRiNDAtNDM0Yy05MjZhLTZjZWYwOTA2NjQ4NiIsInB1ciI6ImJsb2JfaWQifX0=--435eb87958037b494eb6a88f07294a90e3a64006", "public_listing" => "1", "location_name" => "277 Main Rd", "address_line1" => "277 Main Road", "address_line2" => "Walmer", "city" => "Gqeberha", "region" => "Eastern Cape", "postal_code" => "6065", "country" => "South Africa", "latitude" => "-33.981837", "longitude" => "25.565615", "google_place_id" => "ChIJWzv9ZvbReh4R4iAcFZx_kj0"}, "web_form_name" => "", "web_form_page" => "http://localhost:3000/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit", "commit" => "Save club", "id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (2.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (1.7ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Blob Load (1.3ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Blob Load (3.7ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" INNER JOIN "active_storage_attachments" ON "active_storage_blobs"."id" = "active_storage_attachments"."blob_id" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Attachment Load (0.4ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Blob Update (5.4ms)[0m  [1m[33mUPDATE "active_storage_blobs" SET "metadata" = '{"identified":true}' WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."blob_id" = 'ec565605-db40-434c-926a-6cef09066486' /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mActiveStorage::Attachment Create (2.7ms)[0m  [1m[32mINSERT INTO "active_storage_attachments" ("name", "record_type", "record_id", "blob_id", "created_at") VALUES ('logo', 'Club', '42261108-5c10-4d13-934e-9f868904772a', 'ec565605-db40-434c-926a-6cef09066486', '2025-10-20 08:54:03.636054') RETURNING "id" /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mClub Update (0.8ms)[0m  [1m[33mUPDATE "clubs" SET "updated_at" = '2025-10-20 08:54:03.649826' WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='update',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++[ActiveJob] Enqueued ActiveStorage::AnalyzeJob (Job ID: 388efa81-8865-49cf-a7ed-ff5e44b0b200) to Async(default) with arguments: #<GlobalID:0x00000001389fbdf0 @uri=#<URI::GID gid://easy-club/ActiveStorage::Blob/ec565605-db40-434c-926a-6cef09066486>>
++[ActiveJob] ↳ app/controllers/admin/clubs_controller.rb:32:in 'Admin::ClubsController#update'
++Redirected to http://localhost:3000/admin/clubs/42261108-5c10-4d13-934e-9f868904772a
++Completed 302 Found in 1330ms (ActiveRecord: 19.0ms (9 queries, 0 cached) | GC: 0.0ms)
++
++
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mActiveStorage::Blob Load (0.3ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' LIMIT 1 /*application='EasyClub'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200] Performing ActiveStorage::AnalyzeJob (Job ID: 388efa81-8865-49cf-a7ed-ff5e44b0b200) from Async(default) enqueued at 2025-10-20T08:54:03.662950000Z with arguments: #<GlobalID:0x0000000138abcbb8 @uri=#<URI::GID gid://easy-club/ActiveStorage::Blob/ec565605-db40-434c-926a-6cef09066486>>
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a" for ::1 at 2025-10-20 10:54:05 +0200
++Processing by Admin::ClubsController#show as TURBO_STREAM
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (0.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='show',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mMember Count (3.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "members" WHERE "members"."club_id" = '42261108-5c10-4d13-934e-9f868904772a' /*action='show',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:11:in 'Admin::ClubsController#show'
++  [1m[36mInvoice Count (1.5ms)[0m  [1m[34mSELECT COUNT(*) FROM "invoices" WHERE "invoices"."club_id" = '42261108-5c10-4d13-934e-9f868904772a' /*action='show',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:12:in 'Admin::ClubsController#show'
++  [1m[36mPayment Sum (0.8ms)[0m  [1m[34mSELECT SUM("payments"."amount_cents") FROM "payments" WHERE "payments"."club_id" = '42261108-5c10-4d13-934e-9f868904772a' /*action='show',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:13:in 'Admin::ClubsController#show'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/show.html.erb within layouts/admin
++  Rendered admin/clubs/show.html.erb within layouts/admin (Duration: 1.6ms | GC: 0.0ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.1ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 3.6ms | GC: 0.0ms)
++Completed 200 OK in 77ms (Views: 4.0ms | ActiveRecord: 24.1ms (5 queries, 0 cached) | GC: 1.9ms)
++
++
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200] [36m  Bunny Storage (1088.5ms) [0m[34mDownloaded file from key: hzg64am7o1qn9fwzqdp8iu8vfwpr[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='EasyClub',job='ActiveStorage%3A%3AAnalyzeJob'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mActiveStorage::Blob Update (2.6ms)[0m  [1m[33mUPDATE "active_storage_blobs" SET "metadata" = '{"identified":true,"width":476,"height":476,"analyzed":true}' WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' /*application='EasyClub',job='ActiveStorage%3A%3AAnalyzeJob'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mActiveStorage::Attachment Load (0.5ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."blob_id" = 'ec565605-db40-434c-926a-6cef09066486' /*application='EasyClub',job='ActiveStorage%3A%3AAnalyzeJob'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' /*application='EasyClub',job='ActiveStorage%3A%3AAnalyzeJob'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mClub Update (0.4ms)[0m  [1m[33mUPDATE "clubs" SET "updated_at" = '2025-10-20 08:54:06.928474' WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' /*application='EasyClub',job='ActiveStorage%3A%3AAnalyzeJob'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200]   [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='EasyClub',job='ActiveStorage%3A%3AAnalyzeJob'*/[0m
++[ActiveJob] [ActiveStorage::AnalyzeJob] [388efa81-8865-49cf-a7ed-ff5e44b0b200] Performed ActiveStorage::AnalyzeJob (Job ID: 388efa81-8865-49cf-a7ed-ff5e44b0b200) from Async(default) in 3247.31ms
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/edit" for ::1 at 2025-10-20 10:54:09 +0200
++Processing by Admin::ClubsController#edit as HTML
++  Parameters: {"id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  Rendering layout layouts/admin.html.erb
++  Rendering admin/clubs/edit.html.erb within layouts/admin
++  [1m[36mActiveStorage::Attachment Load (0.4ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:32
++  [1m[36mActiveStorage::Blob Load (0.3ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' LIMIT 1 /*action='edit',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/views/admin/clubs/_form.html.erb:34
++[36m  Bunny Storage (0.0ms) [0m[34mGenerated URL for file at key: hzg64am7o1qn9fwzqdp8iu8vfwpr (https://EasyClub.b-cdn.net/hzg64am7o1qn9fwzqdp8iu8vfwpr)[0m
++  Rendered admin/clubs/_form.html.erb (Duration: 16.9ms | GC: 0.1ms)
++  Rendered admin/clubs/edit.html.erb within layouts/admin (Duration: 17.1ms | GC: 0.1ms)
++  Rendered admin/shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
++  Rendered layout layouts/admin.html.erb (Duration: 21.2ms | GC: 0.1ms)
++Completed 200 OK in 51ms (Views: 21.0ms | ActiveRecord: 1.4ms (4 queries, 0 cached) | GC: 0.1ms)
++
++
++Started GET "/admin/clubs/42261108-5c10-4d13-934e-9f868904772a/remove_file?file_name=logo&target_link=club-logo-image" for ::1 at 2025-10-20 10:54:12 +0200
++Processing by Admin::ClubsController#remove_file as HTML
++  Parameters: {"file_name" => "logo", "target_link" => "club-logo-image", "id" => "42261108-5c10-4d13-934e-9f868904772a"}
++  [1m[36mUser Load (1.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '246b2ed4-0458-4434-9910-d718b5fd0495' ORDER BY "users"."id" ASC LIMIT 1 /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++  [1m[36mClub Load (0.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' LIMIT 1 /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:63:in 'Admin::ClubsController#set_club'
++  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++  [1m[36mActiveStorage::Attachment Load (0.9ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '42261108-5c10-4d13-934e-9f868904772a' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++  [1m[36mActiveStorage::Attachment Destroy (0.4ms)[0m  [1m[31mDELETE FROM "active_storage_attachments" WHERE "active_storage_attachments"."id" = '8d3121c4-8b62-462b-beb4-478d2a29ba07' /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++  [1m[36mClub Update (0.5ms)[0m  [1m[33mUPDATE "clubs" SET "updated_at" = '2025-10-20 08:54:12.568081' WHERE "clubs"."id" = '42261108-5c10-4d13-934e-9f868904772a' /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++  [1m[36mActiveStorage::Blob Load (0.3ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' LIMIT 1 /*action='remove_file',application='EasyClub',controller='clubs'*/[0m
++  ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++[ActiveJob] Enqueued ActiveStorage::PurgeJob (Job ID: e82b3ee9-5ea3-4386-a860-49e7148231ac) to Async(default) with arguments: #<GlobalID:0x000000012c93d708 @uri=#<URI::GID gid://easy-club/ActiveStorage::Blob/ec565605-db40-434c-926a-6cef09066486>>
++[ActiveJob] ↳ app/controllers/admin/clubs_controller.rb:52:in 'Admin::ClubsController#remove_file'
++Completed 500 Internal Server Error in 67ms (ActiveRecord: 4.2ms (6 queries, 0 cached) | GC: 0.5ms)
++
++
++  
++NameError (undefined local variable or method 'cable_car' for an instance of Admin::ClubsController):
++  
++app/controllers/admin/clubs_controller.rb:56:in 'Admin::ClubsController#remove_file'
++app/controllers/application_controller.rb:13:in 'ApplicationController#set_current_club_context'
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mActiveStorage::Blob Load (0.7ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' LIMIT 1 /*application='EasyClub'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac] Performing ActiveStorage::PurgeJob (Job ID: e82b3ee9-5ea3-4386-a860-49e7148231ac) from Async(default) enqueued at 2025-10-20T08:54:12.573607000Z with arguments: #<GlobalID:0x000000016afbb3d0 @uri=#<URI::GID gid://easy-club/ActiveStorage::Blob/ec565605-db40-434c-926a-6cef09066486>>
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='EasyClub',job='ActiveStorage%3A%3APurgeJob'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mActiveStorage::Attachment Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "active_storage_attachments" WHERE "active_storage_attachments"."blob_id" = 'ec565605-db40-434c-926a-6cef09066486' LIMIT 1 /*application='EasyClub',job='ActiveStorage%3A%3APurgeJob'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mActiveStorage::VariantRecord Load (14.2ms)[0m  [1m[34mSELECT "active_storage_variant_records".* FROM "active_storage_variant_records" WHERE "active_storage_variant_records"."blob_id" = 'ec565605-db40-434c-926a-6cef09066486' /*application='EasyClub',job='ActiveStorage%3A%3APurgeJob'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mActiveStorage::Attachment Load (0.8ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = 'ec565605-db40-434c-926a-6cef09066486' AND "active_storage_attachments"."record_type" = 'ActiveStorage::Blob' AND "active_storage_attachments"."name" = 'preview_image' LIMIT 1 /*application='EasyClub',job='ActiveStorage%3A%3APurgeJob'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mActiveStorage::Blob Destroy (2.4ms)[0m  [1m[31mDELETE FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = 'ec565605-db40-434c-926a-6cef09066486' /*application='EasyClub',job='ActiveStorage%3A%3APurgeJob'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac]   [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='EasyClub',job='ActiveStorage%3A%3APurgeJob'*/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac] [36m  Bunny Storage (665.9ms) [0m[31mDeleted file from key: hzg64am7o1qn9fwzqdp8iu8vfwpr[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac] [36m  Bunny Storage (623.8ms) [0m[31mDeleted file from key: variants/hzg64am7o1qn9fwzqdp8iu8vfwpr/[0m
++[ActiveJob] [ActiveStorage::PurgeJob] [e82b3ee9-5ea3-4386-a860-49e7148231ac] Performed ActiveStorage::PurgeJob (Job ID: e82b3ee9-5ea3-4386-a860-49e7148231ac) from Async(default) in 1334.4ms
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
++[dotenv] Loaded [33m.env[0m
+diff --git a/node_modules/.yarn-integrity b/node_modules/.yarn-integrity
+index cea65fd..cb96a59 100644
+--- a/node_modules/.yarn-integrity
++++ b/node_modules/.yarn-integrity
+@@ -11,12 +11,12 @@
+     "@rails/actioncable@^7.1.3",
+     "@rails/activestorage@^8.0.300",
+     "@tailwindcss/cli@^4.1.14",
+-    "cable_ready@^5.1.0",
++    "cable_ready@5.0.6",
+     "cropperjs@1.6.2",
+     "dropzone@^6.0.0-beta.2",
+     "esbuild@^0.25.10",
+     "stimulus@^3.2.2",
+-    "stimulus_reflex@^3.5.0",
++    "stimulus_reflex@3.5.5",
+     "tailwindcss@^4.1.14"
+   ],
+   "lockfileEntries": {
+@@ -100,8 +100,8 @@
+     "@tailwindcss/oxide@4.1.14": "https://registry.yarnpkg.com/@tailwindcss/oxide/-/oxide-4.1.14.tgz#acfc7869142665693b3b08e4e51d0f419ca13662",
+     "@tybys/wasm-util@^0.10.1": "https://registry.yarnpkg.com/@tybys/wasm-util/-/wasm-util-0.10.1.tgz#ecddd3205cf1e2d5274649ff0eedd2991ed7f414",
+     "braces@^3.0.3": "https://registry.yarnpkg.com/braces/-/braces-3.0.3.tgz#490332f40919452272d55a8480adc0c441358789",
++    "cable_ready@5.0.6": "https://registry.yarnpkg.com/cable_ready/-/cable_ready-5.0.6.tgz#d76f7500d73606175645a84aa743b22667c0109a",
+     "cable_ready@^5.0.6": "https://registry.yarnpkg.com/cable_ready/-/cable_ready-5.0.6.tgz#d76f7500d73606175645a84aa743b22667c0109a",
+-    "cable_ready@^5.1.0": "https://registry.yarnpkg.com/cable_ready/-/cable_ready-5.0.6.tgz#d76f7500d73606175645a84aa743b22667c0109a",
+     "chownr@^3.0.0": "https://registry.yarnpkg.com/chownr/-/chownr-3.0.0.tgz#9855e64ecd240a9cc4267ce8a4aa5d24a1da15e4",
+     "cropperjs@1.6.2": "https://registry.yarnpkg.com/cropperjs/-/cropperjs-1.6.2.tgz#d1a5d627d880581cca41b7901f06923500e4201b",
+     "detect-libc@^1.0.3": "https://registry.yarnpkg.com/detect-libc/-/detect-libc-1.0.3.tgz#fa137c4bd698edf55cd5cd02ac559f91a4c4ba9b",
+@@ -141,7 +141,7 @@
+     "source-map-js@^1.2.1": "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.2.1.tgz#1ce5650fddd87abc099eda37dcff024c2667ae46",
+     "spark-md5@^3.0.1": "https://registry.yarnpkg.com/spark-md5/-/spark-md5-3.0.2.tgz#7952c4a30784347abcee73268e473b9c0167e3fc",
+     "stimulus@^3.2.2": "https://registry.yarnpkg.com/stimulus/-/stimulus-3.2.2.tgz#a2e955f43e12e2e5784b175d4df5517ef678aa68",
+-    "stimulus_reflex@^3.5.0": "https://registry.yarnpkg.com/stimulus_reflex/-/stimulus_reflex-3.5.5.tgz#f2475fa7eb1f36dcf510cfffdfbd0eaa4c49463a",
++    "stimulus_reflex@3.5.5": "https://registry.yarnpkg.com/stimulus_reflex/-/stimulus_reflex-3.5.5.tgz#f2475fa7eb1f36dcf510cfffdfbd0eaa4c49463a",
+     "tailwindcss@4.1.14": "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-4.1.14.tgz#a5907cc2202a2a1f5f15bac6f2031e53117e43a8",
+     "tailwindcss@^4.1.14": "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-4.1.14.tgz#a5907cc2202a2a1f5f15bac6f2031e53117e43a8",
+     "tapable@^2.2.0": "https://registry.yarnpkg.com/tapable/-/tapable-2.3.0.tgz#7e3ea6d5ca31ba8e078b560f0d83ce9a14aa8be6",
+diff --git a/package.json b/package.json
+index d2f71d8..df0e131 100644
+--- a/package.json
++++ b/package.json
+@@ -5,8 +5,9 @@
+     "esbuild": "^0.25.10"
+   },
+   "scripts": {
+-    "build": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets",
+-    "build:css": "npx @tailwindcss/cli -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify"
++    "build": "node esbuild.config.mjs",
++    "build:css": "npx @tailwindcss/cli -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify",
++    "build:default": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets"
+   },
+   "dependencies": {
+     "@hotwired/stimulus": "^3.2.2",
+@@ -14,11 +15,11 @@
+     "@rails/actioncable": "^7.1.3",
+     "@rails/activestorage": "^8.0.300",
+     "@tailwindcss/cli": "^4.1.14",
+-    "cable_ready": "^5.1.0",
++    "cable_ready": "5.0.6",
+     "cropperjs": "1.6.2",
+     "dropzone": "^6.0.0-beta.2",
+     "stimulus": "^3.2.2",
+-    "stimulus_reflex": "^3.5.0",
++    "stimulus_reflex": "3.5.5",
+     "tailwindcss": "^4.1.14"
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/tmp/cache/bootsnap/load-path-cache b/tmp/cache/bootsnap/load-path-cache
+index e7a8717..b9f7f6c 100644
+Binary files a/tmp/cache/bootsnap/load-path-cache and b/tmp/cache/bootsnap/load-path-cache differ
+diff --git a/yarn.lock b/yarn.lock
+index 6f2f44f..a20d812 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -466,7 +466,7 @@ braces@^3.0.3:
+   dependencies:
+     fill-range "^7.1.1"
+ 
+-cable_ready@^5.0.6, cable_ready@^5.1.0:
++cable_ready@5.0.6, cable_ready@^5.0.6:
+   version "5.0.6"
+   resolved "https://registry.yarnpkg.com/cable_ready/-/cable_ready-5.0.6.tgz#d76f7500d73606175645a84aa743b22667c0109a"
+   integrity sha512-SRCLljXFeFVRDeE/f/LutWNo50pkZRPxkKtFhqVMYvCOZhnUTWH3pPjsn8bD9KlRAMUrlrBN6reX8xX7ItvqfA==
+@@ -718,7 +718,7 @@ stimulus@^3.2.2:
+     "@hotwired/stimulus" "^3.2.2"
+     "@hotwired/stimulus-webpack-helpers" "^1.0.0"
+ 
+-stimulus_reflex@^3.5.0:
++stimulus_reflex@3.5.5:
+   version "3.5.5"
+   resolved "https://registry.yarnpkg.com/stimulus_reflex/-/stimulus_reflex-3.5.5.tgz#f2475fa7eb1f36dcf510cfffdfbd0eaa4c49463a"
+   integrity sha512-8jMyNnbepY4oZAbGZNowmhdg0mNe6p9qMNV8UGW64oSiEMNkV0paGL7VHwm6k/oUGIgVB6ZT+SvzrP20bYBzfw==

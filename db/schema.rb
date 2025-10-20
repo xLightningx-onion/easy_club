@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_16_113906) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -336,6 +336,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_113906) do
     t.index ["user_id"], name: "index_members_on_user_id"
   end
 
+  create_table "membership_question_responses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.uuid "membership_question_id", null: false
+    t.uuid "member_id", null: false
+    t.text "value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id"], name: "index_membership_question_responses_on_club_id"
+    t.index ["membership_question_id", "member_id"], name: "idx_question_responses_member_once", unique: true
+  end
+
+  create_table "membership_questions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.string "prompt", null: false
+    t.string "answer_type", default: "short_text", null: false
+    t.boolean "required", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.text "help_text"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "options", default: [], null: false
+    t.index ["answer_type"], name: "index_membership_questions_on_answer_type"
+    t.index ["club_id", "position"], name: "index_membership_questions_on_club_id_and_position"
+    t.index ["club_id"], name: "index_membership_questions_on_club_id"
+  end
+
   create_table "order_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "order_id", null: false
     t.uuid "member_id", null: false
@@ -545,6 +571,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_113906) do
     t.text "otp_backup_codes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "first_name"
+    t.string "last_name"
+    t.string "country_code"
+    t.string "mobile_number"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -632,6 +662,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_16_113906) do
   add_foreign_key "invoices", "users", column: "family_account_id"
   add_foreign_key "members", "clubs"
   add_foreign_key "members", "users"
+  add_foreign_key "membership_question_responses", "clubs"
+  add_foreign_key "membership_question_responses", "members"
+  add_foreign_key "membership_question_responses", "membership_questions"
+  add_foreign_key "membership_questions", "clubs"
   add_foreign_key "order_items", "members"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "plans"

@@ -1,0 +1,51 @@
+<%= turbo_frame_tag frame_id do %>
+  <div
+    class="space-y-6"
+    data-controller="memberships-selection"
+    data-memberships-selection-selected-class-value="border-slate-900 ring-2 ring-slate-200 shadow-md"
+    data-memberships-selection-selected-id-value="<%= selected_club_id %>"
+  >
+    <div class="space-y-2 text-center">
+      <h2 class="text-xl font-semibold text-slate-900">Find a club</h2>
+      <p class="text-sm text-slate-500">
+        Search the public directory and pick the club you want to join. We’ll remember your choice when you continue.
+      </p>
+    </div>
+
+    <%= form_with url: search_members_selection_path, method: :get, data: { turbo: true, turbo_frame: "#{frame_id}_results", modal_stay: true }, class: "flex gap-2" do |form| %>
+      <%= form.hidden_field :frame_id, value: frame_id %>
+      <%= form.search_field :query,
+            value: query,
+            placeholder: "Search clubs by name",
+            class: "w-full rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" %>
+      <%= form.submit "Search",
+            class: "rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+    <% end %>
+
+    <div class="space-y-2">
+      <div class="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-400">
+        <span>Results</span>
+        <span><%= pluralize(clubs.size, "club") %></span>
+      </div>
+      <%= turbo_frame_tag "#{frame_id}_results" do %>
+        <%= render "members/selections/results", clubs: clubs, query: query %>
+      <% end %>
+    </div>
+
+    <div class="flex items-center justify-between gap-3">
+      <%= link_to "Back to my clubs",
+        new_members_selection_path(frame_id: frame_id),
+        data: { turbo_frame: frame_id },
+        class: "inline-flex items-center justify-center rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+      <button
+        type="button"
+        class="inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+        data-memberships-selection-target="continue"
+        data-action="memberships-selection#continue modal#close"
+        disabled
+      >
+        Continue
+      </button>
+    </div>
+  </div>
+<% end %>

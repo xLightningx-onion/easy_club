@@ -1,0 +1,24 @@
+<% content_for :title, "New membership · #{@club.name}" %>
+
+<section class="mx-auto max-w-5xl px-4 py-10" data-controller="membership-start">
+  <div class="mx-auto max-w-3xl overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-slate-100">
+    <header class="flex flex-col items-center gap-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-6 py-8 text-white">
+      <div class="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white">
+        <% if @club.logo&.attached? %>
+          <%= image_tag serve_image_remote_url(@club.logo, resize_spec: "resize_to_fill", size_curves: [180, 180]), alt: "#{@club.name} logo", class: "h-full w-full object-cover" %>
+        <% else %>
+          <span class="text-xl font-semibold uppercase text-slate-800"><%= @club.name.first(2) %></span>
+        <% end %>
+      </div>
+      <div class="text-center space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-[0.4em] text-white/60">New membership</p>
+        <h1 class="text-2xl font-semibold"><%= @club.name %></h1>
+      </div>
+      <%= render "members/membership_registrations/step_navigation", current_step: @step %>
+    </header>
+
+    <%= turbo_frame_tag "membership-step" do %>
+      <%= render "members/membership_registrations/#{@step}", form: @form, club: @club, plans: @plans %>
+    <% end %>
+  </div>
+</section>

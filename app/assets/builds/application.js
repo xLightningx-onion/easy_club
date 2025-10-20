@@ -15786,11 +15786,19 @@ var clubs_map_controller_default = class extends Controller {
         map: this.map,
         title: club.name
       });
-      const addressLines = [club.address_line1, club.city, club.region, club.country].filter(Boolean);
+      const addressLines = [club.city].filter(Boolean);
+      const logoMarkup = club.logo_url ? `<img src="${club.logo_url}" alt="${club.name} logo" class="h-12 w-12 flex-shrink-0 rounded object-cover" loading="lazy">` : "";
+      const viewMarkup = club.url ? `<div class="w-full mt-2"><a href="${club.url}" class="w-full inline-flex items-center rounded bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white justify-center hover:bg-slate-800" target="_blank" rel="noopener">View</a></div>` : "";
       const content = `
-        <div class="text-sm">
-          <strong>${club.name}</strong><br>
-          ${addressLines.join("<br>")}
+        <div class="flex items-start gap-3 text-sm">
+          ${logoMarkup}
+          <div>
+            <strong>${club.name}</strong><br>
+            ${addressLines.join("<br>")}
+          </div>
+        </div>
+        <div class="flex items-center">
+          ${viewMarkup}
         </div>
       `;
       marker.addListener("click", () => {
@@ -19440,12 +19448,318 @@ function createDropZone(controller) {
   });
 }
 
+// app/javascript/controllers/club_questions_controller.js
+var club_questions_controller_default = class extends Controller {
+  static targets = ["list", "template", "emptyState", "options"];
+  connect() {
+    this.updateEmptyState();
+    this.refreshOptionVisibility();
+  }
+  add(event) {
+    event.preventDefault();
+    const uniqueId = this.generateUniqueId();
+    const templateContent = this.templateTarget.innerHTML.replace(/NEW_RECORD/g, uniqueId);
+    this.listTarget.insertAdjacentHTML("beforeend", templateContent);
+    this.updateEmptyState();
+    this.refreshOptionVisibility();
+  }
+  remove(event) {
+    event.preventDefault();
+    const wrapper = event.target.closest("[data-club-questions-item]");
+    if (!wrapper) return;
+    const destroyInput = wrapper.querySelector("input[name$='[_destroy]']");
+    const isNewRecord = wrapper.dataset.newRecord === "true";
+    if (destroyInput && !isNewRecord) {
+      destroyInput.value = "1";
+      wrapper.classList.add("hidden");
+    } else {
+      wrapper.remove();
+    }
+    this.updateEmptyState();
+    this.refreshOptionVisibility();
+  }
+  updateEmptyState() {
+    if (!this.hasEmptyStateTarget) return;
+    const visibleItems = this.listTarget.querySelectorAll("[data-club-questions-item]:not(.hidden)");
+    this.emptyStateTarget.classList.toggle("hidden", visibleItems.length > 0);
+  }
+  handleTypeChange(event) {
+    const wrapper = event.target.closest("[data-club-questions-item]");
+    if (!wrapper) return;
+    this.toggleOptionsVisibility(wrapper, event.target.value);
+  }
+  refreshOptionVisibility() {
+    const items = this.listTarget.querySelectorAll("[data-club-questions-item]");
+    items.forEach((item) => {
+      const select = item.querySelector("select[name$='[answer_type]']");
+      if (select) {
+        this.toggleOptionsVisibility(item, select.value);
+      }
+    });
+  }
+  toggleOptionsVisibility(wrapper, answerType) {
+    const optionsContainer = wrapper.querySelector("[data-club-questions-target='options']");
+    if (!optionsContainer) return;
+    const choiceTypes = (optionsContainer.dataset.choiceTypes || "").split(/\s+/).map((type) => type.trim()).filter(Boolean);
+    const shouldShow = choiceTypes.includes(answerType);
+    optionsContainer.classList.toggle("hidden", !shouldShow);
+  }
+  generateUniqueId() {
+    if (window.crypto?.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return `${Date.now()}${Math.floor(Math.random() * 1e3)}`;
+  }
+};
+
+// app/javascript/controllers/membership_question_form_controller.js
+var membership_question_form_controller_default = class extends Controller {
+  static targets = ["answerType", "choiceFields"];
+  static values = { choiceTypes: Array };
+  connect() {
+    this.toggle();
+  }
+  toggle() {
+    if (!this.hasAnswerTypeTarget || !this.hasChoiceFieldsTarget) return;
+    const selectedType = this.answerTypeTarget.value;
+    const shouldShow = this.choiceTypesValue.includes(selectedType);
+    this.choiceFieldsTarget.classList.toggle("hidden", !shouldShow);
+  }
+};
+
+// app/javascript/controllers/modal_controller.js
+var modal_controller_default = class extends Controller {
+  static targets = ["wrapper", "frame", "title"];
+  connect() {
+    if (this.hasTitleTarget) {
+      this.defaultTitle = this.titleTarget.textContent;
+    }
+  }
+  open(event) {
+    event.preventDefault();
+    this.previousFocus = document.activeElement;
+    const url = event.currentTarget?.dataset.modalUrl;
+    const title = event.currentTarget?.dataset.modalTitle;
+    if (title && this.hasTitleTarget) {
+      this.titleTarget.textContent = title;
+    } else {
+      this.resetTitle();
+    }
+    this.show();
+    if (url) {
+      this.loadFrame(url);
+    }
+  }
+  close(event) {
+    if (event) event.preventDefault();
+    if (!this.hasWrapperTarget) return;
+    this.wrapperTarget.classList.add("hidden");
+    this.wrapperTarget.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("overflow-hidden");
+    this.clearFrame();
+    if (this.previousFocus && typeof this.previousFocus.focus === "function") {
+      this.previousFocus.focus();
+    }
+    this.previousFocus = null;
+    this.resetTitle();
+  }
+  handleSubmitEnd(event) {
+    if (!event.detail.success) return;
+    if (!this.hasWrapperTarget || this.wrapperTarget.classList.contains("hidden")) return;
+    if (this.shouldIgnoreSubmit(event)) return;
+    this.close();
+  }
+  show() {
+    if (!this.hasWrapperTarget) return;
+    this.wrapperTarget.classList.remove("hidden");
+    this.wrapperTarget.setAttribute("aria-hidden", "false");
+    document.body.classList.add("overflow-hidden");
+    this.wrapperTarget.focus();
+    const initialFocus = this.wrapperTarget.querySelector("[data-modal-initial-focus]");
+    if (initialFocus) {
+      initialFocus.focus();
+    }
+  }
+  loadFrame(url) {
+    if (!this.hasFrameTarget) return;
+    const current = this.frameTarget.getAttribute("src");
+    const frameId = this.frameTarget.id;
+    const finalUrl = this.buildUrlWithFrame(url, frameId);
+    if (current === finalUrl) {
+      this.frameTarget.removeAttribute("src");
+      this.frameTarget.innerHTML = "";
+    }
+    this.frameTarget.src = finalUrl;
+  }
+  clearFrame() {
+    if (!this.hasFrameTarget) return;
+    this.frameTarget.innerHTML = "";
+    this.frameTarget.removeAttribute("src");
+  }
+  disconnect() {
+    document.body.classList.remove("overflow-hidden");
+  }
+  buildUrlWithFrame(url, frameId) {
+    try {
+      const fullUrl = new URL(url, window.location.href);
+      if (frameId) {
+        fullUrl.searchParams.set("frame_id", frameId);
+      }
+      return fullUrl.toString();
+    } catch (_error) {
+      if (!frameId) return url;
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}frame_id=${encodeURIComponent(frameId)}`;
+    }
+  }
+  resetTitle() {
+    if (!this.hasTitleTarget) return;
+    if (!this.defaultTitle) {
+      this.defaultTitle = this.titleTarget.textContent;
+    }
+    this.titleTarget.textContent = this.defaultTitle;
+  }
+  shouldIgnoreSubmit(event) {
+    const form = event.target;
+    if (!form) return false;
+    if (form.dataset.modalStay === "true") return true;
+    if (form.closest("[data-modal-stay]")) return true;
+    return false;
+  }
+};
+
+// app/javascript/controllers/memberships_selection_controller.js
+var memberships_selection_controller_default = class extends Controller {
+  static targets = ["club", "continue", "list"];
+  static values = {
+    selectedClass: String,
+    selectedId: String,
+    selectedName: String
+  };
+  connect() {
+    this.restoreSelection();
+    this.updateState();
+  }
+  choose(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    this.selectedIdValue = button.dataset.clubId;
+    this.selectedNameValue = button.dataset.clubName;
+    this.highlightSelection(button);
+    this.updateState();
+  }
+  continue(event) {
+    if (!this.hasSelectedIdValue) {
+      event.preventDefault();
+      return;
+    }
+    this.dispatch("club-selected", {
+      detail: {
+        clubId: this.selectedIdValue,
+        clubName: this.selectedNameValue
+      }
+    });
+  }
+  highlightSelection(selectedButton) {
+    if (!this.hasClubTarget) return;
+    const classes = this.selectedClasses();
+    this.clubTargets.forEach((button) => {
+      button.classList.remove(...classes);
+    });
+    selectedButton.classList.add(...classes);
+  }
+  updateState() {
+    if (this.hasContinueTarget) {
+      this.continueTarget.disabled = !this.hasSelectedIdValue;
+    }
+  }
+  selectedClasses() {
+    return (this.selectedClassValue || "border-slate-900 ring-2 ring-slate-200 shadow-md").split(/\s+/).filter(Boolean);
+  }
+  restoreSelection() {
+    if (!this.hasSelectedIdValue || !this.hasClubTarget) return;
+    const selectedButton = this.clubTargets.find((button) => button.dataset.clubId === this.selectedIdValue);
+    if (!selectedButton) return;
+    if (!this.hasSelectedNameValue || !this.selectedNameValue) {
+      this.selectedNameValue = selectedButton.dataset.clubName;
+    }
+    this.highlightSelection(selectedButton);
+  }
+};
+
+// app/javascript/controllers/membership_start_controller.js
+var membership_start_controller_default = class extends Controller {
+  static values = { url: String };
+  begin(event) {
+    const { clubId } = event.detail || {};
+    if (!clubId) return;
+    const basePath = this.urlValue || "/members/membership_registration";
+    const url = new URL(basePath, window.location.origin);
+    url.searchParams.set("club_id", clubId);
+    url.searchParams.set("step", "personal");
+    window.location = url.toString();
+  }
+};
+
+// app/javascript/controllers/sa_id_controller.js
+var sa_id_controller_default = class extends Controller {
+  static targets = ["input", "gender", "nationality", "dateOfBirth"];
+  connect() {
+    this.update();
+  }
+  inputTargetConnected() {
+    this.inputTarget.addEventListener("input", () => this.update());
+  }
+  update() {
+    if (!this.hasInputTarget) return;
+    const cleaned = this.inputTarget.value.replace(/\D/g, "");
+    if (cleaned.length !== 13) {
+      this.clearDerivedFields();
+      return;
+    }
+    const yy = parseInt(cleaned.slice(0, 2), 10);
+    const mm = parseInt(cleaned.slice(2, 4), 10);
+    const dd = parseInt(cleaned.slice(4, 6), 10);
+    const currentYear = (/* @__PURE__ */ new Date()).getFullYear() % 100;
+    const century = yy > currentYear ? 1900 : 2e3;
+    const birthDate = new Date(century + yy, mm - 1, dd);
+    if (Number.isNaN(birthDate.getTime())) {
+      this.clearDerivedFields();
+      return;
+    }
+    const genderCode = parseInt(cleaned.slice(6, 10), 10);
+    const nationalityCode = parseInt(cleaned.slice(10, 11), 10);
+    if (this.hasGenderTarget) {
+      const genderValue = genderCode >= 5e3 ? "Male" : "Female";
+      this.genderTarget.value = genderValue;
+    }
+    if (this.hasNationalityTarget) {
+      this.nationalityTarget.value = nationalityCode === 0 ? "South African" : "Non-South African";
+    }
+    if (this.hasDateOfBirthTarget) {
+      const formatted = birthDate.toISOString().split("T")[0];
+      this.dateOfBirthTarget.value = formatted;
+    }
+  }
+  clearDerivedFields() {
+    if (this.hasGenderTarget) this.genderTarget.value = "";
+    if (this.hasNationalityTarget) this.nationalityTarget.value = "";
+    if (this.hasDateOfBirthTarget) this.dateOfBirthTarget.value = "";
+  }
+};
+
 // app/javascript/controllers/index.js
 application.register("hello", hello_controller_default);
 application.register("squad", squad_controller_default);
 application.register("location-picker", location_picker_controller_default);
 application.register("clubs-map", clubs_map_controller_default);
 application.register("dropzone", dropzone_controller_default);
+application.register("club-questions", club_questions_controller_default);
+application.register("membership-question-form", membership_question_form_controller_default);
+application.register("modal", modal_controller_default);
+application.register("memberships-selection", memberships_selection_controller_default);
+application.register("membership-start", membership_start_controller_default);
+application.register("sa-id", sa_id_controller_default);
 
 // app/javascript/application.js
 var import_cropper = __toESM(require_cropper());

@@ -1,0 +1,73 @@
+<% frame_dom_id = local_assigns[:frame_id] || (membership_type.persisted? ? dom_id(membership_type) : dom_id(club, :new_membership_type)) %>
+<%= turbo_frame_tag frame_dom_id do %>
+  <%= form_with model: [:admin, club, membership_type], class: "space-y-4" do |form| %>
+    <% if membership_type.errors.any? %>
+      <div class="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <%= membership_type.errors.full_messages.to_sentence %>
+      </div>
+    <% end %>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="space-y-1">
+        <%= form.label :label, "Label", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.text_field :label,
+          class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+          placeholder: "e.g. Junior Player" %>
+      </div>
+
+      <div class="space-y-1">
+        <%= form.label :gender, "Gender eligibility", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.select :gender,
+          MembershipType::GENDER_OPTIONS.values.map { |value| [value.titleize, value] },
+          {},
+          class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <div class="space-y-1">
+        <%= form.label :min_age_years, "Minimum age (years)", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :min_age_years,
+          min: 0,
+          class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+      <div class="space-y-1">
+        <%= form.label :max_age_years, "Maximum age (years)", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :max_age_years,
+          min: 0,
+          class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+      <div class="space-y-1">
+        <%= form.label :base_price, "Base cost", class: "block text-sm font-medium text-slate-700" %>
+        <div class="relative">
+          <% currency = club.settings.dig("finance", "currency") rescue nil %>
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-500"><%= currency || "ZAR" %></span>
+          <%= form.number_field :base_price,
+            value: membership_type.base_price&.to_f,
+            step: 0.01,
+            min: 0,
+            class: "w-full rounded border border-slate-300 px-3 py-2 pl-16 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      <% if membership_type.persisted? %>
+        <%= link_to "Cancel",
+          admin_club_membership_type_path(club, membership_type),
+          data: { turbo_frame: dom_id(membership_type) },
+          class: "text-sm font-medium text-slate-500 hover:text-slate-700" %>
+      <% else %>
+        <button
+          type="button"
+          class="text-sm font-medium text-slate-500 hover:text-slate-700"
+          data-action="modal#close"
+        >
+          Cancel
+        </button>
+      <% end %>
+      <%= form.submit(membership_type.persisted? ? "Save changes" : "Create membership type",
+        class: "inline-flex items-center rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800") %>
+    </div>
+  <% end %>
+<% end %>

@@ -1,0 +1,52 @@
+<div
+  class="space-y-3 rounded border border-slate-200 bg-white p-4 shadow-sm"
+  data-club-questions-item
+  data-new-record="<%= f.object.persisted? ? "false" : "true" %>"
+>
+  <div class="flex items-start gap-3">
+    <div class="flex-1 space-y-3">
+      <div class="space-y-1">
+        <%= f.label :prompt, "Question", class: "block text-sm font-medium text-slate-700" %>
+        <%= f.text_area :prompt, rows: 2, class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="space-y-1">
+          <%= f.label :answer_type, "Answer type", class: "block text-sm font-medium text-slate-700" %>
+          <%= f.select :answer_type,
+            MembershipQuestion::ANSWER_TYPES.map { |type| [type.humanize, type] },
+            { include_blank: false },
+            class: "block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+            data: { action: "club-questions#handleTypeChange" } %>
+        </div>
+        <div class="flex items-center gap-2 pt-6 sm:pt-8">
+          <%= f.check_box :required, class: "rounded border-slate-300 text-slate-900 focus:ring-slate-500" %>
+          <%= f.label :required, "Required", class: "text-sm text-slate-700" %>
+        </div>
+      </div>
+
+      <div
+        class="<%= f.object.choice_based? ? "" : "hidden" %> space-y-1"
+        data-club-questions-target="options"
+        data-choice-types="<%= MembershipQuestion::CHOICE_ANSWER_TYPES.join(" ") %>"
+      >
+        <%= f.label :options_text, "Options", class: "block text-sm font-medium text-slate-700" %>
+        <%= f.text_area :options_text,
+          rows: 3,
+          class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+          placeholder: "Enter one option per line" %>
+        <p class="text-xs text-slate-500">Enter at least two options. Members will pick one during checkout.</p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="text-sm font-medium text-rose-600 hover:text-rose-500"
+      data-action="club-questions#remove"
+    >
+      Remove
+    </button>
+  </div>
+
+  <%= f.hidden_field :_destroy, value: "0" %>
+</div>

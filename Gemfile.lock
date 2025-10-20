@@ -1,3 +1,12 @@
+GIT
+  remote: git@github.com:xLightningx-onion/active_storage_bunny.git
+  revision: f5df8cf5afa79fcf62aa7dee975cc7c74867eeec
+  branch: fix/direct-upload-and-upload_options
+  specs:
+    active_storage_bunny (1.0.6)
+      bunny_storage_client (~> 1.0)
+      rails (>= 6.0, < 9.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -46,9 +55,6 @@ GEM
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
-    active_storage_bunny (1.0.1)
-      bunny_storage_client (~> 1.0)
-      rails (>= 6.0, < 9.0)
     activejob (8.0.3)
       activesupport (= 8.0.3)
       globalid (>= 0.3.6)
@@ -164,7 +170,7 @@ GEM
     drb (2.2.3)
     ed25519 (1.4.0)
     encryptor (3.0.0)
-    erb (5.0.3)
+    erb (5.1.1)
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
@@ -367,6 +373,9 @@ GEM
       redis-client (>= 0.22.0)
     redis-client (0.26.1)
       connection_pool
+    redis-session-store (0.11.6)
+      actionpack (>= 5.2.4.1, < 9)
+      redis (>= 3, < 6)
     regexp_parser (2.11.3)
     reline (0.6.2)
       io-console (~> 0.5)
@@ -533,7 +542,7 @@ PLATFORMS
 
 DEPENDENCIES
   action_policy
-  active_storage_bunny
+  active_storage_bunny!
   annotate
   attr_encrypted
   audited (~> 5.4)
@@ -570,6 +579,7 @@ DEPENDENCIES
   rack-attack
   rails (~> 8.0.2, >= 8.0.2.1)
   redis (~> 5.0)
+  redis-session-store (~> 0.11.5)
   roo
   rspec-rails
   rubocop-rails-omakase

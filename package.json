@@ -5,8 +5,8 @@
     "esbuild": "^0.25.10"
   },
   "scripts": {
-    "build": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets",
-    "build:css": "npx @tailwindcss/cli -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify"
+    "build:css": "npx @tailwindcss/cli -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify",
+    "build:default": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
@@ -14,11 +14,11 @@
     "@rails/actioncable": "^7.1.3",
     "@rails/activestorage": "^8.0.300",
     "@tailwindcss/cli": "^4.1.14",
-    "cable_ready": "^5.1.0",
+    "cable_ready": "5.0.6",
     "cropperjs": "1.6.2",
     "dropzone": "^6.0.0-beta.2",
     "stimulus": "^3.2.2",
-    "stimulus_reflex": "^3.5.0",
+    "stimulus_reflex": "3.5.5",
     "tailwindcss": "^4.1.14"
   }
 }

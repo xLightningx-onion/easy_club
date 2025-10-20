@@ -1,0 +1,67 @@
+<turbo-frame id="<%= dom_id(membership_type) %>">
+  <article class="space-y-4 px-4 py-4 transition hover:bg-slate-50">
+    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+          <span>Membership type</span>
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+            <%= membership_type.gender.titleize %>
+          </span>
+          <% if membership_type.min_age_years.present? && membership_type.max_age_years.present? %>
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+              Ages <%= membership_type.min_age_years %> – <%= membership_type.max_age_years %>
+            </span>
+          <% end %>
+        </div>
+
+        <h3 class="text-sm font-semibold text-slate-900"><%= membership_type.label %></h3>
+        <p class="text-sm text-slate-600">
+          Base cost:
+          <strong class="text-slate-900"><%= membership_type.base_price.format %></strong>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 md:flex-col md:items-end">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          data-action="modal#open"
+          data-modal-url="<%= edit_admin_club_membership_type_path(club, membership_type) %>"
+          data-modal-frame="<%= dom_id(club, :membership_type_modal) %>"
+          data-modal-title="Edit membership type"
+        >
+          Edit
+        </button>
+        <%= link_to "Delete",
+                    admin_club_membership_type_path(club, membership_type),
+                    data: {
+                      turbo_method: :delete,
+                      turbo_confirm: "Delete this membership type? Members will no longer see it as an option.",
+                      turbo_frame: dom_id(club, :membership_types)
+                    },
+                    class: "inline-flex items-center gap-1 rounded bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-100" %>
+      </div>
+    </div>
+
+    <section class="rounded-lg border border-slate-200 bg-white px-3 py-3">
+      <header class="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900">Tiered pricing</h4>
+          <p class="text-xs text-slate-500">Set optional price tiers based on context like season phases or discounts.</p>
+        </div>
+        <turbo-frame id="<%= dom_id(membership_type, :new_price_tier) %>">
+          <%= render "admin/clubs/membership_types/price_tiers/new_button",
+                     club: club,
+                     membership_type: membership_type %>
+        </turbo-frame>
+      </header>
+
+      <turbo-frame id="<%= dom_id(membership_type, :price_tiers) %>">
+        <%= render "admin/clubs/membership_types/price_tiers/list",
+                   club: club,
+                   membership_type: membership_type,
+                   price_tiers: membership_type.price_tiers %>
+      </turbo-frame>
+    </section>
+  </article>
+</turbo-frame>

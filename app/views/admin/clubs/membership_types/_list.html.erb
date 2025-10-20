@@ -1,0 +1,14 @@
+<% if membership_types.any? %>
+  <div class="divide-y divide-slate-200">
+    <% membership_types.each do |membership_type| %>
+      <%= render "admin/clubs/membership_types/membership_type",
+                 club: club,
+                 membership_type: membership_type %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="px-4 py-10 text-center text-sm text-slate-500">
+    <p class="font-medium text-slate-700">No membership types yet</p>
+    <p class="mt-1 text-xs text-slate-500">Create your first membership type to unlock tailored pricing, eligibility, and automation.</p>
+  </div>
+<% end %>

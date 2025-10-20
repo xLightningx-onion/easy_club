@@ -17,10 +17,9 @@
           name: club.name,
           lat: club.latitude&.to_f,
           lng: club.longitude&.to_f,
-          address_line1: club.address_line1,
           city: club.city,
-          region: club.region,
-          country: club.country
+          logo_url: serve_image_remote_url(club.logo, resize_spec: "resize_to_fill", size_curves: [ 96, 96 ]),
+          url: public_club_path(club)
         }
       }.to_json.html_safe %>'
     >

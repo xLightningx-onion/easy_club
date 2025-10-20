@@ -51,11 +51,23 @@ export default class extends Controller {
         title: club.name
       })
 
-      const addressLines = [club.address_line1, club.city, club.region, club.country].filter(Boolean)
+      const addressLines = [club.city].filter(Boolean)
+      const logoMarkup = club.logo_url
+        ? `<img src="${club.logo_url}" alt="${club.name} logo" class="h-12 w-12 flex-shrink-0 rounded object-cover" loading="lazy">`
+        : ""
+      const viewMarkup = club.url
+        ? `<div class="w-full mt-2"><a href="${club.url}" class="w-full inline-flex items-center rounded bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white justify-center hover:bg-slate-800" target="_blank" rel="noopener">View</a></div>`
+        : ""
       const content = `
-        <div class="text-sm">
-          <strong>${club.name}</strong><br>
-          ${addressLines.join("<br>")}
+        <div class="flex items-start gap-3 text-sm">
+          ${logoMarkup}
+          <div>
+            <strong>${club.name}</strong><br>
+            ${addressLines.join("<br>")}
+          </div>
+        </div>
+        <div class="flex items-center">
+          ${viewMarkup}
         </div>
       `
 

@@ -11,6 +11,8 @@ class Admin::ClubsController < Admin::BaseController
     @members_count = @club.members.count
     @invoices_count = @club.invoices.count
     @payments_total = Money.new(@club.payments.sum(:amount_cents), default_currency)
+    @membership_questions = @club.membership_questions
+    @membership_types = @club.membership_types.includes(:price_tiers).order(:min_age_years, :label)
   end
 
   def new
@@ -47,14 +49,22 @@ class Admin::ClubsController < Admin::BaseController
   end
 
   def remove_file
-    file_name = params[:file_name]
-    if file_name == "logo"
-      @club.update(logo: nil)
-    elsif file_name == "banner"
-      club.update(logo: nil)
+    case params[:file_name]
+    when "logo"   then @club.update!(logo: nil)
+    when "banner" then @club.update!(banner: nil)
+    else
+      return head :unprocessable_entity
     end
-    render cable_ready: cable_car
-                          .remove("##{params[:target_link]}")
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.remove(params[:target_dom_id])
+      end
+      format.html do
+        redirect_back fallback_location: edit_admin_club_path(@club),
+                      notice: "#{params[:file_name].humanize} removed."
+      end
+    end
   end
 
   private
@@ -83,7 +93,17 @@ class Admin::ClubsController < Admin::BaseController
       :longitude,
       :google_place_id,
       color_palette: {},
-      settings: {}
+      settings: {},
+      membership_questions_attributes: %i[
+        id
+        prompt
+        answer_type
+        required
+        position
+        help_text
+        options_text
+        _destroy
+      ]
     )
   end
 

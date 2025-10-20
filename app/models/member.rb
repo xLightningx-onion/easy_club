@@ -18,6 +18,7 @@ class Member < ApplicationRecord
   has_many :carts, through: :cart_items
   has_many :order_items, dependent: :restrict_with_exception
   has_many :orders, through: :order_items
+  has_many :membership_question_responses, dependent: :destroy
 
   def full_name
     [first_name, last_name].compact.join(" ").strip

@@ -1,0 +1,13 @@
+<div class="flex justify-end">
+  <button
+    type="button"
+    data-action="modal#open"
+    data-modal-url="<%= new_admin_club_membership_question_path(club) %>"
+    data-modal-frame="<%= dom_id(club, :membership_question_modal) %>"
+    data-modal-title="Add membership question"
+    class="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+  >
+    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-base leading-none">+</span>
+    Add question
+  </button>
+</div>

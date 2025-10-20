@@ -1,6 +1,3 @@
-
-
-  
 .dropzone {
     border: 2px dashed rgb(232, 232, 232);
     border-radius: 10px;
@@ -20,11 +17,10 @@
     }
 
     &.dz-drag-hover {
-        border-color: rgb(0, 162, 255);
+        border: 1px dashed rgb(0, 162, 255);
         background-color: rgba(228, 228, 228, 0.7);
         .dz-message {
-        opacity: 0.9;
+            opacity: 0.9;
         }
     }
 }
-

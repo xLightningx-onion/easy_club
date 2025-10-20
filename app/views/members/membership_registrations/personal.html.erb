@@ -1,0 +1,98 @@
+<div class="px-6 py-8">
+  <%= form_with model: form, url: members_membership_registration_path(step: "personal", club_id: club.id), method: :patch, data: { controller: "sa-id" }, class: "space-y-8" do |f| %>
+    <%= render "shared/form_errors", resource: form if form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-sm font-semibold text-slate-700">Membership type</label>
+        <%= f.collection_select :plan_id, plans, :id, :name,
+              { prompt: "Select membership type" },
+              class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Name</label>
+        <%= f.text_field :first_name, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring", required: true %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Surname</label>
+        <%= f.text_field :last_name, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring", required: true %>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">ID Number</label>
+        <%= f.text_field :id_number,
+              class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring",
+              data: { "sa-id-target": "input" },
+              maxlength: 13,
+              pattern: "\\d{13}",
+              required: true %>
+        <p class="mt-1 text-xs text-slate-500">We’ll use this to derive your date of birth, gender, and nationality.</p>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Gender</label>
+        <%= f.text_field :gender,
+              value: form.gender_label,
+              class: "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring",
+              data: { "sa-id-target": "gender" },
+              readonly: true,
+              placeholder: "Derived from ID" %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nationality</label>
+        <%= f.text_field :nationality,
+              value: form.nationality_label,
+              class: "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring",
+              data: { "sa-id-target": "nationality" },
+              readonly: true,
+              placeholder: "Derived from ID" %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Date of birth</label>
+        <%= f.date_field :date_of_birth,
+              class: "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring",
+              data: { "sa-id-target": "dateOfBirth" },
+              readonly: true %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Email address</label>
+        <%= f.email_field :email, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring", required: true %>
+      </div>
+
+      <div class="grid grid-cols-[auto_1fr] items-center gap-2">
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Country code</label>
+          <%= f.select :mobile_country_code,
+                [["+27", "+27"], ["+264", "+264"], ["+44", "+44"], ["+1", "+1"]],
+                {},
+                class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring",
+                required: true %>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Mobile number</label>
+          <%= f.telephone_field :mobile_number,
+                class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring",
+                placeholder: "00 000 0000",
+                required: true %>
+        </div>
+      </div>
+    </div>
+
+    <label class="flex items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
+      <%= f.check_box :accept_personal_terms, required: true, class: "mt-1" %>
+      <span>
+        I confirm these details are accurate and I agree to share them with <strong><%= @club.name %></strong> for membership processing.
+      </span>
+    </label>
+
+    <div class="flex items-center justify-between">
+      <%= link_to "Cancel", members_dashboards_path, class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+      <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+    </div>
+  <% end %>
+</div>

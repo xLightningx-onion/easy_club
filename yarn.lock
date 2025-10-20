@@ -466,7 +466,7 @@ braces@^3.0.3:
   dependencies:
     fill-range "^7.1.1"
 
-cable_ready@^5.0.6, cable_ready@^5.1.0:
+cable_ready@5.0.6, cable_ready@^5.0.6:
   version "5.0.6"
   resolved "https://registry.yarnpkg.com/cable_ready/-/cable_ready-5.0.6.tgz#d76f7500d73606175645a84aa743b22667c0109a"
   integrity sha512-SRCLljXFeFVRDeE/f/LutWNo50pkZRPxkKtFhqVMYvCOZhnUTWH3pPjsn8bD9KlRAMUrlrBN6reX8xX7ItvqfA==
@@ -718,7 +718,7 @@ stimulus@^3.2.2:
     "@hotwired/stimulus" "^3.2.2"
     "@hotwired/stimulus-webpack-helpers" "^1.0.0"
 
-stimulus_reflex@^3.5.0:
+stimulus_reflex@3.5.5:
   version "3.5.5"
   resolved "https://registry.yarnpkg.com/stimulus_reflex/-/stimulus_reflex-3.5.5.tgz#f2475fa7eb1f36dcf510cfffdfbd0eaa4c49463a"
   integrity sha512-8jMyNnbepY4oZAbGZNowmhdg0mNe6p9qMNV8UGW64oSiEMNkV0paGL7VHwm6k/oUGIgVB6ZT+SvzrP20bYBzfw==

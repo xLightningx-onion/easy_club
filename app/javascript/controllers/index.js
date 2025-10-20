@@ -18,3 +18,21 @@ application.register("clubs-map", ClubsMapController)
 
 import DropzoneController from "./dropzone_controller"
 application.register("dropzone", DropzoneController)
+
+import ClubQuestionsController from "./club_questions_controller"
+application.register("club-questions", ClubQuestionsController)
+
+import MembershipQuestionFormController from "./membership_question_form_controller"
+application.register("membership-question-form", MembershipQuestionFormController)
+
+import ModalController from "./modal_controller"
+application.register("modal", ModalController)
+
+import MembershipsSelectionController from "./memberships_selection_controller"
+application.register("memberships-selection", MembershipsSelectionController)
+
+import MembershipStartController from "./membership_start_controller"
+application.register("membership-start", MembershipStartController)
+
+import SaIdController from "./sa_id_controller"
+application.register("sa-id", SaIdController)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Club < ApplicationRecord
+  audited
   thread_mattr_accessor :current_id
 
   has_one_attached :logo
@@ -14,6 +15,9 @@ class Club < ApplicationRecord
   has_many :plans, dependent: :destroy
   has_many :price_rules, dependent: :destroy
   has_many :age_bands, dependent: :destroy
+  has_many :age_band_price_tiers, dependent: :destroy
+  has_many :membership_types, dependent: :destroy
+  has_many :membership_type_price_tiers, dependent: :destroy
   has_many :invoices, dependent: :destroy
   has_many :payments, dependent: :destroy
   has_many :vouchers, dependent: :destroy
@@ -29,6 +33,11 @@ class Club < ApplicationRecord
   has_many :outbound_messages, dependent: :destroy
   has_many :report_runs, dependent: :destroy
   has_many :inbound_messages, dependent: :destroy
+
+  has_many :membership_questions, -> { order(:position, :created_at) }, dependent: :destroy, inverse_of: :club
+  has_many :membership_question_responses, dependent: :destroy
+
+  accepts_nested_attributes_for :membership_questions, allow_destroy: true, reject_if: proc { |attributes| attributes["prompt"].blank? }
 
   def self.with_current(club, &block)
     previous = current_id

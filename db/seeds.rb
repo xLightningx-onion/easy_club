@@ -69,6 +69,20 @@ Club.with_current(club) do
     end
   end
 
+  [
+    { label: "Junior Player", min_age: 6, max_age: 12, base_price: 65_00 },
+    { label: "Senior Player", min_age: 13, max_age: 18, base_price: 85_00 },
+    { label: "Coach", min_age: 18, max_age: 65, base_price: 0 }
+  ].each do |attributes|
+    MembershipType.find_or_create_by!(club:, label: attributes[:label]) do |membership_type|
+      membership_type.min_age_years = attributes[:min_age]
+      membership_type.max_age_years = attributes[:max_age]
+      membership_type.gender = :unisex
+      membership_type.base_price_cents = attributes[:base_price]
+      membership_type.base_price_currency = "ZAR"
+    end
+  end
+
   registration = Product.find_or_create_by!(club:, name: "Registration Fee") do |product|
     product.vat_applicable = true
     product.price_cents = 50_000

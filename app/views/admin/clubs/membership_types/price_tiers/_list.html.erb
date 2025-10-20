@@ -1,0 +1,14 @@
+<% if price_tiers.any? %>
+  <ul class="space-y-2">
+    <% price_tiers.each do |price_tier| %>
+      <%= render "admin/clubs/membership_types/price_tiers/price_tier",
+                 club: club,
+                 membership_type: membership_type,
+                 price_tier: price_tier %>
+    <% end %>
+  </ul>
+<% else %>
+  <div class="rounded border border-dashed border-slate-200 px-4 py-4 text-sm text-slate-500">
+    No custom tiers. Members pay the base cost by default.
+  </div>
+<% end %>
