@@ -1,3 +1,6 @@
+base_domain: "c74b6cf69e5f.ngrok-free.app"
+base_url: "https://c74b6cf69e5f.ngrok-free.app"
+
 # Bunny CDN/Storage (used by ActiveStorage Bunny service)
 bunny:
   access_key: <%= ENV.fetch("BUNNY_ACCESS_KEY") %>
@@ -10,7 +13,7 @@ paygate:
   pay_host:
     endpoint: <%= ENV.fetch("PAYGATE_PAY_HOST_ENDPOINT", "https://secure.paygate.co.za/payhost/process.trans") %>
     merchant_id: <%= ENV.fetch("PAYGATE_MERCHANT_ID") %>
-    encryption_key: <%= ENV.fetch("PAYGATE_ENCRYPTION_KEY") %>
+    password: <%= ENV.fetch("PAYGATE_PASSWORD") %>
     return_url: <%= ENV.fetch("PAYGATE_RETURN_URL") %>
     notify_url: <%= ENV.fetch("PAYGATE_NOTIFY_URL") %>
 

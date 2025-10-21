@@ -1,0 +1,178 @@
+<% purchase = @order_item %>
+<% member = @member %>
+<% content_for :title, "Membership ##{purchase.id} · #{@club.name}" %>
+<% content_for :page_heading, member&.display_name || "Membership purchase" %>
+
+<div class="space-y-8">
+  <header class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Membership purchase</p>
+      <h1 class="text-2xl font-semibold text-slate-900"><%= member&.display_name || "Unknown member" %></h1>
+      <p class="text-sm text-slate-600"><%= @club.name %></p>
+    </div>
+    <%= link_to "Back to memberships", admin_club_memberships_path(@club), class: "inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800" %>
+  </header>
+
+  <section class="grid gap-6 lg:grid-cols-3">
+    <article class="space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm lg:col-span-2">
+      <header class="flex items-center justify-between">
+        <h2 class="text-base font-semibold text-slate-900">Purchase details</h2>
+        <% order_status_classes = case @order.status.to_s
+                                  when "paid" then "bg-emerald-100 text-emerald-700"
+                                  when "pending_payment" then "bg-amber-100 text-amber-700"
+                                  when "cancelled" then "bg-rose-100 text-rose-600"
+                                  else "bg-slate-100 text-slate-600"
+                                  end %>
+        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <%= order_status_classes %> capitalize">
+          <%= @order.status.to_s.tr("_", " ") %>
+        </span>
+      </header>
+      <dl class="grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
+        <div>
+          <dt class="font-medium text-slate-500">Order number</dt>
+          <dd class="text-slate-900"><%= @order.number %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Purchased at</dt>
+          <dd class="text-slate-900"><%= @order.submitted_at ? l(@order.submitted_at, format: :long) : "Pending" %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Membership product</dt>
+          <dd class="text-slate-900"><%= purchase.plan&.product&.name || "Membership" %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Amount</dt>
+          <dd class="text-slate-900"><%= number_to_currency(purchase.total_price_cents / 100.0, unit: purchase.total_price_currency) %></dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Member status</dt>
+          <% member_status_classes = case member&.status.to_s
+                                      when "active" then "bg-emerald-100 text-emerald-700"
+                                      when "unpaid" then "bg-amber-100 text-amber-700"
+                                      when "suspended" then "bg-rose-100 text-rose-600"
+                                      else "bg-slate-100 text-slate-600"
+                                      end %>
+          <dd class="text-slate-900">
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <%= member_status_classes %> capitalize">
+              <%= member&.status.to_s.tr("_", " ") || "Unknown" %>
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt class="font-medium text-slate-500">Quantity</dt>
+          <dd class="text-slate-900"><%= purchase.quantity %></dd>
+        </div>
+        <% if member&.user&.email.present? %>
+          <div>
+            <dt class="font-medium text-slate-500">Contact email</dt>
+            <dd class="text-slate-900"><%= member.user.email %></dd>
+          </div>
+        <% end %>
+        <% if member&.dob %>
+          <div>
+            <dt class="font-medium text-slate-500">Date of birth</dt>
+            <dd class="text-slate-900"><%= l(member.dob) %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </article>
+
+    <article class="space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+      <h2 class="text-base font-semibold text-slate-900">Guardians</h2>
+      <% if @guardians.any? %>
+        <ul class="space-y-3 text-sm text-slate-700">
+          <% @guardians.each do |guardianship| %>
+            <li class="flex flex-col rounded border border-slate-200 px-3 py-2">
+              <span class="font-medium text-slate-900"><%= guardianship.guardian.email %></span>
+              <span class="text-xs text-slate-500"><%= guardianship.relationship.presence || "Guardian" %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-slate-500">No guardians assigned.</p>
+      <% end %>
+    </article>
+  </section>
+
+  <section class="space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+    <header class="flex items-center justify-between">
+      <h2 class="text-base font-semibold text-slate-900">Transaction history</h2>
+      <span class="text-xs font-medium uppercase tracking-wide text-slate-400"><%= pluralize(@transactions.count, "transaction") %></span>
+    </header>
+
+    <article class="rounded border border-slate-200 px-4 py-3">
+      <header class="flex flex-col gap-2 border-b border-slate-100 pb-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Order <%= @order.number %></p>
+          <p class="text-xs text-slate-500">
+            <%= @order.submitted_at ? "Submitted #{l(@order.submitted_at, format: :long)}" : "Draft" %>
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <% if @order.payment_method %>
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600"><%= @order.payment_method.masked_label %></span>
+          <% end %>
+          <span class="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
+            <%= number_to_currency(@order.total_cents / 100.0, unit: @order.total_currency) %>
+          </span>
+        </div>
+      </header>
+
+      <div class="grid gap-3 py-3 md:grid-cols-2">
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Order item</h3>
+          <div class="mt-2 rounded border border-slate-100 px-3 py-2 text-sm text-slate-600">
+            <div class="font-medium text-slate-900"><%= purchase.description.presence || purchase.plan&.product&.name || "Membership" %></div>
+            <p class="text-xs text-slate-500">Quantity: <%= purchase.quantity %></p>
+            <p class="text-xs text-slate-500">Total: <%= number_to_currency(purchase.total_price_cents / 100.0, unit: purchase.total_price_currency) %></p>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Payment transactions</h3>
+          <% if @transactions.any? %>
+            <ul class="mt-2 space-y-2 text-sm text-slate-600">
+              <% @transactions.each do |tx| %>
+                <li class="rounded border border-slate-100 px-3 py-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-medium text-slate-900"><%= tx.gateway.titleize %></span>
+                    <span class="text-xs uppercase tracking-wide text-slate-500"><%= tx.status %></span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-1">
+                    Amount: <%= number_to_currency(tx.amount_cents / 100.0, unit: tx.amount_currency) %>
+                    <% if tx.processed_at %>
+                      · <%= l(tx.processed_at, format: :short) %>
+                    <% end %>
+                  </p>
+                  <% if tx.response_reference.present? %>
+                    <p class="text-xs text-slate-400 break-all">Reference: <%= tx.response_reference %></p>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="mt-2 text-xs text-slate-500">No payment transactions recorded.</p>
+          <% end %>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+    <header class="flex items-center justify-between">
+      <h2 class="text-base font-semibold text-slate-900">Question responses</h2>
+      <span class="text-xs font-medium uppercase tracking-wide text-slate-400"><%= pluralize(@question_responses.count, "response") %></span>
+    </header>
+    <% if @question_responses.any? %>
+      <dl class="space-y-3 text-sm text-slate-700">
+        <% @question_responses.each do |response| %>
+          <div class="rounded border border-slate-200 px-3 py-2">
+            <dt class="font-medium text-slate-900"><%= response.membership_question.prompt %></dt>
+            <dd class="mt-1 whitespace-pre-line text-slate-600"><%= response.value %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% else %>
+      <p class="text-sm text-slate-500">No survey responses captured.</p>
+    <% end %>
+  </section>
+</div>

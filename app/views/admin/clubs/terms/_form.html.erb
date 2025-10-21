@@ -1,0 +1,67 @@
+<% frame_dom_id = local_assigns[:frame_id] || (term.persisted? ? dom_id(term) : dom_id(club, :new_club_term)) %>
+<% form_url = term.persisted? ? admin_club_term_path(club, term) : admin_club_terms_path(club) %>
+
+<%= turbo_frame_tag frame_dom_id do %>
+  <%= form_with model: term, url: form_url, class: "space-y-4" do |form| %>
+    <% if term.errors.any? %>
+      <div class="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <%= term.errors.full_messages.to_sentence %>
+      </div>
+    <% end %>
+
+    <div class="space-y-1">
+      <%= form.label :title, "Title", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :title,
+        class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+        placeholder: "e.g. Code of conduct" %>
+    </div>
+
+    <div class="space-y-1">
+      <%= form.label :body, "Term content", class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_area :body,
+        rows: 4,
+        class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+        placeholder: "Describe the requirement members must agree to." %>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="space-y-1">
+        <%= form.label :position, "Display order", class: "block text-sm font-medium text-slate-700" %>
+        <%= form.number_field :position,
+          min: 0,
+          class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+      <div class="space-y-1">
+        <%= form.label :required, "Required to proceed", class: "block text-sm font-medium text-slate-700" %>
+        <div class="flex items-center gap-2">
+          <%= form.check_box :required, class: "rounded border-slate-300 text-slate-900 focus:ring-slate-500" %>
+          <span class="text-sm text-slate-600">Members must accept</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <%= form.check_box :active, class: "rounded border-slate-300 text-slate-900 focus:ring-slate-500" %>
+      <%= form.label :active, "Visible during registration", class: "text-sm text-slate-600" %>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      <% if term.persisted? %>
+        <%= link_to "Cancel",
+          admin_club_term_path(club, term),
+          data: { turbo_frame: dom_id(term) },
+          class: "text-sm font-medium text-slate-500 hover:text-slate-700" %>
+      <% else %>
+        <button
+          type="button"
+          class="text-sm font-medium text-slate-500 hover:text-slate-700"
+          data-action="modal#close"
+        >
+          Cancel
+        </button>
+      <% end %>
+      <%= form.submit(term.persisted? ? "Save changes" : "Create term",
+        class: "inline-flex items-center rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800") %>
+    </div>
+  <% end %>
+<% end %>

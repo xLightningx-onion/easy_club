@@ -34,7 +34,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-slate-900">My Memberships</h2>
       <% if @membership_profiles.any? %>
-        <span class="text-xs font-medium uppercase tracking-wide text-slate-400"><%= pluralize(@membership_profiles.count, "active membership") %></span>
+        <span class="text-xs font-medium uppercase tracking-wide text-slate-400"><%= pluralize(@membership_profiles.count, "membership") %></span>
       <% end %>
     </div>
 
@@ -42,6 +42,13 @@
       <div class="grid gap-4">
         <% @membership_profiles.each do |membership| %>
           <% club = membership.club %>
+          <% status = membership.status.presence || "unpaid" %>
+          <% status_pill_classes = case status.to_s
+                                    when "active" then "bg-emerald-100 text-emerald-700"
+                                    when "unpaid" then "bg-amber-100 text-amber-700"
+                                    when "suspended" then "bg-rose-100 text-rose-600"
+                                    else "bg-slate-100 text-slate-600"
+                                  end %>
           <article class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition hover:border-slate-300">
             <div class="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
               <% if club&.logo&.attached? %>
@@ -56,8 +63,8 @@
               <p class="text-sm font-semibold text-slate-900"><%= club&.name || "Club pending" %></p>
               <p class="text-sm text-slate-500"><%= membership.full_name.presence || "Member profile" %></p>
             </div>
-            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-600">
-              ✓
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <%= status_pill_classes %> capitalize">
+              <%= status.tr("_", " ") %>
             </span>
           </article>
         <% end %>

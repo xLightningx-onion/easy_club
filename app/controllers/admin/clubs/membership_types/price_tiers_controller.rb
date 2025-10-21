@@ -84,7 +84,7 @@ class Admin::Clubs::MembershipTypes::PriceTiersController < Admin::BaseControlle
   end
 
   def price_tier_params
-    params.require(:membership_type_price_tier).permit(:label, :amount, :position)
+    params.require(:membership_type_price_tier).permit(:label, :amount, :position, :starts_on, :ends_on)
   end
 
   def render_form

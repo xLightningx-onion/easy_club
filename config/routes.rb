@@ -48,6 +48,8 @@ Rails.application.routes.draw do
       resources :items, controller: "cart_items", only: %i[create update destroy]
     end
     resource :checkout, only: :create
+    resources :payment_methods, only: :destroy
+    get "checkout/success", to: "checkouts#success", as: :checkout_success
     root "dashboard"
   end
 
@@ -67,6 +69,17 @@ Rails.application.routes.draw do
       resources :membership_questions,
                 module: :clubs,
                 except: %i[index]
+      resources :medical_questions,
+                module: :clubs,
+                except: %i[index] do
+        patch :toggle, on: :member
+      end
+      resources :terms,
+                module: :clubs,
+                except: %i[index]
+      resources :memberships,
+                module: :clubs,
+                only: %i[index show]
     end
     resources :users
     resources :members, only: %i[index show]

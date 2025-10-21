@@ -1,7 +1,82 @@
-<div class="px-6 py-16 text-center text-sm text-slate-500">
-  <p><strong><%= step.titleize %> step coming soon.</strong></p>
-  <p class="mt-2">We’ll guide you through this part of the membership journey in the next iteration.</p>
-  <div class="mt-6">
-    <%= link_to "Back to dashboard", members_dashboards_path, class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+<div class="px-6 py-8 space-y-8">
+  <div class="text-center space-y-2">
+    <h2 class="text-xl font-semibold text-slate-900">Club questions</h2>
+    <p class="text-sm text-slate-600">Your club needs these responses to complete the membership setup.</p>
   </div>
+
+  <% if @membership_questions.any? %>
+    <%= form_with model: @form, url: members_membership_registration_path(step: "survey", club_id: @club.id), method: :patch, class: "space-y-6" do |f| %>
+      <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
+
+      <div class="space-y-5">
+        <% @membership_questions.each do |question| %>
+          <% response_value = @form.survey_responses[question.id.to_s] %>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-700" for="survey-question-<%= question.id %>">
+              <%= question.prompt %>
+              <% if question.required? %>
+                <span class="text-rose-600">*</span>
+              <% end %>
+            </label>
+            <% if question.help_text.present? %>
+              <p class="text-xs text-slate-500"><%= question.help_text %></p>
+            <% end %>
+            <% case question.answer_type %>
+            <% when "long_text" %>
+              <textarea id="survey-question-<%= question.id %>" name="membership_registration_form[survey_responses][<%= question.id %>]" rows="4" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>><%= response_value %></textarea>
+            <% when "number" %>
+              <input id="survey-question-<%= question.id %>" type="number" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= response_value %>" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+            <% when "date" %>
+              <input id="survey-question-<%= question.id %>" type="date" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= response_value %>" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+            <% when "checkbox" %>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                <input type="checkbox" id="survey-question-<%= question.id %>" name="membership_registration_form[survey_responses][<%= question.id %>]" value="1" class="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500" <%= response_value.present? ? "checked" : nil %>>
+                <span>Yes</span>
+              </label>
+            <% when "radio" %>
+              <% options = Array(question.options) %>
+              <% if options.present? %>
+                <div class="space-y-2">
+                  <% options.each_with_index do |option, idx| %>
+                    <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                      <input type="radio" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= option %>" class="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500" <%= response_value == option ? "checked" : nil %> <%= question.required? && idx.zero? ? "required" : nil %>>
+                      <span><%= option %></span>
+                    </label>
+                  <% end %>
+                </div>
+              <% else %>
+                <input id="survey-question-<%= question.id %>" type="text" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= response_value %>" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+              <% end %>
+            <% when "select" %>
+              <% options = Array(question.options) %>
+              <% if options.present? %>
+                <select id="survey-question-<%= question.id %>" name="membership_registration_form[survey_responses][<%= question.id %>]" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+                  <option value="">Select an option</option>
+                  <% options.each do |option| %>
+                    <option value="<%= option %>" <%= response_value == option ? "selected" : nil %>><%= option %></option>
+                  <% end %>
+                </select>
+              <% else %>
+                <input id="survey-question-<%= question.id %>" type="text" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= response_value %>" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+              <% end %>
+            <% else %>
+              <input id="survey-question-<%= question.id %>" type="text" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= response_value %>" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <%= link_to "Previous", members_membership_registration_path(step: "medical", club_id: @club.id), class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+        <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="rounded-xl border border-slate-200 bg-white px-6 py-8 text-center text-sm text-slate-500">
+      <p>There are no custom survey questions from <strong><%= @club.name %></strong>. You can continue to the next step.</p>
+      <div class="mt-4 flex justify-center">
+        <%= link_to "Next", members_membership_registration_path(step: "terms", club_id: @club.id), class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+      </div>
+    </div>
+  <% end %>
 </div>

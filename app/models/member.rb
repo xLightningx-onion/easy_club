@@ -6,6 +6,7 @@ class Member < ApplicationRecord
 
   belongs_to :club
   belongs_to :user, optional: true
+  belongs_to :membership_type, optional: true
 
   has_many :guardianships, dependent: :destroy
   has_many :guardians, through: :guardianships, source: :guardian
@@ -19,12 +20,29 @@ class Member < ApplicationRecord
   has_many :order_items, dependent: :restrict_with_exception
   has_many :orders, through: :order_items
   has_many :membership_question_responses, dependent: :destroy
+  has_many :club_term_acceptances, dependent: :destroy
+
+  enum :status, {
+    unpaid: "unpaid",
+    active: "active",
+    suspended: "suspended"
+  }, prefix: true
+
+  scope :unpaid, -> { where(status: :unpaid) }
+
+  before_validation :ensure_status
 
   def full_name
-    [first_name, last_name].compact.join(" ").strip
+    [ first_name, last_name ].compact.join(" ").strip
   end
 
   def display_name
     full_name.presence || "Member #{id.to_s.first(8)}"
+  end
+
+  private
+
+  def ensure_status
+    self.status ||= "unpaid"
   end
 end

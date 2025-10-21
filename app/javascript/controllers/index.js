@@ -36,3 +36,6 @@ application.register("membership-start", MembershipStartController)
 
 import SaIdController from "./sa_id_controller"
 application.register("sa-id", SaIdController)
+
+import PaymentMethodController from "./payment_method_controller"
+application.register("payment-method", PaymentMethodController)

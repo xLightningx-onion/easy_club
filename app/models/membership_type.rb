@@ -10,11 +10,13 @@ class MembershipType < ApplicationRecord
   }.freeze
 
   belongs_to :club
+  belongs_to :plan, optional: true
   has_many :price_tiers,
            -> { order(:position, :created_at) },
            class_name: "MembershipTypePriceTier",
            dependent: :destroy,
            inverse_of: :membership_type
+  has_many :members, dependent: :nullify
 
   enum :gender, GENDER_OPTIONS
 
@@ -27,6 +29,22 @@ class MembershipType < ApplicationRecord
   validates :min_age_years, :max_age_years,
             numericality: { greater_than_or_equal_to: 0, only_integer: true }
   validates :min_age_years, comparison: { less_than_or_equal_to: :max_age_years }
+
+  def price_for(date = Date.current)
+    tier = price_tiers.find do |price_tier|
+      price_tier.starts_on <= date && price_tier.ends_on >= date
+    end
+
+    if tier
+      Money.new(tier.amount_cents, tier.amount_currency)
+    else
+      base_price
+    end
+  end
+
+  def current_price
+    price_for(Date.current)
+  end
 
   private
 

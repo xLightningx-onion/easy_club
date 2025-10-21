@@ -7,7 +7,7 @@ module Checkouts
     class Error < StandardError; end
     class EmptyCartError < Error; end
 
-    def initialize(cart:, user:, payment_method: nil, tokenize: false, card_details: {}, client: nil)
+    def initialize(cart:, user:, payment_method: nil, tokenize: false, card_details: {}, saved_card_cvv: nil, client: nil)
       @cart = cart
       @user = user
       @payment_method = payment_method
@@ -15,6 +15,7 @@ module Checkouts
       card_hash = card_details || {}
       card_hash = card_hash.to_h if card_hash.respond_to?(:to_h)
       @card_details = card_hash.deep_symbolize_keys
+      @saved_card_cvv = saved_card_cvv.to_s.gsub(/\D/, "")
       @client = client || default_client
     end
 
@@ -32,40 +33,44 @@ module Checkouts
         )
 
         response = initiate_payment!(order, payment_tx)
+
+        unless response.successful?
+          raise Error, response.error_message.presence || "Payment was declined."
+        end
+
         saved_payment_method = persist_tokenized_card(response) if tokenize? && response.card_token.present?
+        applied_payment_method = saved_payment_method || payment_method
 
         order.update!(
-          status: response.successful? ? :pending_payment : :cancelled,
-          submitted_at: Time.current,
-          payment_method: saved_payment_method || payment_method
+          payment_method: applied_payment_method,
+          submitted_at: Time.current
         )
+        order.mark_paid!(Time.current)
 
         payment_tx.update!(
-          status: response.successful? ? :pending : :failed,
+          status: :succeeded,
           request_payload: response.request_payload,
           response_payload: response.parsed_body,
           request_reference: response.request_reference,
           response_reference: response.response_reference,
           processed_at: Time.current,
-          payment_method: saved_payment_method || payment_method
+          payment_method: applied_payment_method
         )
-
-        finalize_cart!
 
         Result.new(
           order:,
           transaction: payment_tx,
           response:,
-          payment_method: saved_payment_method || payment_method
+          payment_method: applied_payment_method
         )
       end
-    rescue StandardError => e
-      raise Error, e.message
+      rescue StandardError => e
+        raise Error, e.message
     end
 
     private
 
-    attr_reader :cart, :user, :payment_method, :tokenize, :card_details, :client
+    attr_reader :cart, :user, :payment_method, :tokenize, :card_details, :saved_card_cvv, :client
 
     def build_order!
       subtotal_cents = cart.cart_items.sum(:total_price_cents)
@@ -102,22 +107,28 @@ module Checkouts
     end
 
     def initiate_payment!(order, payment_tx)
-      response = client.initiate_transaction(
-        order:,
-        transaction: payment_tx,
-        tokenize: tokenize?,
-        payment_method:,
-        card_details:,
-        return_url: Settings.paygate.pay_host.return_url,
-        notify_url: Settings.paygate.pay_host.notify_url
-      )
+      return_url = Settings.paygate.pay_host.return_url
+      notify_url = Settings.paygate.pay_host.notify_url
 
-      response
-    end
-
-    def finalize_cart!
-      cart.update!(status: :checked_out, checked_out_at: Time.current)
-      cart.cart_items.destroy_all
+      if payment_method
+        client.token_payment(
+          order:,
+          transaction: payment_tx,
+          payment_method:,
+          cvv: saved_card_cvv.presence,
+          return_url:,
+          notify_url:
+        )
+      else
+        client.card_payment(
+          order:,
+          transaction: payment_tx,
+          card_details:,
+          tokenize: tokenize?,
+          return_url:,
+          notify_url:
+        )
+      end
     end
 
     def persist_tokenized_card(response)
@@ -130,8 +141,8 @@ module Checkouts
 
       method.last_four = response.card_last4 if response.card_last4
       method.brand = response.card_brand if response.card_brand
-      method.expiry_month = response.card_expiry_month if response.card_expiry_month
-      method.expiry_year = response.card_expiry_year if response.card_expiry_year
+      method.expiry_month = response.card_expiry_month.to_i if response.card_expiry_month
+      method.expiry_year = response.card_expiry_year.to_i if response.card_expiry_year
 
       if PaymentMethod.where(club: cart.club, user:).where(default: true).where.not(id: method.id).empty?
         method.default = true
@@ -152,7 +163,7 @@ module Checkouts
     def default_client
       Paygate::PayHostClient.new(
         merchant_id: Settings.paygate.pay_host.merchant_id,
-        encryption_key: Settings.paygate.pay_host.encryption_key,
+        password: Settings.paygate.pay_host.password,
         endpoint: Settings.paygate.pay_host.endpoint
       )
     end

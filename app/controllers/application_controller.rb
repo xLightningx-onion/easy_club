@@ -1,6 +1,5 @@
 class ApplicationController < ActionController::Base
-
-    include CableReady::Broadcaster
+  include CableReady::Broadcaster
   include ActionPolicy::Controller
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
@@ -9,7 +8,23 @@ class ApplicationController < ActionController::Base
   around_action :set_current_club_context
   helper_method :current_club
 
+  protected
+
+  def after_sign_in_path_for(resource)
+    stored_location_for(resource) || default_signed_in_path_for(resource)
+  end
+
   private
+
+  def default_signed_in_path_for(resource)
+    if resource.respond_to?(:staff?) && resource.staff?
+      club_root_path
+    elsif resource.respond_to?(:club_roles) && resource.club_roles.exists?
+      club_root_path
+    else
+      members_dashboards_path
+    end
+  end
 
   def set_current_club_context
     return yield if admin_namespace?

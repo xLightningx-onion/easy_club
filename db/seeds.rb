@@ -70,16 +70,64 @@ Club.with_current(club) do
   end
 
   [
-    { label: "Junior Player", min_age: 6, max_age: 12, base_price: 65_00 },
-    { label: "Senior Player", min_age: 13, max_age: 18, base_price: 85_00 },
-    { label: "Coach", min_age: 18, max_age: 65, base_price: 0 }
+    { label: "Junior Player", min_age: 6, max_age: 12, base_price: Money.new(65_00, "ZAR") },
+    { label: "Senior Player", min_age: 13, max_age: 18, base_price: Money.new(85_00, "ZAR") },
+    { label: "Coach", min_age: 18, max_age: 65, base_price: Money.new(0, "ZAR") }
   ].each do |attributes|
-    MembershipType.find_or_create_by!(club:, label: attributes[:label]) do |membership_type|
-      membership_type.min_age_years = attributes[:min_age]
-      membership_type.max_age_years = attributes[:max_age]
-      membership_type.gender = :unisex
-      membership_type.base_price_cents = attributes[:base_price]
-      membership_type.base_price_currency = "ZAR"
+    membership_type = MembershipType.find_or_initialize_by(club:, label: attributes[:label])
+    membership_type.assign_attributes(
+      min_age_years: attributes[:min_age],
+      max_age_years: attributes[:max_age],
+      gender: :unisex,
+      base_price_cents: attributes[:base_price].cents,
+      base_price_currency: attributes[:base_price].currency.iso_code
+    )
+    membership_type.save!
+
+    product = club.products.find_or_initialize_by(sku: "membership-type-#{membership_type.id}")
+    product.name = membership_type.label
+    product.price_cents = attributes[:base_price].cents
+    product.price_currency = attributes[:base_price].currency.iso_code
+    product.category ||= "membership"
+    product.save!
+
+    plan = membership_type.plan || club.plans.find_or_initialize_by(product:, plan_type: :once_off)
+    plan.product = product
+    plan.plan_type ||= :once_off
+    plan.save!
+
+    membership_type.update!(plan: plan) unless membership_type.plan_id == plan.id
+  end
+
+  [
+    { prompt: "Does the member have any allergies?", question_type: :long_text, required: true },
+    { prompt: "Is an inhaler required during activity?", question_type: :boolean, required: false }
+  ].each_with_index do |attributes, index|
+    MedicalQuestion.find_or_create_by!(club:, prompt: attributes[:prompt]) do |question|
+      question.question_type = attributes[:question_type]
+      question.required = attributes[:required]
+      question.position = index
+      question.active = true
+    end
+  end
+
+  [
+    {
+      title: "Parent/guardian consent",
+      body: "I confirm I am the legal guardian of the participant and consent to their involvement in all club-sanctioned activities.",
+      required: true
+    },
+    {
+      title: "Photography release",
+      body: "I grant the club permission to capture and use photographs or video for promotional purposes.",
+      required: false
+    }
+  ].each_with_index do |attributes, index|
+    ClubTerm.find_or_create_by!(club:, title: attributes[:title]) do |term|
+      term.body = attributes[:body]
+      term.required = attributes[:required]
+      term.position = index
+      term.active = true
     end
   end
 

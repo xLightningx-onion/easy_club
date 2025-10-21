@@ -15,7 +15,7 @@ class Club::BaseController < ApplicationController
 
   def current_cart
     @current_cart ||= begin
-      Cart.active.find_by(user: current_user, club: current_club) ||
+      Cart.unpaid.find_by(user: current_user, club: current_club) ||
         Cart.create!(user: current_user, club: current_club)
     end
   end

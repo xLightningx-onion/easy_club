@@ -3,6 +3,7 @@
     <div>
       <p class="text-sm font-medium text-slate-900"><%= price_tier.label %></p>
       <p class="text-xs text-slate-500">Amount: <%= price_tier.amount.format %></p>
+      <p class="text-xs text-slate-500">Valid <%= l(price_tier.starts_on, format: :long) %> – <%= l(price_tier.ends_on, format: :long) %></p>
     </div>
     <div class="flex items-center gap-2">
       <button

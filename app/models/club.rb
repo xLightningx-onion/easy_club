@@ -36,6 +36,9 @@ class Club < ApplicationRecord
 
   has_many :membership_questions, -> { order(:position, :created_at) }, dependent: :destroy, inverse_of: :club
   has_many :membership_question_responses, dependent: :destroy
+  has_many :club_terms, -> { order(:position, :created_at) }, dependent: :destroy
+  has_many :club_term_acceptances, through: :club_terms
+  has_many :medical_questions, dependent: :destroy
 
   accepts_nested_attributes_for :membership_questions, allow_destroy: true, reject_if: proc { |attributes| attributes["prompt"].blank? }
 

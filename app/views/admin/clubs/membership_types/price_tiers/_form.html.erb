@@ -1,25 +1,44 @@
 <% frame_dom_id = local_assigns[:frame_id] || (price_tier.persisted? ? dom_id(price_tier) : dom_id(membership_type, :new_price_tier)) %>
+<% form_url = price_tier.persisted? ?
+                admin_club_membership_type_price_tier_path(club, membership_type, price_tier) :
+                admin_club_membership_type_price_tiers_path(club, membership_type) %>
+
 <%= turbo_frame_tag frame_dom_id do %>
-  <%= form_with model: [:admin, club, membership_type, price_tier], class: "space-y-4" do |form| %>
+  <%= form_with model: price_tier, url: form_url, class: "space-y-4" do |form| %>
     <% if price_tier.errors.any? %>
       <div class="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
         <%= price_tier.errors.full_messages.to_sentence %>
       </div>
     <% end %>
 
-    <div class="space-y-1">
-      <%= form.label :label, "Label", class: "block text-sm font-medium text-slate-700" %>
-      <%= form.text_field :label,
-        class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
-        placeholder: "e.g. Early bird discount" %>
-    </div>
+<div class="space-y-1">
+  <%= form.label :label, "Label", class: "block text-sm font-medium text-slate-700" %>
+  <%= form.text_field :label,
+    class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+    placeholder: "e.g. Early bird discount" %>
+</div>
 
-    <div class="grid gap-3 md:grid-cols-2">
-      <div class="space-y-1">
-        <%= form.label :amount, "Amount", class: "block text-sm font-medium text-slate-700" %>
-        <%= form.number_field :amount,
-          value: price_tier.amount&.to_f,
-          step: 0.01,
+<div class="grid gap-3 md:grid-cols-2">
+  <div class="space-y-1">
+    <%= form.label :starts_on, "Starts on", class: "block text-sm font-medium text-slate-700" %>
+    <%= form.date_field :starts_on,
+      value: price_tier.starts_on,
+      class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+  </div>
+  <div class="space-y-1">
+    <%= form.label :ends_on, "Ends on", class: "block text-sm font-medium text-slate-700" %>
+    <%= form.date_field :ends_on,
+      value: price_tier.ends_on,
+      class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+  </div>
+</div>
+
+<div class="grid gap-3 md:grid-cols-2">
+  <div class="space-y-1">
+    <%= form.label :amount, "Amount", class: "block text-sm font-medium text-slate-700" %>
+    <%= form.number_field :amount,
+      value: price_tier.amount&.to_f,
+      step: 0.01,
           min: 0,
           class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
       </div>

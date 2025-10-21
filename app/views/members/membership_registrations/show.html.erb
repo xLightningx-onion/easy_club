@@ -7,7 +7,7 @@
         <% if @club.logo&.attached? %>
           <%= image_tag serve_image_remote_url(@club.logo, resize_spec: "resize_to_fill", size_curves: [180, 180]), alt: "#{@club.name} logo", class: "h-full w-full object-cover" %>
         <% else %>
-          <span class="text-xl font-semibold uppercase text-slate-800"><%= @club.name.first(2) %></span>
+          <span class="text-xl font-semibold uppercase text-slate-800"><%= @club.name.to_s[0, 2] %></span>
         <% end %>
       </div>
       <div class="text-center space-y-2">
@@ -18,7 +18,7 @@
     </header>
 
     <%= turbo_frame_tag "membership-step" do %>
-      <%= render "members/membership_registrations/#{@step}", form: @form, club: @club, plans: @plans %>
+      <%= render "members/membership_registrations/#{@step}" %>
     <% end %>
   </div>
 </section>

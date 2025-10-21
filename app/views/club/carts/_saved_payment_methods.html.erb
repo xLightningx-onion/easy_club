@@ -1,0 +1,82 @@
+<% if payment_methods.any? %>
+  <div class="space-y-3 mb-3">
+    <% if error_message.present? %>
+      <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <%= error_message %>
+      </div>
+    <% end %>
+
+    <% payment_methods.each_with_index do |method, index| %>
+      <% selected_id = selected_method_id.present? ? selected_method_id.to_s : nil %>
+      <% checked = selected_id ? method.id.to_s == selected_id : index.zero? %>
+      <div class="rounded-lg border <%= checked ? 'border-slate-900 shadow-sm' : 'border-slate-300' %> bg-white px-4 py-4 transition hover:border-slate-400"
+           data-payment-method-target="option"
+           data-selection="saved"
+           data-method-id="<%= method.id %>">
+        <div class="flex items-start justify-between gap-3">
+          <label class="flex flex-1 cursor-pointer items-start gap-3">
+            <input type="radio"
+                   name="checkout[payment_option]"
+                   value="<%= method.id %>"
+                   class="mt-1 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
+                   <%= "checked" if checked %>
+                   data-action="change->payment-method#choose"
+                   data-payment-method-selection-param="saved"
+                   data-payment-method-id-param="<%= method.id %>">
+            <span class="flex flex-col text-left">
+              <span class="flex items-center gap-2">
+                <span class="font-medium text-slate-900"><%= method.masked_label %></span>
+                <% if method.default? %>
+                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Default</span>
+                <% end %>
+              </span>
+              <% if method.expiry_month && method.expiry_year %>
+                <span class="text-xs text-slate-500">Expires <%= "%02d" % method.expiry_month %>/<%= method.expiry_year %></span>
+              <% end %>
+            </span>
+          </label>
+          <%= link_to "Remove",
+                      club_payment_method_path(method),
+                      class: "text-xs font-semibold text-rose-600 transition hover:text-rose-700",
+                      data: {
+                        turbo_method: :delete,
+                        turbo_confirm: "Remove this saved card?",
+                        turbo_frame: "club_checkout_payment_methods"
+                      } %>
+        </div>
+
+        <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 <%= checked ? '' : 'hidden' %>"
+             data-payment-method-target="cvvSection"
+             data-method-id="<%= method.id %>">
+          <label class="flex flex-col gap-1 text-left">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Security code (CVV)</span>
+            <%= password_field_tag "checkout[saved_card_cvv]",
+                                    nil,
+                                    id: "checkout_saved_card_cvv_#{method.id}",
+                                    class: "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+                                    placeholder: "123",
+                                    inputmode: "numeric",
+                                    autocomplete: "cc-csc",
+                                    maxlength: 4,
+                                    pattern: "\\d*",
+                                    disabled: checked ? false : true,
+                                    required: true,
+                                    data: {
+                                      payment_method_target: "cvvInput",
+                                      method_id: method.id
+                                    } %>
+          </label>
+          <p class="mt-2 text-xs text-slate-500">
+            We never store your CVV. Enter the 3 or 4-digit code from the back of your card.
+          </p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <% if error_message.present? %>
+    <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <%= error_message %>
+    </div>
+  <% end %>
+<% end %>

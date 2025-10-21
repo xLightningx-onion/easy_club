@@ -1,7 +1,71 @@
-<div class="px-6 py-16 text-center text-sm text-slate-500">
-  <p><strong><%= step.titleize %> step coming soon.</strong></p>
-  <p class="mt-2">We’ll guide you through this part of the membership journey in the next iteration.</p>
-  <div class="mt-6">
-    <%= link_to "Back to dashboard", members_dashboards_path, class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
-  </div>
+<div class="px-6 py-8">
+  <%= form_with model: @form, url: members_membership_registration_path(step: "medical", club_id: @club.id), method: :patch, class: "space-y-8" do |f| %>
+    <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Medical aid name (optional)</label>
+        <%= f.text_field :medical_aid_name, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Medical aid number (optional)</label>
+        <%= f.text_field :medical_aid_number, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Emergency contact name</label>
+        <%= f.text_field :emergency_contact_name, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring", required: true %>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Emergency contact number</label>
+        <%= f.telephone_field :emergency_contact_number, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring", required: true %>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Medical notes (optional)</label>
+        <%= f.text_area :medical_notes, rows: 4, class: "w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" %>
+      </div>
+    </div>
+
+    <% if @medical_questions.any? %>
+      <div class="space-y-4">
+        <h2 class="text-lg font-semibold text-slate-900">Medical survey</h2>
+        <% @medical_questions.each do |question| %>
+          <% response_value = @form.survey_responses[question.id.to_s] %>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-700" for="medical-question-<%= question.id %>">
+              <%= question.prompt %>
+              <% if question.required? %>
+                <span class="text-rose-600">*</span>
+              <% end %>
+            </label>
+            <% case question.question_type %>
+            <% when "boolean" %>
+              <div class="flex items-center gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                  <input type="radio" name="membership_registration_form[survey_responses][<%= question.id %>]" value="yes" class="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500" <%= response_value == "yes" ? "checked" : nil %> <%= question.required? ? "required" : nil %>>
+                  <span>Yes</span>
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                  <input type="radio" name="membership_registration_form[survey_responses][<%= question.id %>]" value="no" class="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500" <%= response_value == "no" ? "checked" : nil %>>
+                  <span>No</span>
+                </label>
+              </div>
+            <% when "long_text" %>
+              <textarea id="medical-question-<%= question.id %>" name="membership_registration_form[survey_responses][<%= question.id %>]" rows="3" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>><%= response_value %></textarea>
+            <% else %>
+              <input id="medical-question-<%= question.id %>" type="text" name="membership_registration_form[survey_responses][<%= question.id %>]" value="<%= response_value %>" class="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 focus:border-slate-500 focus:outline-none focus:ring" <%= question.required? ? "required" : nil %>>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="flex items-center justify-between">
+      <%= link_to "Previous", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "membership_type"), class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+      <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+    </div>
+  <% end %>
 </div>

@@ -29,8 +29,12 @@ class Order < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc) }
 
-  def mark_paid!(paid_time: Time.current)
-    update!(status: :paid, paid_at: paid_time)
+  def mark_paid!(paid_time)
+    paid_time ||= Time.current
+    transaction do
+      update!(status: :paid, paid_at: paid_time)
+      cart&.mark_as_paid!(paid_time)
+    end
   end
 
   private

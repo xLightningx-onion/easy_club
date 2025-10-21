@@ -5,6 +5,7 @@
   <header class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
     <h2 class="text-base font-semibold text-slate-900">Club details</h2>
     <div class="flex flex-wrap items-center gap-2">
+      <%= link_to "Memberships", admin_club_memberships_path(@club), class: "rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
       <%= link_to "Edit", edit_admin_club_path(@club), class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
       <%= button_to "Impersonate", impersonate_admin_club_path(@club), method: :post, form: { class: "inline" }, class: "rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
       <%= button_to "Delete", admin_club_path(@club), method: :delete, data: { turbo_confirm: "Delete this club?" }, form: { class: "inline" }, class: "rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-500" %>
@@ -89,6 +90,122 @@
         <div class="px-4 py-4">
           <turbo-frame
             id="<%= dom_id(@club, :membership_type_modal) %>"
+            data-modal-target="frame"
+            loading="lazy"
+          ></turbo-frame>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section
+  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
+  data-controller="modal"
+  data-action="turbo:submit-end->modal#handleSubmitEnd"
+>
+  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">Terms &amp; conditions</h2>
+      <p class="text-sm text-slate-500">Collect members' acknowledgement of club rules, waivers, and other commitments.</p>
+    </div>
+    <turbo-frame id="<%= dom_id(@club, :new_club_term) %>">
+      <%= render "admin/clubs/terms/new_button", club: @club %>
+    </turbo-frame>
+  </header>
+  <div class="border-t border-slate-200">
+    <turbo-frame id="<%= dom_id(@club, :club_terms) %>">
+      <%= render "admin/clubs/terms/list",
+                 club: @club,
+                 terms: @club_terms %>
+    </turbo-frame>
+  </div>
+
+  <div
+    class="fixed inset-0 z-50 hidden"
+    data-modal-target="wrapper"
+    data-action="keydown.esc->modal#close"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+      <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add term</h3>
+          <button
+            type="button"
+            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            data-action="modal#close"
+            aria-label="Close modal"
+            data-modal-initial-focus
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+        <div class="px-4 py-4">
+          <turbo-frame
+            id="<%= dom_id(@club, :club_term_modal) %>"
+            data-modal-target="frame"
+            loading="lazy"
+          ></turbo-frame>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section
+  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
+  data-controller="modal"
+  data-action="turbo:submit-end->modal#handleSubmitEnd"
+>
+  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">Medical questions</h2>
+      <p class="text-sm text-slate-500">Capture health disclosures or emergency details required before participation.</p>
+    </div>
+    <turbo-frame id="<%= dom_id(@club, :new_medical_question) %>">
+      <%= render "admin/clubs/medical_questions/new_button", club: @club %>
+    </turbo-frame>
+  </header>
+  <div class="border-t border-slate-200">
+    <turbo-frame id="<%= dom_id(@club, :medical_questions) %>">
+      <%= render "admin/clubs/medical_questions/list",
+                 club: @club,
+                 medical_questions: @medical_questions %>
+    </turbo-frame>
+  </div>
+
+  <div
+    class="fixed inset-0 z-50 hidden"
+    data-modal-target="wrapper"
+    data-action="keydown.esc->modal#close"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+      <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add medical question</h3>
+          <button
+            type="button"
+            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            data-action="modal#close"
+            aria-label="Close modal"
+            data-modal-initial-focus
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </header>
+        <div class="px-4 py-4">
+          <turbo-frame
+            id="<%= dom_id(@club, :medical_question_modal) %>"
             data-modal-target="frame"
             loading="lazy"
           ></turbo-frame>

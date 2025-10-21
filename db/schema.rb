@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -131,7 +131,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
   create_table "carts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "club_id", null: false
     t.uuid "user_id", null: false
-    t.string "status", default: "active", null: false
+    t.string "status", default: "unpaid", null: false
     t.datetime "expires_at"
     t.datetime "checked_out_at"
     t.jsonb "metadata", default: {}, null: false
@@ -153,6 +153,29 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.index ["club_id", "user_id"], name: "index_club_roles_on_club_id_and_user_id", unique: true
     t.index ["club_id"], name: "index_club_roles_on_club_id"
     t.index ["user_id"], name: "index_club_roles_on_user_id"
+  end
+
+  create_table "club_term_acceptances", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_term_id", null: false
+    t.uuid "member_id", null: false
+    t.datetime "accepted_at", null: false
+    t.uuid "accepted_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_term_id", "member_id"], name: "idx_club_term_acceptances_unique", unique: true
+  end
+
+  create_table "club_terms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.string "title", null: false
+    t.text "body", null: false
+    t.boolean "required", default: true, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id", "position"], name: "index_club_terms_on_club_id_and_position"
+    t.index ["club_id"], name: "index_club_terms_on_club_id"
   end
 
   create_table "clubs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -318,6 +341,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.index ["number"], name: "index_invoices_on_number", unique: true
   end
 
+  create_table "medical_questions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.string "prompt", null: false
+    t.string "question_type", default: "short_text", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "required", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id"], name: "index_medical_questions_on_club_id"
+  end
+
   create_table "members", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "club_id", null: false
     t.uuid "user_id"
@@ -332,7 +367,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.string "safeguarding_reason"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "membership_type_id"
+    t.string "status", default: "unpaid", null: false
     t.index ["club_id"], name: "index_members_on_club_id"
+    t.index ["membership_type_id"], name: "index_members_on_membership_type_id"
+    t.index ["status"], name: "index_members_on_status"
     t.index ["user_id"], name: "index_members_on_user_id"
   end
 
@@ -360,6 +399,40 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.index ["answer_type"], name: "index_membership_questions_on_answer_type"
     t.index ["club_id", "position"], name: "index_membership_questions_on_club_id_and_position"
     t.index ["club_id"], name: "index_membership_questions_on_club_id"
+  end
+
+  create_table "membership_type_price_tiers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.uuid "membership_type_id", null: false
+    t.string "label", null: false
+    t.integer "amount_cents", default: 0, null: false
+    t.string "amount_currency", default: "ZAR", null: false
+    t.integer "position", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.index ["club_id"], name: "index_membership_type_price_tiers_on_club_id"
+    t.index ["membership_type_id"], name: "index_membership_type_price_tiers_on_membership_type_id"
+    t.check_constraint "starts_on <= ends_on", name: "membership_type_price_tiers_starts_before_ends"
+  end
+
+  create_table "membership_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.string "label", null: false
+    t.integer "min_age_years", null: false
+    t.integer "max_age_years", null: false
+    t.string "gender", default: "unisex", null: false
+    t.integer "base_price_cents", default: 0, null: false
+    t.string "base_price_currency", default: "ZAR", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "plan_id"
+    t.index ["club_id", "label"], name: "index_membership_types_on_club_id_and_label", unique: true
+    t.index ["club_id"], name: "index_membership_types_on_club_id"
+    t.index ["plan_id"], name: "index_membership_types_on_plan_id"
   end
 
   create_table "order_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -400,9 +473,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "payment_method_id"
+    t.datetime "paid_time"
     t.index ["cart_id"], name: "index_orders_on_cart_id"
     t.index ["club_id"], name: "index_orders_on_club_id"
     t.index ["number"], name: "index_orders_on_number", unique: true
+    t.index ["payment_method_id"], name: "index_orders_on_payment_method_id"
     t.index ["user_id", "status"], name: "index_orders_on_user_id_and_status"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
@@ -424,6 +500,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.index ["member_id"], name: "index_outbound_messages_on_member_id"
   end
 
+  create_table "payment_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.uuid "user_id", null: false
+    t.string "provider", default: "paygate", null: false
+    t.string "external_reference", null: false
+    t.string "last_four"
+    t.string "brand"
+    t.integer "expiry_month"
+    t.integer "expiry_year"
+    t.boolean "default", default: false, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id"], name: "index_payment_methods_on_club_id"
+    t.index ["user_id", "default"], name: "idx_payment_methods_user_default"
+    t.index ["user_id", "provider", "external_reference"], name: "idx_payment_methods_unique_reference", unique: true
+    t.index ["user_id"], name: "index_payment_methods_on_user_id"
+  end
+
   create_table "payment_transactions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "order_id", null: false
     t.string "gateway", default: "paygate", null: false
@@ -438,7 +533,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
     t.datetime "processed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "payment_method_id"
+    t.datetime "paid_time"
     t.index ["order_id"], name: "index_payment_transactions_on_order_id"
+    t.index ["payment_method_id"], name: "index_payment_transactions_on_payment_method_id"
     t.index ["request_reference"], name: "index_payment_transactions_on_request_reference"
     t.index ["response_reference"], name: "index_payment_transactions_on_response_reference"
   end
@@ -636,6 +734,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
   add_foreign_key "carts", "users"
   add_foreign_key "club_roles", "clubs"
   add_foreign_key "club_roles", "users"
+  add_foreign_key "club_term_acceptances", "club_terms"
+  add_foreign_key "club_term_acceptances", "members"
+  add_foreign_key "club_term_acceptances", "users", column: "accepted_by_id"
+  add_foreign_key "club_terms", "clubs"
   add_foreign_key "competitions", "clubs"
   add_foreign_key "competitions", "seasons"
   add_foreign_key "consent_types", "clubs"
@@ -660,23 +762,33 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_20_135101) do
   add_foreign_key "invoices", "clubs"
   add_foreign_key "invoices", "members"
   add_foreign_key "invoices", "users", column: "family_account_id"
+  add_foreign_key "medical_questions", "clubs"
   add_foreign_key "members", "clubs"
+  add_foreign_key "members", "membership_types"
   add_foreign_key "members", "users"
   add_foreign_key "membership_question_responses", "clubs"
   add_foreign_key "membership_question_responses", "members"
   add_foreign_key "membership_question_responses", "membership_questions"
   add_foreign_key "membership_questions", "clubs"
+  add_foreign_key "membership_type_price_tiers", "clubs"
+  add_foreign_key "membership_type_price_tiers", "membership_types"
+  add_foreign_key "membership_types", "clubs"
+  add_foreign_key "membership_types", "plans"
   add_foreign_key "order_items", "members"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "plans"
   add_foreign_key "order_items", "products"
   add_foreign_key "orders", "carts"
   add_foreign_key "orders", "clubs"
+  add_foreign_key "orders", "payment_methods"
   add_foreign_key "orders", "users"
   add_foreign_key "outbound_messages", "broadcasts"
   add_foreign_key "outbound_messages", "clubs"
   add_foreign_key "outbound_messages", "members"
+  add_foreign_key "payment_methods", "clubs"
+  add_foreign_key "payment_methods", "users"
   add_foreign_key "payment_transactions", "orders"
+  add_foreign_key "payment_transactions", "payment_methods"
   add_foreign_key "payments", "clubs"
   add_foreign_key "payments", "invoices"
   add_foreign_key "plans", "clubs"

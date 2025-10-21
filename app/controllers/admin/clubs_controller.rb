@@ -12,6 +12,8 @@ class Admin::ClubsController < Admin::BaseController
     @invoices_count = @club.invoices.count
     @payments_total = Money.new(@club.payments.sum(:amount_cents), default_currency)
     @membership_questions = @club.membership_questions
+    @medical_questions = @club.medical_questions.order(:position, :created_at)
+    @club_terms = @club.club_terms.order(:position, :created_at)
     @membership_types = @club.membership_types.includes(:price_tiers).order(:min_age_years, :label)
   end
 

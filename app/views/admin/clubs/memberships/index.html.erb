@@ -1,0 +1,80 @@
+<% content_for :title, "#{@club.name} · Memberships" %>
+<% content_for :page_heading, "#{@club.name} memberships" %>
+
+<section class="space-y-6">
+  <header class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h1 class="text-xl font-semibold text-slate-900">Memberships</h1>
+      <p class="text-sm text-slate-600">
+        Manage all members registered with <strong><%= @club.name %></strong>. Unpaid memberships appear alongside their current status.
+      </p>
+    </div>
+    <%= link_to "Back to club", admin_club_path(@club), class: "inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800" %>
+  </header>
+
+  <% if @purchases.present? && @purchases.any? %>
+    <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Member</th>
+            <th class="px-4 py-3">Membership</th>
+            <th class="px-4 py-3">Order status</th>
+            <th class="px-4 py-3">Member status</th>
+            <th class="px-4 py-3 text-right">Purchased</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 bg-white">
+          <% @purchases.each do |purchase| %>
+            <% member = purchase.member %>
+            <% order = purchase.order %>
+            <% member_status_classes = case member&.status.to_s
+                                        when "active" then "bg-emerald-100 text-emerald-700"
+                                        when "unpaid" then "bg-amber-100 text-amber-700"
+                                        when "suspended" then "bg-rose-100 text-rose-600"
+                                        else "bg-slate-100 text-slate-600"
+                                        end %>
+            <% order_status_classes = case order.status.to_s
+                                       when "paid" then "bg-emerald-100 text-emerald-700"
+                                       when "pending_payment" then "bg-amber-100 text-amber-700"
+                                       when "cancelled" then "bg-rose-100 text-rose-600"
+                                       else "bg-slate-100 text-slate-600"
+                                       end %>
+            <tr class="transition hover:bg-slate-50">
+              <td class="px-4 py-3">
+                <div class="font-medium text-slate-900"><%= member&.display_name || "Unknown member" %></div>
+                <div class="text-xs text-slate-500"><%= member&.id || "—" %></div>
+              </td>
+              <td class="px-4 py-3 text-slate-600">
+                <div class="font-medium text-slate-900"><%= purchase.plan&.product&.name || "Membership" %></div>
+                <div class="text-xs text-slate-500">Order <%= order.number %></div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <%= order_status_classes %> capitalize">
+                  <%= order.status.to_s.tr("_", " ") %>
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <%= member_status_classes %> capitalize">
+                  <%= member&.status.to_s.tr("_", " ") %>
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right text-slate-500">
+                <%= l(purchase.created_at, format: :short) %>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <%= link_to "View", admin_club_membership_path(@club, purchase), class: "text-sm font-semibold text-slate-700 transition hover:text-slate-900" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+      <p class="text-sm font-medium text-slate-700">No membership purchases yet</p>
+      <p class="mt-1 text-sm text-slate-500">Completed checkouts will appear here once members purchase memberships.</p>
+    </div>
+  <% end %>
+</section>

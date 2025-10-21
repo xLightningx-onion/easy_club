@@ -1,3 +1,4 @@
+<% selected_club_id ||= nil %>
 <div class="max-h-72 space-y-2 overflow-y-auto pr-1" data-memberships-selection-target="list">
   <% clubs.each do |club| %>
     <% selected = selected_club_id.present? && selected_club_id.to_s == club.id.to_s %>

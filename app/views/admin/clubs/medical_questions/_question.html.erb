@@ -1,0 +1,51 @@
+<turbo-frame id="<%= dom_id(medical_question) %>">
+  <article class="flex flex-col gap-4 px-4 py-4 transition hover:bg-slate-50 md:flex-row md:items-start md:justify-between">
+    <div class="space-y-3">
+      <div class="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+        <span>Question <%= index || "?" %></span>
+        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+          <%= medical_question.question_type.humanize %>
+        </span>
+        <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold <%= medical_question.required? ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600" %>">
+          <%= medical_question.required? ? "Required" : "Optional" %>
+        </span>
+        <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold <%= medical_question.active? ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-500" %>">
+          <%= medical_question.active? ? "Visible" : "Hidden" %>
+        </span>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-sm font-medium text-slate-900"><%= medical_question.prompt %></p>
+        <p class="text-xs text-slate-500">Display order: <%= medical_question.position %></p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 md:flex-col md:items-end">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        data-action="modal#open"
+        data-modal-url="<%= edit_admin_club_medical_question_path(club, medical_question) %>"
+        data-modal-frame="<%= dom_id(club, :medical_question_modal) %>"
+        data-modal-title="Edit medical question"
+      >
+        Edit
+      </button>
+      <%= link_to(medical_question.active? ? "Hide" : "Show",
+                  toggle_admin_club_medical_question_path(club, medical_question),
+                  data: {
+                    turbo_method: :patch,
+                    turbo_frame: dom_id(club, :medical_questions)
+                  },
+                  class: "inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100") %>
+      <%= link_to "Delete",
+                  admin_club_medical_question_path(club, medical_question),
+                  data: {
+                    turbo_method: :delete,
+                    turbo_confirm: "Delete this medical question?",
+                    turbo_frame: dom_id(club, :medical_questions)
+                  },
+                  class: "inline-flex items-center gap-1 rounded bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-100" %>
+    </div>
+  </article>
+</turbo-frame>

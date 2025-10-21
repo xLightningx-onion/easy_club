@@ -15,22 +15,6 @@ class CreateCommerceStructures < ActiveRecord::Migration[8.0]
     add_index :carts, %i[club_id status]
     add_index :carts, %i[user_id club_id], unique: true, where: "status = 'active'", name: "idx_carts_unique_active"
 
-    create_table :payment_methods, id: :uuid do |t|
-      t.references :club, type: :uuid, null: false, foreign_key: true
-      t.references :user, type: :uuid, null: false, foreign_key: true
-      t.string :provider, null: false, default: "paygate"
-      t.string :external_reference, null: false
-      t.string :last_four
-      t.string :brand
-      t.integer :expiry_month
-      t.integer :expiry_year
-      t.boolean :default, null: false, default: false
-      t.jsonb :metadata, null: false, default: {}
-      t.timestamps
-    end
-    add_index :payment_methods, %i[user_id provider external_reference], unique: true, name: "idx_payment_methods_unique_token"
-    add_index :payment_methods, %i[user_id default]
-
     create_table :cart_items, id: :uuid do |t|
       t.references :cart, type: :uuid, null: false, foreign_key: true
       t.references :member, type: :uuid, null: false, foreign_key: true
