@@ -1,0 +1,176 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+@import "tailwindcss";
+
+@theme {
+
+  /* Font */
+  --font-roboto: "Roboto", sans-serif; 
+
+  /* Colours - General */
+  --color-grey-custom: oklch(0.97 0.01 0);
+  --color-green-border: oklch(0.6664 0.1134 197.02);
+  --color-link-blue: oklch(0.6587 0.1607 247.79);
+  --color-light-grey: oklch(0.9215 0.0058 264.53);
+  --color-dark-grey: oklch(0.3523 0 0);
+  --color-accent-red: oklch(0.5968 0.2079 19.7);
+  --color-footer-grey-1: oklch(0.2875 0.0109 285.7);
+  --color-footer-grey-2: oklch(0.2611 0.0037 286.14);
+  --color-subtext-gray: oklch(0.6891 0.0063 264.52);
+  --color-background-grey: oklch(0.9431 0 0);
+  --color-background-dark-transparent: oklch(0 0 0 / 70.98%);
+  --color-light-blue-grey: oklch(0.9774 0.0042 236.5);
+  --color-white-light: oklch(0.86 0.0047 258.33);
+
+  /* Colours - Badges */
+  --color-badge-green-light: oklch(0.9588 0.0244 129.89);
+  --color-badge-green-border: oklch(0.9045 0.0428 132.22);
+  --color-badge-green-dark: oklch(0.6479 0.1287 136.08);
+  
+  --color-badge-purple-light: oklch(0.9525 0.0259 297.93);
+  --color-badge-purple-border: oklch(0.892 0.0582 297.2);
+  --color-badge-purple-dark: oklch(0.624 0.212 290.34);
+
+  --color-badge-yellow-light: oklch(0.9752 0.0242 94.06);
+  --color-badge-yellow-border: oklch(0.9451 0.056 93.96);
+  --color-badge-yellow-dark: oklch(0.8197 0.1586 91.23);
+  
+}
+
+body {
+  @apply text-dark-grey font-roboto;
+}
+
+@layer utilities {
+  .floating-label {
+    @apply absolute text-sm text-gray-500 
+           duration-300 transform -translate-y-4 scale-75 top-2 z-10 
+           origin-[0] bg-[#f4f6f8] px-2 peer-focus:px-1 
+           peer-placeholder-shown:scale-100 
+           peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 
+           peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4.5 
+           rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 
+           peer-focus:bg-white peer-[&:not(:placeholder-shown)]:bg-white
+           peer-focus:translate-x-3 peer-[&:not(:placeholder-shown)]:translate-x-3
+           peer-[&:not(:placeholder-shown)]:-translate-y-4.5 peer-[&:not(:placeholder-shown)]:px-1;
+  }
+
+  .md-input-styling {
+    @apply block bg-[#f4f6f8] px-2.5 pb-2.5 
+           pt-4 w-full text-sm text-gray-900 rounded-2xl 
+           border-1 border-transparent appearance-none focus:outline-none 
+           focus:ring-0 focus:border-gray-200 focus:bg-white
+           [&:not(:placeholder-shown)]:bg-white [&:not(:placeholder-shown)]:border-gray-200;
+  }
+
+  .floating-label-textarea {
+    @apply absolute text-sm text-gray-500 
+           duration-300 transform -translate-y-4 scale-75 top-2 z-10 
+           origin-[0] bg-[#f4f6f8] px-2 peer-focus:px-1 
+           peer-placeholder-shown:scale-100 
+           peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-[20px] 
+           peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4.5 
+           rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 
+           peer-focus:bg-white peer-[&:not(:placeholder-shown)]:bg-white
+           peer-focus:translate-x-3 peer-[&:not(:placeholder-shown)]:translate-x-3
+           peer-[&:not(:placeholder-shown)]:-translate-y-4.5 peer-[&:not(:placeholder-shown)]:px-1;
+  }
+
+  .md-input-styling-textarea {
+    @apply block bg-[#f4f6f8] px-2.5 pb-2.5 
+           pt-4 w-full text-sm text-gray-900 rounded-2xl 
+           border-1 border-transparent appearance-none focus:outline-none 
+           focus:ring-0 focus:border-gray-200 focus:bg-white
+           [&:not(:placeholder-shown)]:bg-white [&:not(:placeholder-shown)]:border-gray-200;
+  }
+
+  .socials_styling {
+    @apply opacity-30 text-2xl px-2
+  }
+
+  .tag_styling {
+    @apply border-1 bg-white border-light-grey rounded-lg py-1 px-4 me-2 mb-2
+  }
+
+  .tag_styling_grey {
+    @apply rounded-lg bg-light-blue-grey py-2 px-3
+  }
+
+  .container-widths {
+    @apply container w-[90%] md:w-[80%] lg:w-[90%] xl:w-[55%]
+  }
+
+  /* Radio */
+  .radio_styling {
+    @apply border-green-border rounded-xl text-green-border focus:ring-transparent
+    checked:border-green-border w-5 h-5 bg-size-[1.5em] mx-3 my-2
+  }
+
+  /* Buttons */
+  .button_dark_grey {
+    @apply hover:bg-white border-1 border-dark-grey 
+    hover:text-dark-grey text-white rounded-2xl bg-dark-grey 
+    font-medium text-lg
+  }
+
+  .button_dark_grey_outline {
+    @apply text-dark-grey bg-transparent border-1 
+    border-dark-grey hover:bg-dark-grey hover:text-white
+  }
+
+  .button_white {
+    @apply text-dark-grey bg-white border-1 border-white 
+    hover:bg-transparent hover:text-white
+  }
+
+  .button_white_outline {
+    @apply text-white bg-transparent border-1 border-white 
+    hover:bg-white hover:text-dark-grey
+  }
+
+  .buttons_green {
+    @apply focus:outline-none text-white bg-green-border 
+    hover:bg-white font-medium hover:text-green-border hover:border-1 
+    hover:border-green-border 
+  }
+
+  .button_blue {
+    @apply text-white bg-link-blue hover:bg-white hover:border-1 
+    hover:border-link-blue hover:text-link-blue border-1 
+  }
+
+  /* Element stylings */
+  .badge_container {
+    @apply rounded-full aspect-square p-[2px]
+  }
+
+  .badge_green_inner {
+    @apply p-[4px] text-[11px] bg-badge-green-light text-badge-green-dark 
+    border-1 border-badge-green-border rounded-full size-[20px] flex 
+    items-center justify-center
+  }
+
+  .badge_pupple_inner {
+    @apply p-[4px] text-[11px] bg-badge-purple-light text-badge-purple-dark 
+    border-1 border-badge-purple-border rounded-full size-[20px] flex 
+    items-center justify-center
+  }
+
+  .badge_yellow_inner {
+    @apply p-[4px] text-[11px] bg-badge-yellow-light text-badge-yellow-dark 
+    border-1 border-badge-yellow-border rounded-full size-[20px] flex 
+    items-center justify-center
+  }
+
+  .selection_form_tag {
+    @apply px-4 py-2 border-1 border-dark-grey rounded-xl me-2 mb-2 text-sm
+  }
+
+  .step_active {
+    @apply bg-green-border w-fit px-4.5 py-2.5 rounded-full lg:rounded-2xl mt-3
+  }
+
+  .step_inactive {
+    @apply bg-background-grey w-fit px-4.5 py-2.5 rounded-full lg:rounded-2xl mt-3
+  }
+
+}

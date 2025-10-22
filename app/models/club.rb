@@ -26,6 +26,7 @@ class Club < ApplicationRecord
   has_many :orders, dependent: :destroy
   has_many :payment_transactions, through: :orders
   has_many :payment_methods, dependent: :destroy
+  has_many :staggered_payment_plans, dependent: :destroy
   has_many :teams, dependent: :destroy
   has_many :fixtures, dependent: :destroy
   has_many :templates, dependent: :destroy
@@ -61,5 +62,16 @@ class Club < ApplicationRecord
 
   def location?
     latitude.present? && longitude.present?
+  end
+
+  def active_staggered_payment_plans
+    today = Date.current
+
+    staggered_payment_plans
+      .active
+      .where("starts_on IS NULL OR starts_on <= ?", today)
+      .where("ends_on IS NULL OR ends_on >= ?", today)
+      .includes(:installments)
+      .order(:name)
   end
 end

@@ -1,11 +1,35 @@
-<div class="px-6 py-8">
+<%= content_for :club_header do %>
+  <div class="bg-white rounded-[15px] flex flex-col justify-center items-center py-5 px-5">
+    <%= image_tag serve_image_remote_url(@club.logo), class: "max-w-[200px] mb-5" %>
+    <h2 class="text-3xl lg:text-3xl font-semibold text-center lg:text-start">
+      New Membership
+    </h2> 
+  </div>
+  <style>
+    .club-header-color {
+      background-color: blue;
+    }
+  </style>
+<% end %>
+
+<%= content_for :progress_bar do %>
+  <%= render "members/membership_registrations/progress_bar", step_count: 4 %>
+<% end %>
+
+<div class="py-3">
   <%= form_with model: @form, url: members_membership_registration_path(step: "terms", club_id: @club.id), method: :patch, class: "space-y-8" do |f| %>
     <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
 
     <% if @club_terms.any? %>
       <div class="space-y-4">
-        <h2 class="text-lg font-semibold text-slate-900">Club terms</h2>
-        <p class="text-sm text-slate-600">Review and acknowledge the club’s rules before completing your registration.</p>
+
+        <h2 class="text-2xl lg:text-3xl font-semibold text-center lg:text-start mb-3">
+          Club Terms
+        </h2> 
+        <div class="space-y-2 text-center lg:text-start">
+          <p class="text-sm text-slate-600">Review and acknowledge the club’s rules before completing your registration.</p>
+        </div>
+
 
         <div class="space-y-4">
           <% @club_terms.each do |term| %>

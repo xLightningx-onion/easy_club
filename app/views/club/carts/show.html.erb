@@ -55,10 +55,115 @@
           <% end %>
         </div>
 
-        <footer class="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-          <span class="text-sm font-medium text-slate-600">Cart total</span>
-          <span class="text-base font-semibold text-slate-900"><%= number_to_currency(@cart.total_cents / 100.0, unit: @cart.total_currency) %></span>
+        <footer class="space-y-4">
+          <div class="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+            <span class="text-sm font-medium text-slate-600">Cart total</span>
+            <span class="text-base font-semibold text-slate-900"><%= number_to_currency(@cart.total_cents / 100.0, unit: @cart.total_currency) %></span>
+          </div>
+
+          <div class="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-900">Payment option</h3>
+                <p class="text-xs text-slate-500">Chosen during membership registration.</p>
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <%= @selected_payment_mode == "staggered" && @selected_payment_plan ? @selected_payment_plan.name : "Pay in full" %>
+              </span>
+            </div>
+
+            <input type="hidden"
+                   name="checkout[payment_mode]"
+                   value="<%= @selected_payment_mode.presence || "full" %>"
+                   form="checkout-payment-form">
+            <input type="hidden"
+                   name="checkout[staggered_payment_plan_id]"
+                   value="<%= @selected_payment_plan_id %>"
+                   form="checkout-payment-form">
+
+            <% if @selected_payment_mode == "staggered" && @selected_payment_plan %>
+              <div class="space-y-2 text-sm text-slate-600">
+                <% installments = @selected_payment_plan.ordered_installments %>
+                <p class="font-semibold text-slate-900"><%= @selected_payment_plan.name %></p>
+                <p><%= pluralize(installments.size, "payment") %> scheduled for this membership.</p>
+                <% if installments.first&.due_on.present? %>
+                  <p class="text-xs text-slate-500">First due <%= l(installments.first.due_on, format: :long) %></p>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-sm text-slate-600">Pay in full today. The full amount will be charged immediately.</p>
+            <% end %>
+          </div>
         </footer>
+      </section>
+
+      <section class="space-y-6 rounded-xl border border-slate-200 bg-white px-4 py-6 shadow-sm">
+        <header class="space-y-1">
+          <h2 class="text-base font-semibold text-slate-900">Payment summary</h2>
+          <p class="text-sm text-slate-600">Review your selected payment option before completing checkout.</p>
+        </header>
+
+        <div class="space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+          <div class="flex items-center justify-between">
+            <span>Cart total</span>
+            <strong class="text-slate-900"><%= number_to_currency(@cart_total_money.cents / 100.0, unit: @cart_total_money.currency.iso_code) %></strong>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Payment option</span>
+            <strong class="text-slate-900">
+              <%= @selected_payment_mode == "staggered" && @selected_payment_plan ? @selected_payment_plan.name : "Pay in full" %>
+            </strong>
+          </div>
+        </div>
+
+        <% if @selected_payment_mode == "staggered" && @selected_payment_plan && @selected_plan_breakdown.any? %>
+          <div class="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-4">
+            <div class="flex items-center justify-between text-sm text-slate-500">
+              <span>Installment schedule</span>
+              <% if @selected_payment_plan.ends_on.present? %>
+                <span>Ends <%= l(@selected_payment_plan.ends_on, format: :long) %></span>
+              <% end %>
+            </div>
+            <div class="overflow-hidden rounded-lg border border-slate-200">
+              <table class="min-w-full divide-y divide-slate-200 text-sm text-slate-600">
+                <thead class="bg-slate-50">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">#</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">% of order</th>
+                    <th class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide">Amount</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">Due date</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  <% @selected_plan_breakdown.each_with_index do |(installment, amount), idx| %>
+                    <tr class="<%= idx.odd? ? 'bg-slate-50' : 'bg-white' %>">
+                      <td class="px-3 py-2 font-semibold text-slate-700"><%= idx + 1 %></td>
+                      <td class="px-3 py-2"><%= number_with_precision(installment.percentage, precision: 2) %>%</td>
+                      <td class="px-3 py-2 text-right"><%= number_to_currency(amount.cents / 100.0, unit: amount.currency.iso_code) %></td>
+                      <td class="px-3 py-2">
+                        <% if idx.zero? %>
+                          Due today
+                        <% elsif installment.due_on.present? %>
+                          <%= l(installment.due_on, format: :long) %>
+                        <% else %>
+                          <span class="text-slate-400">Date to be confirmed</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% end %>
+
+        <% if current_club.active_staggered_payment_plans.exists? %>
+          <div class="flex justify-end">
+            <%= link_to "Change payment option",
+                        members_membership_registration_path(step: "payment_option", club_id: current_club.id),
+                        class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
+          </div>
+        <% end %>
       </section>
 
       <section class="space-y-6 rounded-xl border border-slate-200 bg-white px-4 py-6 shadow-sm">
@@ -69,7 +174,12 @@
           <p class="text-sm text-slate-600">PayGate securely processes the payment. We never store your full card number.</p>
         </header>
 
-        <%= form_with url: club_checkout_path, method: :post, local: true, data: { controller: "payment-method" }, class: "space-y-6" do %>
+        <%= form_with url: club_checkout_path,
+                      method: :post,
+                      local: true,
+                      data: { controller: "payment-method" },
+                      html: { id: "checkout-payment-form" },
+                      class: "space-y-6" do %>
           <%= hidden_field_tag "checkout[payment_source]", default_source, data: { payment_method_target: "sourceInput" } %>
           <%= hidden_field_tag "checkout[payment_method_id]", default_source == "saved" ? default_method&.id : "", data: { payment_method_target: "methodInput" } %>
 
@@ -129,7 +239,7 @@
           </div>
 
           <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-            <p>Payments are processed instantly via PayGate PayHost. Card data never touches Easy Club servers.</p>
+            <p>Total amount due: <strong><%= number_to_currency(@cart.total_cents / 100.0, unit: @cart.total_currency) %></strong>. Payments are processed instantly via PayGate PayHost. Card data never touches Easy Club servers.</p>
           </div>
 
           <div class="flex items-center justify-end">

@@ -37,7 +37,7 @@ module Paygate
       @endpoint = endpoint
     end
 
-    def card_payment(order:, transaction:, card_details:, tokenize:, return_url:, notify_url:)
+    def card_payment(order:, transaction:, card_details:, tokenize:, return_url:, notify_url:, amount_cents: nil)
       request_id = SecureRandom.uuid
 
       payload = build_single_payment_envelope(
@@ -46,7 +46,8 @@ module Paygate
         tokenize:,
         request_reference: request_id,
         return_url:,
-        notify_url:
+        notify_url:,
+        amount_cents: amount_cents
       )
 
       http_response = perform_request(payload)
@@ -104,7 +105,7 @@ module Paygate
       )
     end
 
-    def token_payment(order:, transaction:, payment_method:, return_url:, notify_url:, cvv: nil)
+    def token_payment(order:, transaction:, payment_method:, return_url:, notify_url:, cvv: nil, amount_cents: nil)
       request_id = SecureRandom.uuid
 
       payload = build_single_payment_envelope(
@@ -114,7 +115,8 @@ module Paygate
         security_code: cvv,
         request_reference: request_id,
         return_url:,
-        notify_url:
+        notify_url:,
+        amount_cents: amount_cents
       )
 
       http_response = perform_request(payload)
@@ -142,7 +144,7 @@ module Paygate
 
     private
 
-    def build_single_payment_envelope(order:, request_reference:, return_url:, notify_url:, card_details: nil, vault_id: nil, tokenize: false, security_code: nil)
+    def build_single_payment_envelope(order:, request_reference:, return_url:, notify_url:, card_details: nil, vault_id: nil, tokenize: false, security_code: nil, amount_cents: nil)
       raise Error, "Either card details or vault ID must be provided" if card_details.blank? && vault_id.blank?
 
       user = order.user
@@ -150,7 +152,7 @@ module Paygate
       last_name = user&.last_name.to_s
       email = user&.email.to_s
       telephone = user.respond_to?(:phone) ? user.phone.to_s : ""
-      amount = order.total_cents
+      amount = amount_cents.present? ? amount_cents.to_i : order.total_cents
       currency = order.total_currency
 
       xml = +"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"

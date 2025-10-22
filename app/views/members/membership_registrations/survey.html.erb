@@ -1,6 +1,27 @@
-<div class="px-6 py-8 space-y-8">
-  <div class="text-center space-y-2">
-    <h2 class="text-xl font-semibold text-slate-900">Club questions</h2>
+<%= content_for :club_header do %>
+  <div class="bg-white rounded-[15px] flex flex-col justify-center items-center py-5 px-5">
+    <%= image_tag serve_image_remote_url(@club.logo), class: "max-w-[200px] mb-5" %>
+    <h2 class="text-3xl lg:text-3xl font-semibold text-center lg:text-start">
+      New Membership
+    </h2> 
+  </div>
+  <style>
+    .club-header-color {
+      background-color: blue;
+    }
+  </style>
+<% end %>
+
+<%= content_for :progress_bar do %>
+  <%= render "members/membership_registrations/progress_bar", step_count: 3 %>
+<% end %>
+
+<div class="py-4 space-y-8">
+
+  <h2 class="text-2xl lg:text-3xl font-semibold text-center lg:text-start mb-3">
+    Club questions
+  </h2> 
+  <div class="space-y-2 text-center lg:text-start">
     <p class="text-sm text-slate-600">Your club needs these responses to complete the membership setup.</p>
   </div>
 

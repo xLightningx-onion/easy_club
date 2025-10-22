@@ -39,3 +39,9 @@ application.register("sa-id", SaIdController)
 
 import PaymentMethodController from "./payment_method_controller"
 application.register("payment-method", PaymentMethodController)
+
+import StaggeredPaymentPlanController from "./staggered_payment_plan_controller"
+application.register("staggered-payment-plan", StaggeredPaymentPlanController)
+
+import PaymentPlanSelectorController from "./payment_plan_selector_controller"
+application.register("payment-plan-selector", PaymentPlanSelectorController)

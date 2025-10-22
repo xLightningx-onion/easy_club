@@ -77,6 +77,9 @@ Rails.application.routes.draw do
       resources :terms,
                 module: :clubs,
                 except: %i[index]
+      resources :staggered_payment_plans,
+                module: :clubs,
+                except: %i[index show]
       resources :memberships,
                 module: :clubs,
                 only: %i[index show]

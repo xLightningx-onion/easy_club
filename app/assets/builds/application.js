@@ -19853,6 +19853,307 @@ var payment_method_controller_default = class extends Controller {
   }
 };
 
+// app/javascript/controllers/staggered_payment_plan_controller.js
+var staggered_payment_plan_controller_default = class extends Controller {
+  static targets = [
+    "list",
+    "template",
+    "installment",
+    "installmentLabel",
+    "percentage",
+    "position",
+    "destroy",
+    "totalDisplay",
+    "submit"
+  ];
+  connect() {
+    this.ensureAtLeastOneInstallment();
+    this.renumber();
+    this.recalculate();
+  }
+  addInstallment(event) {
+    event.preventDefault();
+    const templateContent = this.templateTarget?.innerHTML;
+    if (!templateContent) return;
+    const timestamp = Date.now().toString();
+    const html = templateContent.replace(/NEW_RECORD/g, timestamp);
+    this.listTarget.insertAdjacentHTML("beforeend", html);
+    this.ensureAtLeastOneInstallment();
+    requestAnimationFrame(() => {
+      const newest = this.installmentTargets[this.installmentTargets.length - 1];
+      this.prefillDueDate(newest);
+      this.renumber();
+      this.recalculate();
+    });
+  }
+  removeInstallment(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const container = button.closest("[data-staggered-payment-plan-target='installment']");
+    if (!container) return;
+    if (this.activeInstallmentCount() <= 1) return;
+    const destroyInput = container.querySelector("input[data-staggered-payment-plan-target='destroy']");
+    const idInput = container.querySelector("input[name$='[id]']");
+    if (idInput && idInput.value) {
+      if (destroyInput) destroyInput.value = "1";
+      container.classList.add("hidden");
+      container.dataset.removed = "true";
+    } else {
+      container.remove();
+    }
+    requestAnimationFrame(() => {
+      this.renumber();
+      this.recalculate();
+    });
+  }
+  recalculate() {
+    let total = 0;
+    this.percentageTargets.forEach((input) => {
+      if (this.isActiveInput(input)) {
+        const value = parseFloat(input.value);
+        if (!Number.isNaN(value)) {
+          total += value;
+        }
+      }
+    });
+    const totalRounded = Math.round((total + Number.EPSILON) * 100) / 100;
+    if (this.hasTotalDisplayTarget) {
+      this.totalDisplayTarget.textContent = `${totalRounded.toFixed(2)}%`;
+      this.totalDisplayTarget.classList.toggle("bg-emerald-100", this.isValidTotal(totalRounded));
+      this.totalDisplayTarget.classList.toggle("text-emerald-700", this.isValidTotal(totalRounded));
+      this.totalDisplayTarget.classList.toggle("bg-rose-100", !this.isValidTotal(totalRounded));
+      this.totalDisplayTarget.classList.toggle("text-rose-700", !this.isValidTotal(totalRounded));
+    }
+    if (this.hasSubmitTarget) {
+      this.submitTarget.disabled = !this.isValidTotal(totalRounded);
+      this.submitTarget.classList.toggle("opacity-60", !this.isValidTotal(totalRounded));
+      this.submitTarget.classList.toggle("cursor-not-allowed", !this.isValidTotal(totalRounded));
+    }
+  }
+  renumber() {
+    let index = 1;
+    this.installmentTargets.forEach((container) => {
+      const destroyInput = container.querySelector("input[data-staggered-payment-plan-target='destroy']");
+      const isHidden = container.classList.contains("hidden") || container.dataset.removed === "true";
+      if (destroyInput && destroyInput.value === "1") return;
+      if (isHidden) return;
+      const label = container.querySelector("[data-staggered-payment-plan-target='installmentLabel']");
+      if (label) {
+        label.textContent = `Installment ${index}`;
+      }
+      const positionInput = container.querySelector("input[data-staggered-payment-plan-target='position']");
+      if (positionInput) {
+        positionInput.value = index - 1;
+      }
+      index += 1;
+    });
+  }
+  handleSubmitEnd(event) {
+    if (event?.detail?.success === false) {
+      this.recalculate();
+    }
+  }
+  // Private helpers
+  ensureAtLeastOneInstallment() {
+    if (this.installmentTargets.length === 0 && this.templateTarget) {
+      const templateContent = this.templateTarget.innerHTML;
+      const timestamp = Date.now().toString();
+      const html = templateContent.replace(/NEW_RECORD/g, `${timestamp}-seed`);
+      this.listTarget.insertAdjacentHTML("beforeend", html);
+      requestAnimationFrame(() => {
+        const newest = this.installmentTargets[this.installmentTargets.length - 1];
+        this.prefillDueDate(newest);
+      });
+    }
+  }
+  activeInstallmentCount() {
+    let count = 0;
+    this.installmentTargets.forEach((container) => {
+      const destroyInput = container.querySelector("input[data-staggered-payment-plan-target='destroy']");
+      const hidden = container.classList.contains("hidden") || container.dataset.removed === "true";
+      if (destroyInput && destroyInput.value === "1") {
+        return;
+      }
+      if (!hidden) {
+        count += 1;
+      }
+    });
+    return count;
+  }
+  isActiveInput(input) {
+    const container = input.closest("[data-staggered-payment-plan-target='installment']");
+    if (!container) return false;
+    const destroyInput = container.querySelector("input[data-staggered-payment-plan-target='destroy']");
+    if (destroyInput && destroyInput.value === "1") return false;
+    if (container.classList.contains("hidden") || container.dataset.removed === "true") return false;
+    return true;
+  }
+  isValidTotal(total) {
+    if (this.activeInstallmentCount() === 0) return false;
+    return total > 0 && Math.abs(total - 100) <= 0.01;
+  }
+  prefillDueDate(container) {
+    if (!container) return;
+    const dueInput = container.querySelector("input[name$='[due_on]']");
+    if (!dueInput || dueInput.value) return;
+    const otherDueInputs = Array.from(this.element.querySelectorAll("input[name$='[due_on]']")).filter((input) => {
+      if (input === dueInput || !input.value) return false;
+      const container2 = input.closest("[data-staggered-payment-plan-target='installment']");
+      if (!container2) return false;
+      const destroyInput = container2.querySelector("input[data-staggered-payment-plan-target='destroy']");
+      if (destroyInput && destroyInput.value === "1") return false;
+      if (container2.classList.contains("hidden") || container2.dataset.removed === "true") return false;
+      return true;
+    });
+    let baseDate;
+    if (otherDueInputs.length > 0) {
+      const latest = otherDueInputs.map((input) => new Date(input.value)).filter((date) => !Number.isNaN(date.getTime())).sort((a, b) => a - b).pop();
+      baseDate = latest || /* @__PURE__ */ new Date();
+      baseDate = this.addDays(baseDate, 28);
+    } else {
+      const startsOnField = this.element.querySelector("input[name='staggered_payment_plan[starts_on]']");
+      if (startsOnField && startsOnField.value) {
+        const startDate = new Date(startsOnField.value);
+        baseDate = Number.isNaN(startDate.getTime()) ? /* @__PURE__ */ new Date() : startDate;
+      } else {
+        baseDate = /* @__PURE__ */ new Date();
+      }
+    }
+    dueInput.value = this.formatDate(baseDate);
+  }
+  addDays(date, days) {
+    const result = new Date(date.getTime());
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+  formatDate(date) {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+};
+
+// app/javascript/controllers/payment_plan_selector_controller.js
+var payment_plan_selector_controller_default = class extends Controller {
+  static targets = [
+    "input",
+    "modeField",
+    "planField",
+    "summary",
+    "toggle"
+  ];
+  static values = {
+    mode: String,
+    planId: String,
+    previewUrl: String
+  };
+  connect() {
+    this.syncInitialSelection();
+    this.updateSummary();
+    this.lastPreviewSignature = this.signature();
+  }
+  select(event) {
+    const input = event.currentTarget;
+    const value = input.value;
+    if (value === "full") {
+      this.modeValue = "full";
+      this.planIdValue = "";
+    } else {
+      this.modeValue = "staggered";
+      this.planIdValue = input.dataset.planId || "";
+    }
+    this.applySelectionStyles();
+    this.updateHiddenFields();
+    this.updateSummary();
+    this.requestPreview();
+  }
+  syncInitialSelection() {
+    const mode = this.modeValue || this.modeFieldTarget?.value || "full";
+    const planId = this.planIdValue || this.planFieldTarget?.value || "";
+    this.inputs.forEach((input) => {
+      const isFull = input.value === "full";
+      const matches = mode === "full" && isFull || mode === "staggered" && !isFull && input.dataset.planId === planId;
+      if (matches) {
+        input.checked = true;
+        this.modeValue = mode;
+        this.planIdValue = planId;
+      }
+    });
+    if (!this.modeValue) {
+      this.modeValue = "full";
+    }
+    this.applySelectionStyles();
+    this.updateHiddenFields();
+    this.updateSummary();
+    this.lastPreviewSignature = this.signature();
+  }
+  updateHiddenFields() {
+    if (this.hasModeFieldTarget) {
+      this.modeFieldTarget.value = this.modeValue || "full";
+    }
+    if (this.hasPlanFieldTarget) {
+      this.planFieldTarget.value = this.modeValue === "staggered" ? this.planIdValue || "" : "";
+    }
+  }
+  applySelectionStyles() {
+    this.inputs.forEach((input) => {
+      const container = input.closest("[data-payment-plan-selector-target='toggle']");
+      if (!container) return;
+      const isFull = input.value === "full";
+      const isActive = this.modeValue === "full" && isFull || this.modeValue === "staggered" && !isFull && input.dataset.planId === this.planIdValue;
+      container.classList.toggle("border-slate-900", isActive);
+      container.classList.toggle("shadow-sm", isActive);
+      container.classList.toggle("border-slate-300", !isActive);
+    });
+  }
+  updateSummary() {
+    if (!this.hasSummaryTarget) return;
+    const activeInput = this.inputs.find((input) => input.checked);
+    if (!activeInput) {
+      this.summaryTarget.textContent = this.modeValue === "staggered" ? "Staggered payments selected" : "Pay in full";
+      return;
+    }
+    const label = activeInput.dataset.summaryLabel || activeInput.dataset.label || activeInput.nextElementSibling?.textContent || "";
+    this.summaryTarget.textContent = label.trim();
+  }
+  requestPreview() {
+    if (!this.hasPreviewUrlValue) return;
+    const signature = this.signature();
+    if (signature === this.lastPreviewSignature) return;
+    const url = new URL(this.previewUrlValue, window.location.origin);
+    url.searchParams.set("preview_payment_mode", this.modeValue || "full");
+    if ((this.modeValue || "full") === "staggered") {
+      url.searchParams.set("preview_staggered_payment_plan_id", this.planIdValue || "");
+    } else {
+      url.searchParams.delete("preview_staggered_payment_plan_id");
+    }
+    this.lastPreviewSignature = signature;
+    fetch(url.toString(), {
+      headers: { Accept: "text/vnd.turbo-stream.html" },
+      credentials: "include"
+    }).then((response2) => {
+      if (!response2.ok) throw new Error(`Preview request failed with status ${response2.status}`);
+      return response2.text();
+    }).then((html) => {
+      if (window.Turbo && typeof window.Turbo.renderStreamMessage === "function") {
+        window.Turbo.renderStreamMessage(html);
+      }
+    }).catch((error3) => {
+      console.error(error3);
+      this.lastPreviewSignature = null;
+    });
+  }
+  signature() {
+    const mode = this.modeValue || "full";
+    const planId = mode === "staggered" ? this.planIdValue || "" : "";
+    return `${mode}:${planId}`;
+  }
+  get inputs() {
+    return this.inputTargets || [];
+  }
+};
+
 // app/javascript/controllers/index.js
 application.register("hello", hello_controller_default);
 application.register("squad", squad_controller_default);
@@ -19866,6 +20167,8 @@ application.register("memberships-selection", memberships_selection_controller_d
 application.register("membership-start", membership_start_controller_default);
 application.register("sa-id", sa_id_controller_default);
 application.register("payment-method", payment_method_controller_default);
+application.register("staggered-payment-plan", staggered_payment_plan_controller_default);
+application.register("payment-plan-selector", payment_plan_selector_controller_default);
 
 // app/javascript/application.js
 var import_cropper = __toESM(require_cropper());

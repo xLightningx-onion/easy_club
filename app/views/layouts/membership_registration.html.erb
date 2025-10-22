@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Easy Club" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+  </head>
+
+  <body class="bg-grey-custom">
+    <div class="w-full pb-10 pt-20">
+      <div class="absolute w-[200vw] h-[200vw] club-header-color top-[-160vw] left-[-50vw] rounded-[50%] z-[0]">
+      </div>
+      <div class="absolute w-[100vw] h-20 top-0 flex justify-center items-center">
+        <%= image_tag asset_path("easyclub-logo.png"), class: "max-w-[30%]" %>
+      </div>
+
+      <div class="relative mx-auto w-[90%] md:w-[80%] lg:w-[60%] xl:w-[32%] z-[2]">
+        <%= yield :club_header %>
+      </div>
+    </div>
+    <div class="z-[1]">
+        <div class="container mx-auto h-5 lg:h-20 xl:h-25 lg:w-[35%]">
+        </div>
+    </div>
+    <div class="relative w-full flex justify-center bottom-8 lg:bottom-22 z-[3]">
+        <%= yield :progress_bar %>
+    </div>
+    <div class="relative w-full pb-10 z-[2]">
+        <div class="container mx-auto w-[90%] md:w-[80%] lg:w-[60%] xl:w-[32%]">
+            <div class="flex flex-col bg-white rounded-t-xl px-6 lg:px-10 pt-10 pb-7">
+                <%# <h2 class="text-3xl lg:text-4xl font-semibold text-center lg:text-start mb-3"> %>
+                    <%# Personal Details %>
+                <%# </h2>  %>
+                <%# <p class="lg:w-[75%] text-sm text-center mb-7"> %>
+                    <%# Lorem ipsum dolor sit amet, consectetur adipiscing,  %>
+                    <%# tempor incididunt ut labore et dolore magna aliqua %>
+                <%# </p> %>
+                <%= yield%>
+            </div>
+            <div class="h-5 bg-[#00a9ac] rounded-b-xl"></div>
+        </div>
+        <%#= render 'shared/components/form_footer_content' %>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+<% if plans.any? %>
+  <div class="divide-y divide-slate-200">
+    <% plans.each_with_index do |plan, index| %>
+      <%= render "admin/clubs/staggered_payment_plans/plan",
+                 club: club,
+                 plan: plan,
+                 index: index + 1 %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="px-4 py-10 text-center text-sm text-slate-500">
+    <p class="font-medium text-slate-700">No staggered payment plans yet</p>
+    <p class="mt-1 text-xs text-slate-500">Create a payment schedule so members can pay their orders across multiple installments.</p>
+  </div>
+<% end %>

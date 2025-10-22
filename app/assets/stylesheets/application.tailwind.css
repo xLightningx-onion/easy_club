@@ -3,3 +3,4 @@
 @import "dropzone/dist/basic.css";
 @import "./dropzone.scss";
 @import "cropperjs/dist/cropper.css";
+@import "./registration_layout.scss"

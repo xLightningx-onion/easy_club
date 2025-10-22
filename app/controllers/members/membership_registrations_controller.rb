@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class Members::MembershipRegistrationsController < Members::ApplicationController
-  STEPS = %w[personal medical survey terms order_confirmation].freeze
+  layout "membership_registration"
+  STEPS = %w[personal medical survey terms payment_option].freeze
 
   before_action :ensure_club_selected!
   before_action :reset_registration_if_requested
@@ -11,12 +12,20 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
   before_action :prepare_medical_step, only: :show
   before_action :prepare_survey_step, only: :show
   before_action :prepare_terms_step, only: :show
-  before_action :prepare_order_confirmation_step, only: :show
+  before_action :prepare_payment_option_step, only: :show
 
   helper_method :current_cart
 
   def show
-    render template_for_step
+    if request.format.turbo_stream? && @step == "payment_option"
+      render turbo_stream: turbo_stream.update(
+        "payment_option_breakdown",
+        partial: "members/membership_registrations/payment_option_breakdown",
+        locals: breakdown_locals
+      )
+    else
+      render template_for_step, formats: [:html]
+    end
   end
 
   def update
@@ -28,8 +37,8 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
       process_survey_step
     elsif @step == "terms"
       process_terms_step
-    elsif @step == "order_confirmation"
-      redirect_to club_cart_path
+    elsif @step == "payment_option"
+      process_payment_option_step
     else
       head :bad_request
     end
@@ -84,7 +93,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     ).to_h
 
     phase = params.dig(:membership_registration_form, :phase)
-    permitted['phase'] = phase if phase.present?
+    permitted["phase"] = phase if phase.present?
     permitted
   end
 
@@ -206,15 +215,217 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     terms = @club.club_terms.active.order(:position)
     if @form.submit_terms_acceptances(attrs, terms: terms)
       store_registration_data(@form.to_session)
-      redirect_to members_membership_registration_path(step: next_step_from(@step), club_id: selected_club_id), status: :see_other
+      return unless ensure_membership_finalized!
+
+      plans = @club.active_staggered_payment_plans
+      if plans.blank?
+        redirect_to club_cart_path, status: :see_other and return
+      end
+
+      redirect_to members_membership_registration_path(step: "payment_option", club_id: selected_club_id), status: :see_other and return
     else
       @club_terms = terms
       render template_for_step, status: :unprocessable_entity
     end
   end
 
-  def prepare_order_confirmation_step
-    return unless @step == "order_confirmation"
+  def process_payment_option_step
+    return unless ensure_membership_finalized!
+
+    form_params = params.fetch(:membership_registration_form, {}).permit(:payment_mode, :staggered_payment_plan_id)
+    payment_mode = form_params[:payment_mode].presence_in(%w[full staggered]) || "full"
+
+    cart = @cart || current_cart
+    selected_plan = nil
+
+    if payment_mode == "staggered"
+      selected_plan = available_payment_plans.find_by(id: form_params[:staggered_payment_plan_id])
+      unless selected_plan
+        flash.now[:alert] = "Please select a valid payment plan."
+        prepare_payment_option_step
+        render template_for_step, status: :unprocessable_entity
+        return
+      end
+    end
+
+    unless cart.update(payment_mode:, staggered_payment_plan: selected_plan)
+      flash.now[:alert] = cart.errors.full_messages.to_sentence
+      prepare_payment_option_step
+      render template_for_step, status: :unprocessable_entity
+      return
+    end
+
+    redirect_to club_cart_path, status: :see_other
+  end
+
+  def prepare_payment_option_step
+    return unless @step == "payment_option"
+
+    return unless ensure_membership_finalized!
+
+    @staggered_payment_plans = available_payment_plans
+
+    if @staggered_payment_plans.blank?
+      redirect_to club_cart_path and return
+    end
+
+    preview_mode = params[:preview_payment_mode].presence_in(%w[full staggered])
+    preview_plan_id = params[:preview_staggered_payment_plan_id].presence
+
+    @selected_payment_mode = @cart.payment_mode.presence || "full"
+    plan_id = @cart.staggered_payment_plan_id
+    unless @staggered_payment_plans.any? { |plan| plan.id.to_s == plan_id.to_s }
+      plan_id = nil
+      @selected_payment_mode = "full"
+    end
+
+    if preview_mode.present?
+      @selected_payment_mode = preview_mode
+      plan_id = if preview_mode == "staggered"
+                  candidate = preview_plan_id
+                  valid_plan = @staggered_payment_plans.find { |plan| plan.id.to_s == candidate.to_s }
+                  valid_plan&.id
+      end
+      if @selected_payment_mode == "staggered" && plan_id.nil?
+        @selected_payment_mode = "full"
+      end
+    end
+
+    @selected_payment_plan_id = plan_id&.to_s
+
+    @cart_items ||= @cart.cart_items.includes({ member: :membership_type }, plan: :product)
+    @cart_item_summaries = build_cart_item_summaries(@cart_items)
+
+    @cart_total_money = Money.new(@cart.total_cents, @cart.total_currency)
+    @base_price = resolve_base_price_for_cart(@cart, cart_items: @cart_items)
+    @staggered_total_money = @base_price || @cart_total_money
+    @plan_pricing = build_plan_pricing(@staggered_payment_plans, @base_price)
+    @payment_totals_by_mode = {
+      "full" => @cart_total_money,
+      "staggered" => @staggered_total_money
+    }
+    @selected_payment_summary_label = build_payment_summary_label(
+      @selected_payment_mode,
+      @selected_payment_plan_id,
+      @plan_pricing,
+      @staggered_payment_plans
+    )
+  end
+
+  def reset_registration_if_requested
+    return unless params[:restart].present?
+
+    session[:membership_registration] ||= {}
+    club_id = @club&.id || selected_club_id
+    session[:membership_registration][current_user_session_key] = { club_id: club_id }
+  end
+
+  def breakdown_locals
+    full_total = @payment_totals_by_mode["full"] || @cart_total_money
+    staggered_total = @payment_totals_by_mode["staggered"] || full_total
+
+    {
+      selected_mode: @selected_payment_mode,
+      full_total_money: full_total,
+      staggered_total_money: staggered_total
+    }
+  end
+
+  def current_cart
+    @current_cart ||= Club.with_current(@club) do
+      Cart.unpaid.find_by(user: current_user, club: @club) || Cart.create!(user: current_user, club: @club)
+    end
+  end
+
+  def available_payment_plans
+    @available_payment_plans ||= @club.active_staggered_payment_plans.includes(:installments)
+  end
+
+  def resolve_base_price_for_cart(cart, cart_items: nil)
+    items = cart_items || cart.cart_items.includes(member: :membership_type)
+    return nil if items.blank?
+
+    base_prices = items.map { |item| base_price_for_cart_item(item) }.compact
+
+    return nil if base_prices.blank?
+
+    currency_code = base_prices.first.currency.iso_code
+    total_cents = base_prices.sum(&:cents)
+    Money.new(total_cents, currency_code)
+  end
+
+  def build_plan_pricing(plans, base_price)
+    return {} unless plans.present? && base_price
+
+    plans.each_with_object({}) do |plan, map|
+      map[plan.id] = plan.ordered_installments.map do |installment|
+        amount_cents = (base_price.cents * installment.percentage.to_f / 100.0).round
+        amount = Money.new(amount_cents, base_price.currency.iso_code)
+        [ installment, amount ]
+      end
+    end
+  end
+
+  def build_cart_item_summaries(cart_items)
+    return [] if cart_items.blank?
+
+    cart_items.map do |item|
+      member = item.member
+      membership_type = member&.membership_type
+      plan = item.plan
+      product = plan&.product
+
+      full_price = Money.new(item.total_price_cents, item.total_price_currency)
+      base_price = base_price_for_cart_item(item) || full_price
+
+      {
+        cart_item: item,
+        member: member,
+        membership_type: membership_type,
+        member_name: member&.display_name.presence || "Member #{item.id}",
+        membership_label: membership_type&.label || product&.name || "Membership",
+        full_price: full_price,
+        base_price: base_price
+      }
+    end
+  end
+
+  def build_payment_summary_label(selected_mode, selected_plan_id, plan_pricing, plans)
+    return "Pay in full" unless selected_mode == "staggered"
+
+    plan = plans.find { |candidate| candidate.id.to_s == selected_plan_id.to_s }
+    return "Staggered payments" unless plan
+
+    breakdown = plan_pricing[plan.id] || []
+    if breakdown.any?
+      "#{plan.name} · #{breakdown.size} payment#{'s' unless breakdown.size == 1}"
+    else
+      plan.name
+    end
+  end
+
+  def base_price_for_cart_item(item)
+    membership_type = item.member&.membership_type
+    return Money.new(item.total_price_cents, item.total_price_currency) unless membership_type&.base_price
+
+    base_price = membership_type.base_price
+    quantity = item.quantity.to_i.nonzero? || 1
+    base_price * quantity
+  end
+
+  def ensure_membership_finalized!
+    return true if defined?(@finalization_attempted) && @finalization_attempted
+
+    if @form.cart_id.present?
+      existing_cart = Cart.find_by(id: @form.cart_id)
+      if existing_cart
+        @current_cart = @cart = existing_cart
+        @highlighted_cart_item = existing_cart.cart_items.find_by(id: @form.cart_item_id)
+        @cart_items = existing_cart.cart_items.includes({ member: :membership_type }, plan: :product)
+        @finalization_attempted = true
+        return true
+      end
+    end
 
     result = Club.with_current(@club) do
       MembershipRegistrations::Finalize.new(club: @club, user: current_user, form: @form).call
@@ -227,22 +438,16 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
 
     @current_cart = @cart = result.cart
     @highlighted_cart_item = result.cart_item
+    @cart_items = @cart.cart_items.includes({ member: :membership_type }, plan: :product)
+    @base_price = resolve_base_price_for_cart(@cart, cart_items: @cart_items)
+    @cart_total_money = Money.new(@cart.total_cents, @cart.total_currency)
+    @plan_pricing = build_plan_pricing(available_payment_plans, @base_price)
+
+    @finalization_attempted = true
+    true
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
     Rails.logger.error("Membership finalization failed: #{e.message}")
-    redirect_to members_membership_registration_path(step: "terms", club_id: @club.id), alert: "We couldn't prepare your order. Please review the previous step." and return
-  end
-
-  def reset_registration_if_requested
-    return unless params[:restart].present?
-
-    session[:membership_registration] ||= {}
-    club_id = @club&.id || selected_club_id
-    session[:membership_registration][current_user_session_key] = { club_id: club_id }
-  end
-
-  def current_cart
-    @current_cart ||= Club.with_current(@club) do
-      Cart.unpaid.find_by(user: current_user, club: @club) || Cart.create!(user: current_user, club: @club)
-    end
+    redirect_to members_membership_registration_path(step: "terms", club_id: @club.id), alert: "We couldn't prepare your order. Please review the previous step."
+    false
   end
 end

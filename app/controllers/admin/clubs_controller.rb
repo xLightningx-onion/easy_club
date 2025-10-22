@@ -10,11 +10,14 @@ class Admin::ClubsController < Admin::BaseController
   def show
     @members_count = @club.members.count
     @invoices_count = @club.invoices.count
-    @payments_total = Money.new(@club.payments.sum(:amount_cents), default_currency)
+    payments_cents = @club.payments.sum(:amount_cents).to_i
+    @payments_total = Money.new(payments_cents, default_currency)
+    @payments_total ||= Money.new(0, default_currency)
     @membership_questions = @club.membership_questions
     @medical_questions = @club.medical_questions.order(:position, :created_at)
     @club_terms = @club.club_terms.order(:position, :created_at)
     @membership_types = @club.membership_types.includes(:price_tiers).order(:min_age_years, :label)
+    @staggered_payment_plans = policy_scope(@club.staggered_payment_plans.includes(:installments)).order(:name)
   end
 
   def new
@@ -110,6 +113,8 @@ class Admin::ClubsController < Admin::BaseController
   end
 
   def default_currency
-    @club.settings.dig("finance", "currency") rescue "ZAR"
+    @club.settings.dig("finance", "currency").presence || "ZAR"
+  rescue StandardError
+    "ZAR"
   end
 end

@@ -13,6 +13,23 @@ class Club::CheckoutsController < Club::BaseController
     checkout = checkout_params
     payment_source = checkout[:payment_source].presence || (policy_scope(PaymentMethod).usable.where(club: current_club).exists? ? "saved" : "new")
 
+    payment_mode = checkout[:payment_mode].presence_in(%w[full staggered]) || cart.payment_mode.presence || "full"
+    selected_plan = cart.staggered_payment_plan if cart.payment_mode == "staggered"
+
+    if payment_mode == "staggered"
+      plan_id = checkout[:staggered_payment_plan_id].presence || selected_plan&.id
+      selected_plan = current_club.staggered_payment_plans.find_by(id: plan_id)
+      unless selected_plan
+        redirect_to club_cart_path, alert: "Please select a valid staggered payment plan." and return
+      end
+    else
+      selected_plan = nil
+    end
+
+    unless cart.update(payment_mode:, staggered_payment_plan: selected_plan)
+      redirect_to club_cart_path, alert: cart.errors.full_messages.to_sentence and return
+    end
+
     saved_card_cvv = nil
 
     if payment_source == "saved"
@@ -41,7 +58,9 @@ class Club::CheckoutsController < Club::BaseController
       payment_method:,
       tokenize: payment_source == "new",
       card_details: card_details,
-      saved_card_cvv: saved_card_cvv
+      saved_card_cvv: saved_card_cvv,
+      payment_mode:,
+      staggered_payment_plan: selected_plan
     ).call
 
     if result.order.status_paid?
@@ -83,6 +102,8 @@ class Club::CheckoutsController < Club::BaseController
       :payment_source,
       :payment_method_id,
       :saved_card_cvv,
+      :payment_mode,
+      :staggered_payment_plan_id,
       :tokenize,
       card: %i[number expiry_month expiry_year cvv holder_name]
     ).to_h

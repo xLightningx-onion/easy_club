@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_21_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -137,8 +137,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "payment_mode", default: "full", null: false
+    t.uuid "staggered_payment_plan_id"
     t.index ["club_id", "status"], name: "index_carts_on_club_id_and_status"
     t.index ["club_id"], name: "index_carts_on_club_id"
+    t.index ["staggered_payment_plan_id"], name: "index_carts_on_staggered_payment_plan_id"
     t.index ["user_id", "club_id"], name: "idx_carts_unique_active", unique: true, where: "((status)::text = 'active'::text)"
     t.index ["user_id", "status"], name: "index_carts_on_user_id_and_status"
     t.index ["user_id"], name: "index_carts_on_user_id"
@@ -475,10 +478,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
     t.datetime "updated_at", null: false
     t.uuid "payment_method_id"
     t.datetime "paid_time"
+    t.string "payment_mode", default: "full", null: false
+    t.uuid "staggered_payment_plan_id"
     t.index ["cart_id"], name: "index_orders_on_cart_id"
     t.index ["club_id"], name: "index_orders_on_club_id"
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["payment_method_id"], name: "index_orders_on_payment_method_id"
+    t.index ["staggered_payment_plan_id"], name: "index_orders_on_staggered_payment_plan_id"
     t.index ["user_id", "status"], name: "index_orders_on_user_id_and_status"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
@@ -617,6 +623,62 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
     t.index ["club_id"], name: "index_seasons_on_club_id"
   end
 
+  create_table "staggered_payment_installments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "staggered_payment_plan_id", null: false
+    t.integer "position", default: 0, null: false
+    t.decimal "percentage", precision: 6, scale: 3, null: false
+    t.integer "amount_cents"
+    t.string "amount_currency", default: "ZAR", null: false
+    t.date "due_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["staggered_payment_plan_id", "position"], name: "index_installments_on_plan_and_position"
+    t.index ["staggered_payment_plan_id"], name: "index_payment_installments_on_plan_id"
+  end
+
+  create_table "staggered_payment_plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.date "starts_on"
+    t.date "ends_on"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id"], name: "index_staggered_payment_plans_on_club_id"
+  end
+
+  create_table "staggered_payment_schedule_installments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "staggered_payment_schedule_id", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "position", default: 0, null: false
+    t.decimal "percentage", precision: 6, scale: 3, null: false
+    t.integer "amount_cents", default: 0, null: false
+    t.string "amount_currency", default: "ZAR", null: false
+    t.datetime "due_at", null: false
+    t.datetime "paid_at"
+    t.uuid "payment_transaction_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payment_transaction_id"], name: "idx_on_payment_transaction_id_f534b08f43"
+    t.index ["staggered_payment_schedule_id", "position"], name: "index_schedule_installments_on_schedule_and_position", unique: true
+    t.index ["staggered_payment_schedule_id"], name: "index_schedule_installments_on_schedule_id"
+  end
+
+  create_table "staggered_payment_schedules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.uuid "order_id", null: false
+    t.uuid "staggered_payment_plan_id", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "activated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id"], name: "index_staggered_payment_schedules_on_club_id"
+    t.index ["order_id"], name: "index_staggered_payment_schedules_on_order_id"
+    t.index ["staggered_payment_plan_id"], name: "index_staggered_payment_schedules_on_staggered_payment_plan_id"
+  end
+
   create_table "team_memberships", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "club_id", null: false
     t.uuid "team_id", null: false
@@ -731,6 +793,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
   add_foreign_key "cart_items", "members"
   add_foreign_key "cart_items", "plans"
   add_foreign_key "carts", "clubs"
+  add_foreign_key "carts", "staggered_payment_plans"
   add_foreign_key "carts", "users"
   add_foreign_key "club_roles", "clubs"
   add_foreign_key "club_roles", "users"
@@ -781,6 +844,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
   add_foreign_key "orders", "carts"
   add_foreign_key "orders", "clubs"
   add_foreign_key "orders", "payment_methods"
+  add_foreign_key "orders", "staggered_payment_plans"
   add_foreign_key "orders", "users"
   add_foreign_key "outbound_messages", "broadcasts"
   add_foreign_key "outbound_messages", "clubs"
@@ -797,6 +861,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_145501) do
   add_foreign_key "products", "clubs"
   add_foreign_key "report_runs", "clubs"
   add_foreign_key "seasons", "clubs"
+  add_foreign_key "staggered_payment_installments", "staggered_payment_plans"
+  add_foreign_key "staggered_payment_plans", "clubs"
+  add_foreign_key "staggered_payment_schedule_installments", "payment_transactions"
+  add_foreign_key "staggered_payment_schedule_installments", "staggered_payment_schedules"
+  add_foreign_key "staggered_payment_schedules", "clubs"
+  add_foreign_key "staggered_payment_schedules", "orders"
+  add_foreign_key "staggered_payment_schedules", "staggered_payment_plans"
   add_foreign_key "team_memberships", "clubs"
   add_foreign_key "team_memberships", "members"
   add_foreign_key "team_memberships", "teams"

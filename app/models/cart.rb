@@ -15,8 +15,17 @@ class Cart < ApplicationRecord
   has_many :cart_items, dependent: :destroy
   has_many :members, through: :cart_items
   has_one :order, dependent: :nullify
+  belongs_to :staggered_payment_plan, optional: true
+
+  enum :payment_mode, {
+    full: "full",
+    staggered: "staggered"
+  }, prefix: true
 
   validates :status, presence: true
+  validates :payment_mode, presence: true
+  validate :validate_payment_plan_belongs_to_club
+  validate :validate_payment_mode_consistency
   validate :ensure_single_active_cart_per_user, on: :create
 
   scope :unpaid, -> { where(status: :unpaid) }
@@ -36,7 +45,12 @@ class Cart < ApplicationRecord
     return if status_paid?
 
     transaction do
-      update!(status: :paid, checked_out_at: paid_time)
+      update!(
+        status: :paid,
+        checked_out_at: paid_time,
+        payment_mode: :full,
+        staggered_payment_plan_id: nil
+      )
 
       members.distinct.compact.each do |member|
         member.update!(status: :active)
@@ -54,5 +68,20 @@ class Cart < ApplicationRecord
 
     existing = Cart.unpaid.where(user:, club:).where.not(id: id).exists?
     errors.add(:base, "Active cart already exists for this user and club") if existing
+  end
+
+  def validate_payment_plan_belongs_to_club
+    return unless staggered_payment_plan_id.present?
+    return if staggered_payment_plan&.club_id == club_id
+
+    errors.add(:staggered_payment_plan, "must belong to the same club")
+  end
+
+  def validate_payment_mode_consistency
+    if payment_mode_full? && staggered_payment_plan.present?
+      errors.add(:staggered_payment_plan, "must be blank when paying in full")
+    elsif payment_mode_staggered? && staggered_payment_plan.nil?
+      errors.add(:staggered_payment_plan, "must be selected for staggered payments")
+    end
   end
 end

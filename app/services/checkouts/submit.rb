@@ -2,12 +2,12 @@
 
 module Checkouts
   class Submit
-    Result = Struct.new(:order, :transaction, :response, :payment_method, keyword_init: true)
+    Result = Struct.new(:order, :transaction, :response, :payment_method, :schedule, keyword_init: true)
 
     class Error < StandardError; end
     class EmptyCartError < Error; end
 
-    def initialize(cart:, user:, payment_method: nil, tokenize: false, card_details: {}, saved_card_cvv: nil, client: nil)
+    def initialize(cart:, user:, payment_method: nil, tokenize: false, card_details: {}, saved_card_cvv: nil, payment_mode: nil, staggered_payment_plan: nil, client: nil)
       @cart = cart
       @user = user
       @payment_method = payment_method
@@ -16,6 +16,8 @@ module Checkouts
       card_hash = card_hash.to_h if card_hash.respond_to?(:to_h)
       @card_details = card_hash.deep_symbolize_keys
       @saved_card_cvv = saved_card_cvv.to_s.gsub(/\D/, "")
+      @payment_mode = (payment_mode.presence || cart.payment_mode || "full").to_s
+      @staggered_payment_plan = staggered_payment_plan || cart.staggered_payment_plan
       @client = client || default_client
     end
 
@@ -24,15 +26,24 @@ module Checkouts
 
       ActiveRecord::Base.transaction do
         order = build_order!
+        schedule = nil
+        first_installment = nil
+
+        charge_amount_cents = order.total_cents
+        if staggered_payment?
+          schedule, first_installment = build_staggered_schedule!(order)
+          charge_amount_cents = first_installment.amount_cents
+        end
+
         payment_tx = order.payment_transactions.create!(
           status: :initialized,
           gateway: "paygate",
-          amount_cents: order.total_cents,
+          amount_cents: charge_amount_cents,
           amount_currency: order.total_currency,
           payment_method: payment_method
         )
 
-        response = initiate_payment!(order, payment_tx)
+        response = initiate_payment!(order, payment_tx, amount_cents: charge_amount_cents)
 
         unless response.successful?
           raise Error, response.error_message.presence || "Payment was declined."
@@ -41,11 +52,15 @@ module Checkouts
         saved_payment_method = persist_tokenized_card(response) if tokenize? && response.card_token.present?
         applied_payment_method = saved_payment_method || payment_method
 
-        order.update!(
-          payment_method: applied_payment_method,
-          submitted_at: Time.current
-        )
-        order.mark_paid!(Time.current)
+        if staggered_payment?
+          finalize_staggered_order!(order, schedule, first_installment, applied_payment_method, payment_tx)
+        else
+          order.update!(
+            payment_method: applied_payment_method,
+            submitted_at: Time.current
+          )
+          order.mark_paid!(Time.current)
+        end
 
         payment_tx.update!(
           status: :succeeded,
@@ -61,7 +76,8 @@ module Checkouts
           order:,
           transaction: payment_tx,
           response:,
-          payment_method: applied_payment_method
+          payment_method: applied_payment_method,
+          schedule: order.staggered_payment_schedule
         )
       end
       rescue StandardError => e
@@ -70,7 +86,7 @@ module Checkouts
 
     private
 
-    attr_reader :cart, :user, :payment_method, :tokenize, :card_details, :saved_card_cvv, :client
+    attr_reader :cart, :user, :payment_method, :tokenize, :card_details, :saved_card_cvv, :payment_mode, :staggered_payment_plan, :client
 
     def build_order!
       subtotal_cents = cart.cart_items.sum(:total_price_cents)
@@ -81,6 +97,8 @@ module Checkouts
         user:,
         cart:,
         status: :draft,
+        payment_mode: payment_mode || cart.payment_mode || "full",
+        staggered_payment_plan: payment_mode.to_s == "staggered" ? (staggered_payment_plan || cart.staggered_payment_plan) : nil,
         subtotal_cents: subtotal_cents,
         subtotal_currency: currency,
         discount_cents: 0,
@@ -106,7 +124,7 @@ module Checkouts
       order
     end
 
-    def initiate_payment!(order, payment_tx)
+    def initiate_payment!(order, payment_tx, amount_cents:)
       return_url = Settings.paygate.pay_host.return_url
       notify_url = Settings.paygate.pay_host.notify_url
 
@@ -117,7 +135,8 @@ module Checkouts
           payment_method:,
           cvv: saved_card_cvv.presence,
           return_url:,
-          notify_url:
+          notify_url:,
+          amount_cents:
         )
       else
         client.card_payment(
@@ -126,7 +145,8 @@ module Checkouts
           card_details:,
           tokenize: tokenize?,
           return_url:,
-          notify_url:
+          notify_url:,
+          amount_cents:
         )
       end
     end
@@ -154,6 +174,79 @@ module Checkouts
 
     def tokenize?
       tokenize
+    end
+
+    def staggered_payment?
+      payment_mode == "staggered" && staggered_payment_plan.present?
+    end
+
+    def build_staggered_schedule!(order)
+      raise Error, "No payment plan selected" unless staggered_payment_plan
+
+      plan_installments = staggered_payment_plan.ordered_installments
+      if plan_installments.empty?
+        raise Error, "Selected payment plan has no installments configured."
+      end
+
+      schedule = order.build_staggered_payment_schedule(
+        club: order.club,
+        staggered_payment_plan:,
+        status: :active,
+        activated_at: Time.current
+      )
+
+      total_cents = order.total_cents
+      allocated_cents = 0
+
+      plan_installments.each_with_index do |plan_installment, index|
+        percentage = plan_installment.percentage.to_f
+        raw_amount = (total_cents * percentage / 100.0)
+        amount_cents =
+          if index == plan_installments.length - 1
+            total_cents - allocated_cents
+          else
+            raw_amount.round
+          end
+        allocated_cents += amount_cents
+
+        if index.zero?
+          due_time = Time.current
+        else
+          due_date = plan_installment.due_on || order.created_at&.to_date || Date.current
+          zone = Time.zone || ActiveSupport::TimeZone["UTC"]
+          due_time = zone.local(due_date.year, due_date.month, due_date.day, 23, 59, 59)
+        end
+
+        schedule.installments.build(
+          position: index,
+          percentage: percentage,
+          amount_cents: amount_cents,
+          amount_currency: order.total_currency,
+          due_at: due_time,
+          status: :pending
+        )
+      end
+
+      schedule.save!
+      [schedule, schedule.installments.order(:position, :id).first]
+    end
+
+    def finalize_staggered_order!(order, schedule, first_installment, payment_method, payment_tx)
+      order.update!(
+        payment_method:,
+        submitted_at: Time.current,
+        status: :pending_payment
+      )
+
+      if first_installment
+        first_installment.update!(
+          status: :paid,
+          paid_at: Time.current,
+          payment_transaction: payment_tx
+        )
+      end
+
+      order.cart&.mark_as_paid!(Time.current)
     end
 
     def club_currency

@@ -1,0 +1,42 @@
+<div class="space-y-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 mt-4">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <h3 class="text-sm font-semibold text-slate-900">Memberships in your cart</h3>
+      <p class="text-xs text-slate-500">Totals update when you change how you pay.</p>
+    </div>
+    <span class="text-xs font-semibold uppercase tracking-wide text-slate-500"
+          data-payment-plan-selector-target="summary">
+      <%= @selected_payment_summary_label %>
+    </span>
+  </div>
+  <% full_total_formatted = number_to_currency(full_total_money.cents / 100.0, unit: full_total_money.currency.iso_code) %>
+  <% staggered_total_formatted = number_to_currency(staggered_total_money.cents / 100.0, unit: staggered_total_money.currency.iso_code) %>
+  <% initial_total_amount = selected_mode == "staggered" ? staggered_total_formatted : full_total_formatted %>
+  <% if @cart_item_summaries.present? %>
+    <div class="space-y-3">
+      <% @cart_item_summaries.each do |summary| %>
+        <% full_amount = number_to_currency(summary[:full_price].cents / 100.0, unit: summary[:full_price].currency.iso_code) %>
+        <% staggered_amount = number_to_currency(summary[:base_price].cents / 100.0, unit: summary[:base_price].currency.iso_code) %>
+        <% initial_amount = selected_mode == "staggered" ? staggered_amount : full_amount %>
+        <div class="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+          <div>
+            <p class="text-sm font-semibold text-slate-900"><%= summary[:member_name] %></p>
+            <p class="text-xs text-slate-500"><%= summary[:membership_label] %></p>
+          </div>
+          <p class="text-sm font-semibold text-slate-900"><%= initial_amount %></p>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3 text-xs text-slate-500">
+      No memberships have been added yet.
+    </p>
+  <% end %>
+  <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
+    <span class="text-sm font-medium text-slate-600">Order total</span>
+    <span class="text-base font-semibold text-slate-900"><%= initial_total_amount %></span>
+  </div>
+  <p class="text-[11px] text-slate-500">
+    Installment plans use the membership base price. Paying in full uses the current pricing tier.
+  </p>
+</div>

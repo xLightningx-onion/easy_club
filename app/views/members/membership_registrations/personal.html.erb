@@ -1,7 +1,27 @@
+<%= content_for :club_header do %>
+  <div class="bg-white rounded-[15px] flex flex-col justify-center items-center py-5 px-5">
+    <%= image_tag serve_image_remote_url(@club.logo), class: "max-w-[200px] mb-5" %>
+    <h2 class="text-3xl lg:text-3xl font-semibold text-center lg:text-start">
+      New Membership
+    </h2> 
+  </div>
+  <style>
+    .club-header-color {
+      background-color: blue;
+    }
+  </style>
+<% end %>
+
+<%= content_for :progress_bar do %>
+  <%= render "members/membership_registrations/progress_bar", step_count: 1 %>
+<% end %>
+
 <% if @phase == :membership_type %>
-  <div class="px-6 py-8 space-y-6">
-    <div class="text-center space-y-2">
-      <h2 class="text-xl font-semibold text-slate-900">Choose your membership type</h2>
+  <div class="py-3 space-y-6">
+    <h2 class="text-2xl lg:text-3xl font-semibold text-center lg:text-start mb-3">
+      Personal Questions
+    </h2> 
+    <div class="space-y-2 text-center lg:text-start">
       <p class="text-sm text-slate-600">We filtered the available memberships based on your age and gender.</p>
     </div>
 
@@ -61,7 +81,7 @@
     <% end %>
   </div>
 <% else %>
-  <div class="px-6 py-8">
+  <div class="py-3">
     <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club.id), method: :patch, data: { controller: "sa-id" }, class: "space-y-8" do |f| %>
       <%= hidden_field_tag "membership_registration_form[phase]", "details" %>
       <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>

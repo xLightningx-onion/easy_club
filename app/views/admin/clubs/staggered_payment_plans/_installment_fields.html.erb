@@ -1,0 +1,63 @@
+<div
+  class="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm"
+  data-staggered-payment-plan-target="installment"
+>
+  <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+    <div class="space-y-2">
+      <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <span data-staggered-payment-plan-target="installmentLabel">Installment</span>
+        <% if form.object.persisted? %>
+          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Saved</span>
+        <% else %>
+          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">New</span>
+        <% end %>
+      </div>
+      <div class="grid gap-4 md:grid-cols-3">
+        <div class="space-y-1">
+          <%= form.label :percentage, "Percent of order", class: "text-xs font-medium text-slate-600" %>
+          <div class="relative">
+            <%= form.number_field :percentage,
+                                  step: 0.1,
+                                  min: 0,
+                                  max: 100,
+                                  class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+                                  data: { action: "input->staggered-payment-plan#recalculate", staggered_payment_plan_target: "percentage" } %>
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-semibold text-slate-500">%</span>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <%= form.label :due_on, "Payment due date", class: "text-xs font-medium text-slate-600" %>
+          <%= form.date_field :due_on,
+                               class: "w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+                               data: { action: "change->staggered-payment-plan#renumber" } %>
+          <p class="text-[11px] text-slate-400">Members must settle this installment on or before this date.</p>
+        </div>
+        <div class="space-y-1">
+          <%= form.label :amount, "Reference amount", class: "text-xs font-medium text-slate-600" %>
+          <div class="relative">
+            <% currency = club.settings.dig("finance", "currency") rescue "ZAR" %>
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-semibold text-slate-500"><%= currency %></span>
+            <%= form.number_field :amount,
+                                  step: 0.01,
+                                  min: 0,
+                                  class: "w-full rounded border border-slate-300 px-3 py-2 pl-16 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+          </div>
+          <p class="text-[11px] text-slate-400">Optional guide for club admins. Actual amount is calculated from each order.</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-start md:flex-col md:items-end md:gap-2">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+        data-action="staggered-payment-plan#removeInstallment"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+
+  <%= form.hidden_field :position, value: form.object.position || 0, data: { staggered_payment_plan_target: "position" } %>
+  <%= form.hidden_field :_destroy, value: form.object.marked_for_destruction? ? "1" : "0", data: { staggered_payment_plan_target: "destroy" } %>
+  <%= form.hidden_field :id if form.object.persisted? %>
+</div>
