@@ -27,12 +27,14 @@ module Checkouts
       ActiveRecord::Base.transaction do
         order = build_order!
         schedule = nil
-        first_installment = nil
+        installment_to_charge = nil
 
         charge_amount_cents = order.total_cents
         if staggered_payment?
-          schedule, first_installment = build_staggered_schedule!(order)
-          charge_amount_cents = first_installment.amount_cents
+          schedule, installment_to_charge = build_staggered_schedule!(order)
+          raise Error, "All installments have already been settled." unless installment_to_charge
+
+          charge_amount_cents = installment_to_charge.amount_cents
         end
 
         payment_tx = order.payment_transactions.create!(
@@ -53,7 +55,7 @@ module Checkouts
         applied_payment_method = saved_payment_method || payment_method
 
         if staggered_payment?
-          finalize_staggered_order!(order, schedule, first_installment, applied_payment_method, payment_tx)
+          finalize_staggered_order!(order, schedule, installment_to_charge, applied_payment_method, payment_tx)
         else
           order.update!(
             payment_method: applied_payment_method,
@@ -89,16 +91,28 @@ module Checkouts
     attr_reader :cart, :user, :payment_method, :tokenize, :card_details, :saved_card_cvv, :payment_mode, :staggered_payment_plan, :client
 
     def build_order!
-      subtotal_cents = cart.cart_items.sum(:total_price_cents)
-      currency = cart.cart_items.first&.total_price_currency || club_currency
+      existing_order = cart.order
 
-      order = Order.create!(
+      full_total_money = cart.full_total_money
+      base_total_money = cart.base_price_total
+
+      order_total_money = if staggered_payment?
+                            base_total_money || full_total_money
+                          else
+                            full_total_money
+                          end
+
+      subtotal_cents = order_total_money.cents
+      currency = order_total_money.currency.iso_code
+      selected_plan = payment_mode.to_s == "staggered" ? (staggered_payment_plan || cart.staggered_payment_plan) : nil
+
+      order = existing_order || Order.new
+      order.assign_attributes(
         club: cart.club,
         user:,
         cart:,
-        status: :draft,
         payment_mode: payment_mode || cart.payment_mode || "full",
-        staggered_payment_plan: payment_mode.to_s == "staggered" ? (staggered_payment_plan || cart.staggered_payment_plan) : nil,
+        staggered_payment_plan: selected_plan,
         subtotal_cents: subtotal_cents,
         subtotal_currency: currency,
         discount_cents: 0,
@@ -106,18 +120,39 @@ module Checkouts
         total_cents: subtotal_cents,
         total_currency: currency
       )
+      order.status = :draft if order.new_record? || order.status_draft?
+      order.save!
 
-      cart.cart_items.includes(:plan, :member, plan: :product).each do |item|
+      order.order_items.destroy_all
+
+      cart.cart_items.includes({ member: :membership_type }, plan: :product).each do |item|
+        membership_type = item.member&.membership_type
+        quantity = item.quantity.to_i.nonzero? || 1
+
+        unit_money = if staggered_payment? && membership_type&.base_price
+                        membership_type.base_price
+                      else
+                        Money.new(item.unit_price_cents, item.unit_price_currency)
+                      end
+
+        item_total_money = if staggered_payment?
+                              unit_money * quantity
+                            else
+                              Money.new(item.total_price_cents, item.total_price_currency)
+                            end
+
+        item_total_money ||= Money.new(item.total_price_cents, item.total_price_currency)
+
         order.order_items.create!(
           member: item.member,
           plan: item.plan,
           product: item.plan.product,
           description: item.plan.product&.name,
-          quantity: item.quantity,
-          unit_price_cents: item.unit_price_cents,
-          unit_price_currency: item.unit_price_currency,
-          total_price_cents: item.total_price_cents,
-          total_price_currency: item.total_price_currency
+          quantity: quantity,
+          unit_price_cents: unit_money.cents,
+          unit_price_currency: unit_money.currency.iso_code,
+          total_price_cents: item_total_money.cents,
+          total_price_currency: item_total_money.currency.iso_code
         )
       end
 
@@ -183,70 +218,86 @@ module Checkouts
     def build_staggered_schedule!(order)
       raise Error, "No payment plan selected" unless staggered_payment_plan
 
-      plan_installments = staggered_payment_plan.ordered_installments
-      if plan_installments.empty?
-        raise Error, "Selected payment plan has no installments configured."
+      schedule = order.staggered_payment_schedule
+
+      if schedule && schedule.staggered_payment_plan_id != staggered_payment_plan.id
+        if schedule.installments.none?(&:status_paid?)
+          schedule.destroy!
+          schedule = nil
+        else
+          raise Error, "Cannot change payment plan after installments have been paid."
+        end
       end
 
-      schedule = order.build_staggered_payment_schedule(
-        club: order.club,
-        staggered_payment_plan:,
-        status: :active,
-        activated_at: Time.current
-      )
+      if schedule.nil?
+        plan_installments = staggered_payment_plan.ordered_installments
+        raise Error, "Selected payment plan has no installments configured." if plan_installments.empty?
 
-      total_cents = order.total_cents
-      allocated_cents = 0
+        schedule = order.build_staggered_payment_schedule(
+          club: order.club,
+          staggered_payment_plan:,
+          status: :active,
+          activated_at: Time.current
+        )
 
-      plan_installments.each_with_index do |plan_installment, index|
-        percentage = plan_installment.percentage.to_f
-        raw_amount = (total_cents * percentage / 100.0)
-        amount_cents =
-          if index == plan_installments.length - 1
-            total_cents - allocated_cents
-          else
-            raw_amount.round
-          end
-        allocated_cents += amount_cents
+        total_cents = order.total_cents
+        allocated_cents = 0
 
-        if index.zero?
-          due_time = Time.current
-        else
-          due_date = plan_installment.due_on || order.created_at&.to_date || Date.current
-          zone = Time.zone || ActiveSupport::TimeZone["UTC"]
-          due_time = zone.local(due_date.year, due_date.month, due_date.day, 23, 59, 59)
+        plan_installments.each_with_index do |plan_installment, index|
+          percentage = plan_installment.percentage.to_f
+          raw_amount = total_cents * percentage / 100.0
+          amount_cents =
+            if index == plan_installments.length - 1
+              total_cents - allocated_cents
+            else
+              raw_amount.round
+            end
+          allocated_cents += amount_cents
+
+          due_time = if index.zero?
+                       Time.current
+                     else
+                       due_date = plan_installment.due_on || order.created_at&.to_date || Date.current
+                       zone = Time.zone || ActiveSupport::TimeZone["UTC"]
+                       zone.local(due_date.year, due_date.month, due_date.day, 23, 59, 59)
+                     end
+
+          schedule.installments.build(
+            position: index,
+            percentage: percentage,
+            amount_cents: amount_cents,
+            amount_currency: order.total_currency,
+            due_at: due_time,
+            status: :pending,
+            club: order.club
+          )
         end
 
-        schedule.installments.build(
-          position: index,
-          percentage: percentage,
-          amount_cents: amount_cents,
-          amount_currency: order.total_currency,
-          due_at: due_time,
-          status: :pending
-        )
+        schedule.save!
       end
 
-      schedule.save!
-      [schedule, schedule.installments.order(:position, :id).first]
+      next_installment = schedule.installments.order(:position, :id).detect { |installment| !installment.status_paid? }
+      [schedule, next_installment]
     end
 
-    def finalize_staggered_order!(order, schedule, first_installment, payment_method, payment_tx)
+    def finalize_staggered_order!(order, schedule, installment, payment_method, payment_tx)
       order.update!(
         payment_method:,
         submitted_at: Time.current,
         status: :pending_payment
       )
 
-      if first_installment
-        first_installment.update!(
-          status: :paid,
-          paid_at: Time.current,
-          payment_transaction: payment_tx
-        )
+      if installment
+        installment.update!(payment_transaction: payment_tx)
+        installment.mark_paid!(Time.current)
       end
 
-      order.cart&.mark_as_paid!(Time.current)
+      schedule.reload
+      if schedule.installments.all?(&:status_paid?)
+        order.reload
+      else
+        order.cart&.mark_as_partially_paid!(Time.current)
+      end
     end
 
     def club_currency

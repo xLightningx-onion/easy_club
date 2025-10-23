@@ -48,6 +48,7 @@
           <dt class="font-medium text-slate-500">Member status</dt>
           <% member_status_classes = case member&.status.to_s
                                       when "active" then "bg-emerald-100 text-emerald-700"
+                                      when "partially_paid" then "bg-sky-100 text-sky-700"
                                       when "unpaid" then "bg-amber-100 text-amber-700"
                                       when "suspended" then "bg-rose-100 text-rose-600"
                                       else "bg-slate-100 text-slate-600"

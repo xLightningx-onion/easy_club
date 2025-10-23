@@ -1,15 +1,5 @@
 <%= content_for :club_header do %>
-  <div class="bg-white rounded-[15px] flex flex-col justify-center items-center py-5 px-5">
-    <%= image_tag serve_image_remote_url(@club.logo), class: "max-w-[200px] mb-5" %>
-    <h2 class="text-3xl lg:text-3xl font-semibold text-center lg:text-start">
-      New Membership
-    </h2> 
-  </div>
-  <style>
-    .club-header-color {
-      background-color: blue;
-    }
-  </style>
+  <%= render "members/membership_registrations/club_header", club: @club %>
 <% end %>
 
 <%= content_for :progress_bar do %>
@@ -45,6 +35,7 @@
     <% if @eligible_membership_types.any? %>
       <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club.id), method: :patch, class: "space-y-5" do |f| %>
         <%= hidden_field_tag "membership_registration_form[phase]", "membership_type" %>
+        <%= f.hidden_field :member_id %>
         <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
         <div class="space-y-3">
           <% @eligible_membership_types.each do |membership_type| %>
@@ -66,8 +57,8 @@
         </div>
 
         <div class="flex items-center justify-between">
-          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details"), class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
-          <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+          <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded bg-easyclub-primary px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
         </div>
       <% end %>
     <% else %>
@@ -75,15 +66,44 @@
         <p class="font-semibold">No memberships available.</p>
         <p class="mt-1">Your age and gender do not match any membership types offered by <strong><%= @club.name %></strong>. Please adjust the personal details or contact the club.</p>
         <div class="mt-4">
-          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details"), class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
         </div>
       </div>
     <% end %>
   </div>
 <% else %>
-  <div class="py-3">
+  <div class="py-3 space-y-6">
+    <% if @available_profiles.present? %>
+      <div class="space-y-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+        <div class="flex flex-col gap-1">
+          <h3 class="text-base font-semibold text-slate-900">Use a saved profile</h3>
+          <p class="text-sm text-slate-600">Select a member you have registered before to prefill their personal details.</p>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <% @available_profiles.each do |profile| %>
+            <% selected = @form.member_id.to_s == profile.id.to_s %>
+            <%= link_to members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details", profile_member_id: profile.id),
+                        class: [
+                          "flex flex-col gap-2 rounded-xl border px-4 py-3 text-left transition",
+                          selected ? "border-sky-500 bg-sky-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
+                        ].join(" ") do %>
+              <span class="text-sm font-semibold text-slate-900"><%= profile.display_name %></span>
+              <span class="text-xs text-slate-500"><%= profile.club&.name %></span>
+              <% if profile.dob.present? %>
+                <span class="text-xs text-slate-500">Born <%= l(profile.dob, format: :long) %></span>
+              <% end %>
+              <% if profile.gender.present? %>
+                <span class="text-xs text-slate-500 capitalize">Gender: <%= profile.gender %></span>
+              <% end %>
+              <span class="text-xs text-slate-400">Tap to load these details</span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
     <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club.id), method: :patch, data: { controller: "sa-id" }, class: "space-y-8" do |f| %>
       <%= hidden_field_tag "membership_registration_form[phase]", "details" %>
+      <%= f.hidden_field :member_id %>
       <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
 
       <div class="grid gap-6 md:grid-cols-2">
@@ -168,8 +188,8 @@
       </label>
 
       <div class="flex items-center justify-between">
-        <%= link_to "Cancel", members_dashboards_path, class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
-        <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+        <%= link_to "Cancel", members_dashboards_path, class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+        <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded bg-easyclub-primary px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
       </div>
     <% end %>
   </div>

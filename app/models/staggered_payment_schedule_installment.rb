@@ -3,6 +3,7 @@
 class StaggeredPaymentScheduleInstallment < ApplicationRecord
   include TenantScoped
 
+  belongs_to :club
   enum :status, {
     pending: "pending",
     scheduled: "scheduled",
@@ -38,8 +39,9 @@ class StaggeredPaymentScheduleInstallment < ApplicationRecord
   validates :due_at, presence: true
 
   before_validation :default_amount_currency
+  before_validation :sync_club
 
-  delegate :club, :order, to: :schedule
+  delegate :order, to: :schedule
 
   scope :upcoming, -> { where(status: :pending).where("due_at >= ?", Time.current) }
 
@@ -63,5 +65,9 @@ class StaggeredPaymentScheduleInstallment < ApplicationRecord
 
   def default_amount_currency
     self.amount_currency ||= order&.total_currency || schedule&.club&.settings&.dig("finance", "currency") || "ZAR"
+  end
+
+  def sync_club
+    self.club ||= schedule&.club
   end
 end

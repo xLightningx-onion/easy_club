@@ -45,3 +45,6 @@ application.register("staggered-payment-plan", StaggeredPaymentPlanController)
 
 import PaymentPlanSelectorController from "./payment_plan_selector_controller"
 application.register("payment-plan-selector", PaymentPlanSelectorController)
+
+import ClubThemeColorController from "./club_theme_color_controller"
+application.register("club-theme-color", ClubThemeColorController)

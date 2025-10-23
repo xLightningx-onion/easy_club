@@ -17,7 +17,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
   helper_method :current_cart
 
   def show
-    if request.format.turbo_stream? && @step == "payment_option"
+    if request.format.turbo_stream? && @step == "payment_option" && preview_request?
       render turbo_stream: turbo_stream.update(
         "payment_option_breakdown",
         partial: "members/membership_registrations/payment_option_breakdown",
@@ -88,12 +88,11 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
       :emergency_contact_name,
       :emergency_contact_number,
       :medical_notes,
+      :member_id,
+      :phase,
       survey_responses: {},
       terms_acceptances: {}
     ).to_h
-
-    phase = params.dig(:membership_registration_form, :phase)
-    permitted["phase"] = phase if phase.present?
     permitted
   end
 
@@ -130,7 +129,19 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
   def prepare_personal_step
     return unless @step == "personal"
 
+    @available_profiles = current_user.members.includes(:club).order(:first_name, :last_name, :created_at)
+
     requested_phase = params[:phase]
+    selected_profile_id = params[:profile_member_id].presence
+
+    if selected_profile_id
+      profile = @available_profiles.find { |member| member.id.to_s == selected_profile_id }
+      if profile
+        @form.prefill_from_member(profile, guardian: current_user)
+        store_registration_data(@form.to_session)
+        requested_phase = "details"
+      end
+    end
 
     if requested_phase == "details"
       @phase = :details
@@ -219,7 +230,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
 
       plans = @club.active_staggered_payment_plans
       if plans.blank?
-        redirect_to club_cart_path, status: :see_other and return
+        redirect_to members_cart_path(club_id: selected_club_id), status: :see_other and return
       end
 
       redirect_to members_membership_registration_path(step: "payment_option", club_id: selected_club_id), status: :see_other and return
@@ -255,7 +266,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
       return
     end
 
-    redirect_to club_cart_path, status: :see_other
+    redirect_to members_cart_path(club_id: @club.id), status: :see_other
   end
 
   def prepare_payment_option_step
@@ -266,7 +277,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     @staggered_payment_plans = available_payment_plans
 
     if @staggered_payment_plans.blank?
-      redirect_to club_cart_path and return
+      redirect_to members_cart_path(club_id: @club.id) and return
     end
 
     preview_mode = params[:preview_payment_mode].presence_in(%w[full staggered])
@@ -296,7 +307,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     @cart_items ||= @cart.cart_items.includes({ member: :membership_type }, plan: :product)
     @cart_item_summaries = build_cart_item_summaries(@cart_items)
 
-    @cart_total_money = Money.new(@cart.total_cents, @cart.total_currency)
+    @cart_total_money = @cart.full_total_money
     @base_price = resolve_base_price_for_cart(@cart, cart_items: @cart_items)
     @staggered_total_money = @base_price || @cart_total_money
     @plan_pricing = build_plan_pricing(@staggered_payment_plans, @base_price)
@@ -341,17 +352,12 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     @available_payment_plans ||= @club.active_staggered_payment_plans.includes(:installments)
   end
 
+  def preview_request?
+    params[:preview_payment_mode].present? || params[:preview_staggered_payment_plan_id].present?
+  end
+
   def resolve_base_price_for_cart(cart, cart_items: nil)
-    items = cart_items || cart.cart_items.includes(member: :membership_type)
-    return nil if items.blank?
-
-    base_prices = items.map { |item| base_price_for_cart_item(item) }.compact
-
-    return nil if base_prices.blank?
-
-    currency_code = base_prices.first.currency.iso_code
-    total_cents = base_prices.sum(&:cents)
-    Money.new(total_cents, currency_code)
+    cart.base_price_total(cart_items: cart_items)
   end
 
   def build_plan_pricing(plans, base_price)
@@ -417,13 +423,17 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     return true if defined?(@finalization_attempted) && @finalization_attempted
 
     if @form.cart_id.present?
-      existing_cart = Cart.find_by(id: @form.cart_id)
-      if existing_cart
+      existing_cart = Cart.find_by(id: @form.cart_id, user: current_user)
+      if existing_cart&.club_id == @club.id && existing_cart.status_unpaid?
         @current_cart = @cart = existing_cart
         @highlighted_cart_item = existing_cart.cart_items.find_by(id: @form.cart_item_id)
         @cart_items = existing_cart.cart_items.includes({ member: :membership_type }, plan: :product)
         @finalization_attempted = true
         return true
+      elsif existing_cart
+        @form.cart_id = nil
+        @form.cart_item_id = nil
+        store_registration_data(@form.to_session)
       end
     end
 
@@ -440,7 +450,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     @highlighted_cart_item = result.cart_item
     @cart_items = @cart.cart_items.includes({ member: :membership_type }, plan: :product)
     @base_price = resolve_base_price_for_cart(@cart, cart_items: @cart_items)
-    @cart_total_money = Money.new(@cart.total_cents, @cart.total_currency)
+    @cart_total_money = @cart.full_total_money
     @plan_pricing = build_plan_pricing(available_payment_plans, @base_price)
 
     @finalization_attempted = true

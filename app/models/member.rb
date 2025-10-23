@@ -24,6 +24,7 @@ class Member < ApplicationRecord
 
   enum :status, {
     unpaid: "unpaid",
+    partially_paid: "partially_paid",
     active: "active",
     suspended: "suspended"
   }, prefix: true

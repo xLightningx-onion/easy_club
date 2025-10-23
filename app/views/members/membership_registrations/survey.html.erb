@@ -1,15 +1,5 @@
 <%= content_for :club_header do %>
-  <div class="bg-white rounded-[15px] flex flex-col justify-center items-center py-5 px-5">
-    <%= image_tag serve_image_remote_url(@club.logo), class: "max-w-[200px] mb-5" %>
-    <h2 class="text-3xl lg:text-3xl font-semibold text-center lg:text-start">
-      New Membership
-    </h2> 
-  </div>
-  <style>
-    .club-header-color {
-      background-color: blue;
-    }
-  </style>
+  <%= render "members/membership_registrations/club_header", club: @club %>
 <% end %>
 
 <%= content_for :progress_bar do %>
@@ -88,15 +78,15 @@
       </div>
 
       <div class="flex items-center justify-between">
-        <%= link_to "Previous", members_membership_registration_path(step: "medical", club_id: @club.id), class: "rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
-        <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+        <%= link_to "Previous", members_membership_registration_path(step: "medical", club_id: @club.id), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+        <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>
       </div>
     <% end %>
   <% else %>
     <div class="rounded-xl border border-slate-200 bg-white px-6 py-8 text-center text-sm text-slate-500">
       <p>There are no custom survey questions from <strong><%= @club.name %></strong>. You can continue to the next step.</p>
       <div class="mt-4 flex justify-center">
-        <%= link_to "Next", members_membership_registration_path(step: "terms", club_id: @club.id), class: "inline-flex min-w-[160px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+        <%= link_to "Next", members_membership_registration_path(step: "terms", club_id: @club.id), class: "inline-flex min-w-[160px] items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>
       </div>
     </div>
   <% end %>

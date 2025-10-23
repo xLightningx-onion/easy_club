@@ -1,9 +1,0 @@
-<%= turbo_stream.replace "club_checkout_payment_methods" do %>
-  <%= turbo_frame_tag "club_checkout_payment_methods",
-                      data: { action: "turbo:frame-load->payment-method#refresh" } do %>
-    <%= render "club/carts/saved_payment_methods",
-               payment_methods: payment_methods,
-               selected_method_id: selected_method_id,
-               error_message: error_message %>
-  <% end %>
-<% end %>

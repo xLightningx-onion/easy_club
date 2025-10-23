@@ -33,7 +33,6 @@ class MembershipRegistrationForm
     user = attributes.delete(:user)
     super(attributes)
     self.user = user
-    apply_user_defaults if user
   end
 
   validates :club_id, presence: true
@@ -65,8 +64,11 @@ class MembershipRegistrationForm
       :accept_personal_terms
     )
 
-    assign_attributes(permitted)
-    clear_created_records!
+    existing_member_id = attrs[:member_id].presence || member_id
+
+    assign_attributes(permitted.except(:member_id))
+    clear_created_records!(preserve_member: existing_member_id.present?)
+    self.member_id = existing_member_id
     self.membership_type_id = nil
     derive_identity_details if permitted[:id_number].present?
 
@@ -82,7 +84,7 @@ class MembershipRegistrationForm
     end
 
     self.membership_type_id = attrs[:membership_type_id]
-    clear_created_records!
+    clear_created_records!(preserve_member: member_id.present?)
     validate_membership_choice(eligible_membership_types)
   end
 
@@ -90,14 +92,14 @@ class MembershipRegistrationForm
     attrs = indifferent_hash(params)
     assign_attributes(attrs.slice(:medical_aid_name, :medical_aid_number, :emergency_contact_name, :emergency_contact_number, :medical_notes))
     assign_survey_responses(attrs[:survey_responses]) if attrs.key?(:survey_responses)
-    clear_created_records!
+    clear_created_records!(preserve_member: member_id.present?)
     validate_medical_details
   end
 
   def submit_survey_responses(params, membership_questions: [])
     attrs = indifferent_hash(params)
     assign_survey_responses(attrs[:survey_responses]) if attrs.key?(:survey_responses)
-    clear_created_records!
+    clear_created_records!(preserve_member: member_id.present?)
     validate_survey_responses(membership_questions)
   end
 
@@ -182,8 +184,27 @@ class MembershipRegistrationForm
     ActiveModel::Type::Boolean.new.cast(terms_acceptances[term.id.to_s])
   end
 
-  def clear_created_records!
-    self.member_id = nil
+  def prefill_from_member(member, guardian: nil)
+    return unless member
+
+    self.member_id = member.id
+    self.first_name = member.first_name
+    self.last_name = member.last_name
+    self.gender = member.gender
+    self.date_of_birth = member.dob
+    self.id_number = nil
+    self.email = guardian&.email if guardian&.email.present?
+
+    if guardian
+      self.mobile_country_code = guardian.country_code.presence || mobile_country_code
+      self.mobile_number = guardian.mobile_number if guardian.mobile_number.present?
+    end
+
+    self.accept_personal_terms = false
+  end
+
+  def clear_created_records!(preserve_member: false)
+    self.member_id = nil unless preserve_member
     self.cart_id = nil
     self.cart_item_id = nil
   end
@@ -278,12 +299,6 @@ class MembershipRegistrationForm
     structured = values.is_a?(Hash) ? values : {}
     merged = survey_responses.merge(structured.stringify_keys)
     self.survey_responses = merged.with_indifferent_access
-  end
-
-  def apply_user_defaults
-    self.first_name ||= user.first_name
-    self.last_name ||= user.last_name
-    self.email ||= user.email
   end
 
   def derive_identity_details

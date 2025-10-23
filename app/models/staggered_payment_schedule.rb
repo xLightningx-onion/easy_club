@@ -43,7 +43,10 @@ class StaggeredPaymentSchedule < ApplicationRecord
   def complete_if_settled!
     return unless installments.all?(&:status_paid?)
 
-    update!(status: :completed, completed_at: Time.current)
+    transaction do
+      update!(status: :completed, completed_at: Time.current)
+      order.mark_paid!(Time.current) if order && !order.status_paid?
+    end
   end
 
   private

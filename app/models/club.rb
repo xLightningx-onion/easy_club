@@ -74,4 +74,8 @@ class Club < ApplicationRecord
       .includes(:installments)
       .order(:name)
   end
+
+  def oklch_color
+    color_palette["theme_oklch"]
+  end
 end

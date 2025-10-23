@@ -44,12 +44,6 @@ Rails.application.routes.draw do
       end
     end
     resources :plans, only: :index
-    resource :cart, only: :show do
-      resources :items, controller: "cart_items", only: %i[create update destroy]
-    end
-    resource :checkout, only: :create
-    resources :payment_methods, only: :destroy
-    get "checkout/success", to: "checkouts#success", as: :checkout_success
     root "dashboard"
   end
 
@@ -114,6 +108,12 @@ Rails.application.routes.draw do
     resource :dashboards
     get "" => "dashboards#index"
     resource :membership_registration, only: %i[show update]
+    resource :cart, only: :show do
+      resources :items, controller: "cart_items", only: %i[create update destroy]
+    end
+    resource :checkout, only: :create
+    resources :payment_methods, only: :destroy
+    get "checkout/success", to: "checkouts#success", as: :checkout_success
   end
 
   root "members/dashboards#index"

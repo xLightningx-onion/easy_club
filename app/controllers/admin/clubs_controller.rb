@@ -79,7 +79,7 @@ class Admin::ClubsController < Admin::BaseController
   end
 
   def club_params
-    params.require(:club).permit(
+    permitted = params.require(:club).permit(
       :name,
       :subdomain,
       :primary_domain,
@@ -97,7 +97,7 @@ class Admin::ClubsController < Admin::BaseController
       :latitude,
       :longitude,
       :google_place_id,
-      color_palette: {},
+      color_palette: %i[theme_hex theme_oklch],
       settings: {},
       membership_questions_attributes: %i[
         id
@@ -110,6 +110,13 @@ class Admin::ClubsController < Admin::BaseController
         _destroy
       ]
     )
+
+    # if permitted[:color_palette].is_a?(Hash)
+    #   permitted[:color_palette].delete_if { |_key, value| value.blank? }
+    #   permitted[:color_palette] = nil if permitted[:color_palette].empty?
+    # end
+
+    permitted
   end
 
   def default_currency
