@@ -422,18 +422,31 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
   def ensure_membership_finalized!
     return true if defined?(@finalization_attempted) && @finalization_attempted
 
+    existing_cart = nil
+
     if @form.cart_id.present?
       existing_cart = Cart.find_by(id: @form.cart_id, user: current_user)
       if existing_cart&.club_id == @club.id && existing_cart.status_unpaid?
-        @current_cart = @cart = existing_cart
-        @highlighted_cart_item = existing_cart.cart_items.find_by(id: @form.cart_item_id)
-        @cart_items = existing_cart.cart_items.includes({ member: :membership_type }, plan: :product)
+        hydrate_cart_context(existing_cart)
         @finalization_attempted = true
         return true
       elsif existing_cart
         @form.cart_id = nil
         @form.cart_item_id = nil
         store_registration_data(@form.to_session)
+        existing_cart = nil
+      end
+    end
+
+    if existing_cart.nil? && params[:cart_id].present?
+      existing_cart = Cart.find_by(id: params[:cart_id], user: current_user, club: @club)
+      if existing_cart&.status_unpaid?
+        @form.cart_id = existing_cart.id
+        @form.cart_item_id ||= existing_cart.cart_items.first&.id
+        store_registration_data(@form.to_session)
+        hydrate_cart_context(existing_cart)
+        @finalization_attempted = true
+        return true
       end
     end
 
@@ -446,12 +459,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     @form.cart_item_id = result.cart_item.id
     store_registration_data(@form.to_session)
 
-    @current_cart = @cart = result.cart
-    @highlighted_cart_item = result.cart_item
-    @cart_items = @cart.cart_items.includes({ member: :membership_type }, plan: :product)
-    @base_price = resolve_base_price_for_cart(@cart, cart_items: @cart_items)
-    @cart_total_money = @cart.full_total_money
-    @plan_pricing = build_plan_pricing(available_payment_plans, @base_price)
+    hydrate_cart_context(result.cart, highlighted_item: result.cart_item)
 
     @finalization_attempted = true
     true
@@ -459,5 +467,14 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     Rails.logger.error("Membership finalization failed: #{e.message}")
     redirect_to members_membership_registration_path(step: "terms", club_id: @club.id), alert: "We couldn't prepare your order. Please review the previous step."
     false
+  end
+
+  def hydrate_cart_context(cart, highlighted_item: nil)
+    @current_cart = @cart = cart
+    @cart_items = cart.cart_items.includes({ member: :membership_type }, plan: :product)
+    @highlighted_cart_item = highlighted_item || cart.cart_items.find_by(id: @form.cart_item_id)
+    @base_price = resolve_base_price_for_cart(cart, cart_items: @cart_items)
+    @cart_total_money = cart.full_total_money
+    @plan_pricing = build_plan_pricing(available_payment_plans, @base_price)
   end
 end

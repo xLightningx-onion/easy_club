@@ -20,7 +20,7 @@
         <% initial_amount = selected_mode == "staggered" ? staggered_amount : full_amount %>
         <div class="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
           <div>
-            <p class="text-sm font-semibold text-slate-900"><%= summary[:member_name] %></p>
+            <p class="text-sm font-semibold text-slate-900"><%= summary[:member_name].to_s %></p>
             <p class="text-xs text-slate-500"><%= summary[:membership_label] %></p>
           </div>
           <p class="text-sm font-semibold text-slate-900"><%= initial_amount %></p>

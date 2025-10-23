@@ -66,12 +66,7 @@ class Members::CheckoutsController < Members::ApplicationController
       staggered_payment_plan: selected_plan
     ).call
 
-    if result.order.status_paid?
-      redirect_to members_checkout_success_path(reference: result.order.number)
-    else
-      flash[:notice] = "Checkout recorded. Awaiting payment confirmation."
-      redirect_to members_cart_redirect_path(reference: result.order.number)
-    end
+    redirect_to members_checkout_success_path(reference: result.order.number)
   rescue Checkouts::Submit::EmptyCartError
     redirect_to members_cart_redirect_path, alert: "Your cart is empty."
   rescue Checkouts::Submit::Error => e
@@ -90,12 +85,44 @@ class Members::CheckoutsController < Members::ApplicationController
               .includes(:payment_method, :user, :payment_transactions, order_items: [:member, { plan: :product }])
               .find_by("UPPER(orders.number) = ?", reference.upcase)
 
-    unless @order&.status_paid?
+    unless @order && (@order.status_paid? || @order.status_pending_payment?)
       redirect_to members_cart_redirect_path, alert: "We couldn't find that payment confirmation."
       return
     end
 
     @payment_transaction = @order.payment_transactions.max_by { |tx| tx.processed_at || tx.created_at }
+    @schedule = @order.staggered_payment_schedule
+    @schedule_installments = if @schedule
+                               @schedule.installments.order(:position, :id).to_a
+                             else
+                               []
+                             end
+
+    currency_code = @order.total_currency
+
+    if @schedule_installments.any?
+      @completed_installments = @schedule_installments.select(&:status_paid?)
+      @upcoming_installments = @schedule_installments.reject { |inst| inst.status_paid? || inst.status_cancelled? }
+      paid_cents = @completed_installments.sum(&:amount_cents)
+      outstanding_cents = @upcoming_installments.sum(&:amount_cents)
+      @current_installment = @completed_installments.last
+      @next_installment = @upcoming_installments.first
+    else
+      @completed_installments = []
+      @upcoming_installments = []
+      paid_cents = @order.total_cents
+      outstanding_cents = 0
+      @current_installment = nil
+      @next_installment = nil
+    end
+
+    @amount_paid_so_far = Money.new(paid_cents, currency_code)
+    @outstanding_amount = Money.new(outstanding_cents, currency_code)
+    @amount_captured_now = if @payment_transaction
+                             Money.new(@payment_transaction.amount_cents, @payment_transaction.amount_currency)
+                           else
+                             Money.new(0, currency_code)
+                           end
   end
 
   private

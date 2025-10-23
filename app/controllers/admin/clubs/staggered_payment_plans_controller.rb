@@ -19,7 +19,7 @@ class Admin::Clubs::StaggeredPaymentPlansController < Admin::BaseController
   def create
     @plan = @club.staggered_payment_plans.build(plan_params)
     authorize! @plan
-debugger
+
     if @plan.save
       respond_refresh_list(notice: "Staggered payment plan created.")
     else

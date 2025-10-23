@@ -29,16 +29,16 @@
     data-payment-plan-selector-target="toggle"
   >
     <div class="flex items-start justify-between gap-3">
-      <div>
+      <div class="flex items-start">
         <input type="radio"
                name="membership_registration_form[payment_plan_choice]"
                value="full"
-               class="mr-3 mt-1 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
+               class="mr-3 m-auto h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
                data-payment-plan-selector-target="input"
                data-action="payment-plan-selector#select"
                data-summary-label="Pay in full"
                <%= "checked" if full_selected %>>
-        <span class="font-semibold text-slate-900">Pay in full today</span>
+        <span class="font-semibold text-slate-900">Pay in Full</span>
       </div>
       <strong class="text-slate-900"><%= full_total_formatted %></strong>
     </div>
@@ -50,7 +50,7 @@
     <% summary_text = "#{plan.name} · #{breakdown.size} payment#{'s' unless breakdown.size == 1}" %>
     <% plan_selected = selected_mode == "staggered" && plan.id.to_s == @selected_payment_plan_id.to_s %>
     <% plan_label_classes = [
-         "flex cursor-pointer flex-col gap-3 rounded border bg-white px-4 py-3 text-sm transition hover:border-slate-400",
+         "flex cursor-pointer flex-col gap-1 rounded border bg-white px-4 py-3 text-sm transition hover:border-slate-400",
          plan_selected ? "border-slate-900 shadow-sm" : "border-slate-300"
        ].join(" ") %>
     <label
@@ -61,7 +61,7 @@
         <input type="radio"
                name="membership_registration_form[payment_plan_choice]"
                value="staggered"
-               class="mt-1 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
+               class="m-auto h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
                data-payment-plan-selector-target="input"
                data-action="payment-plan-selector#select"
                data-plan-id="<%= plan.id %>"
@@ -72,57 +72,61 @@
             <span class="font-semibold text-slate-900"><%= plan.name %></span>
             <% total_cents = breakdown.sum { |(_, amount)| amount.cents } %>
             <% total_amount = Money.new(total_cents, (@base_price || @cart_total_money).currency.iso_code) %>
-            <strong class="text-slate-900"><%= number_to_currency(total_amount.cents / 100.0, unit: total_amount.currency.iso_code) %></strong>
+            <% breakdown&.take(1).each_with_index do |(installment, amount), idx| %>
+              <strong class="text-slate-900">
+                <%= number_to_currency(amount.cents / 100.0, unit: amount.currency.iso_code) %>
+              </strong>
+            <% end %>
           </div>
+        </div>
+      </div>
+      <div class="flex mb-2 ms-7 justify-between">
+        <div>
           <% if plan.ends_on.present? %>
-            <p class="text-[11px] uppercase tracking-wide text-slate-400">Available until <%= l(plan.ends_on, format: :long) %></p>
+            <p class="text-[11px] tracking-wide text-slate-400">Available until <%= l(plan.ends_on, format: :long) %></p>
           <% end %>
           <% if plan.description.present? %>
             <p class="text-xs text-slate-500"><%= plan.description %></p>
           <% end %>
-          <% if breakdown.any? %>
-            <div class="overflow-hidden rounded-lg border border-slate-200">
-              <table class="min-w-full divide-y divide-slate-200 text-xs text-slate-600">
-                <thead class="bg-slate-50">
-                  <tr>
-                    <th class="px-3 py-2 text-left font-semibold uppercase tracking-wide">#</th>
-                    <th class="px-3 py-2 text-right font-semibold uppercase tracking-wide">Amount</th>
-                    <th class="px-3 py-2 text-left font-semibold uppercase tracking-wide">Due date</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200">
-                  <% breakdown.each_with_index do |(installment, amount), idx| %>
-                    <tr class="<%= idx.odd? ? 'bg-slate-50' : 'bg-white' %>">
-                      <td class="px-3 py-1.5 font-semibold text-slate-700"><%= idx + 1 %></td>
-                      <td class="px-3 py-1.5 text-right"><%= number_to_currency(amount.cents / 100.0, unit: amount.currency.iso_code) %></td>
-                      <td class="px-3 py-1.5">
-                        <% if idx.zero? %>
-                          Due Now
-                        <% elsif installment.due_on.present? %>
-                          <%= l(installment.due_on, format: :long) %>
-                        <% else %>
-                          <span class="text-slate-400">Date to be confirmed</span>
-                        <% end %>
-                      </td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
-            </div>
-          <% else %>
-            <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-              Installment amounts will be calculated during checkout.
-            </p>
-          <% end %>
         </div>
+        <p class="text-[11px] tracking-wide text-slate-400">Due Today</p>
+      </div>
+      <div class="flex-1 space-y-2">
+        <% if breakdown.any? %>
+          <div class="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
+            <p class="text-sm font-semibold text-slate-900">
+              Upcoming installments
+            </p>
+            <ul class="space-y-2 text-xs text-slate-500">
+              <% breakdown&.from(1).each_with_index do |(installment, amount), idx| %>
+                <% due_date = installment[:due_on] %>
+                <li class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                  <span class="font-semibold text-slate-700">
+                    Installment <%= idx + 2 %>
+                  </span>
+                  <span class="text-slate-600">
+                    <% if due_date.present? %>
+                      Due <%= l(due_date, format: :long) %>
+                    <% else %>
+                      Due date to be confirmed
+                    <% end %>
+                  </span>
+                  <span class="font-semibold text-slate-900">
+                    <%= number_to_currency(amount.cents / 100.0, unit: amount.currency.iso_code) %>
+                  </span>
+                </li>
+              <% end %>
+            </ul>
+            <div class="flex justify-end">
+              <span class="text-gray-400 text-xs">Total Membership Cost: <%= number_to_currency(total_amount.cents / 100.0, unit: total_amount.currency.iso_code) %></span>
+            </div>
+          </div>
+        <% else %>
+          <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            Installment amounts will be calculated during checkout.
+          </p>
+        <% end %>
       </div>
     </label>
-  <% end %>
-
-  <%= turbo_frame_tag "payment_option_breakdown" do %>
-    <%= render "members/membership_registrations/payment_option_breakdown",
-               selected_mode: selected_mode,
-               full_total_money: full_total_money,
-               staggered_total_money: staggered_total_money %>
   <% end %>
 </div>

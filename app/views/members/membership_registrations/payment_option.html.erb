@@ -23,12 +23,12 @@
       <%= render "members/membership_registrations/payment_option_selection" %>
     <% end %>
 
-    <div class="flex justify-between mt-4">
+    <div class="flex justify-between mt-7">
       <%= link_to "Previous",
                   members_membership_registration_path(step: "terms", club_id: @club.id),
                   class: "inline-flex items-center justify-center rounded border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
       <%= form.submit "Continue",
-                      class: "inline-flex items-center justify-center rounded bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>
+                      class: "inline-flex items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>
     </div>
   <% end %>
 </div>

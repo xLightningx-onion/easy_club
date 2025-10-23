@@ -79,7 +79,7 @@
           <h3 class="text-base font-semibold text-slate-900">Use a saved profile</h3>
           <p class="text-sm text-slate-600">Select a member you have registered before to prefill their personal details.</p>
         </div>
-        <div class="grid gap-3 md:grid-cols-2">
+        <div class="grid gap-3 grid-cols-1">
           <% @available_profiles.each do |profile| %>
             <% selected = @form.member_id.to_s == profile.id.to_s %>
             <%= link_to members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details", profile_member_id: profile.id),

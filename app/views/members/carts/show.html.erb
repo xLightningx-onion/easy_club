@@ -12,7 +12,11 @@
   <div class="space-y-2">
     <h1 class="text-2xl font-semibold text-slate-900">Complete payment</h1>
     <p class="text-sm text-slate-600">
-      Review the memberships in your cart and choose how you would like to pay. Payments are securely processed via PayGate PayWeb.
+      <% if @selected_payment_mode == "staggered" && @current_installment.present? %>
+        You’re paying installment <%= @current_installment[:number] %> of <%= @installment_total_count %> today. The rest of the balance will be charged in upcoming installments.
+      <% else %>
+        Review the memberships in your cart and choose how you would like to pay. Payments are securely processed via PayGate PayWeb.
+      <% end %>
     </p>
   </div>
 
@@ -27,13 +31,13 @@
   <% else %>
     <div class="grid gap-6 lg:grid-cols-1">
       <div class="gap-6 grid grid-cols-1">
-        <section class="space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-          <header class="flex items-center justify-between">
-            <h2 class="text-base font-semibold text-slate-900">Memberships</h2>
-            <%= link_to "Add another", members_membership_registration_path(step: "personal", club_id: current_club.id, restart: true), class: "text-sm font-semibold text-slate-600 transition hover:text-slate-900" %>
-          </header>
+        <% amount_due_money = if @selected_payment_mode == "staggered" && @current_installment.present?
+                                  @current_installment[:amount]
+                                  else
+                                  display_cart_total_money
+                                  end %>
 
-          <div class="space-y-4">
+        <section class="space-y-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
             <% @cart_items.each do |item| %>
               <% plan = item.plan %>
               <% product = plan&.product %>
@@ -50,7 +54,7 @@
                   else
                     [ full_unit_money, full_total_money ]
                   end %>
-              <article class="rounded-lg border border-slate-200 px-4 py-4">
+              <article class="">
                 <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div class="space-y-1">
                     <p class="text-sm font-semibold text-slate-900"><%= member.display_name %></p>
@@ -63,7 +67,7 @@
                   </div>
                   <div class="text-right">
                     <p class="text-sm font-semibold text-slate-900">
-                      <%= number_to_currency(display_total_money.cents / 100.0, unit: display_total_money.currency.iso_code) %>
+                      <%= number_to_currency(amount_due_money.cents / 100.0, unit: amount_due_money.currency.iso_code) %>
                     </p>
                     <p class="text-xs text-slate-500">Qty <%= quantity %></p>
                   </div>
@@ -79,58 +83,32 @@
                 </div>
               </article>
             <% end %>
-          </div>
         </section>
-
-        <section class="space-y-6 rounded-xl border border-slate-200 bg-white px-4 py-6 shadow-sm">
-          <header class="space-y-1">
-            <h2 class="text-base font-semibold text-slate-900">Payment summary</h2>
-            <p class="text-sm text-slate-600">Review your selected payment option before completing checkout.</p>
-          </header>
-
+        <%# old view payment summary used to be here %>
+        <section class="space-y-6 space-y-2 rounded-xl border border-slate-900/10 bg-slate-900/5 px-4 py-4 px-4 py-6 shadow-sm">
           <% display_cart_total_money = @cart.display_total_for_mode(mode: @selected_payment_mode, cart_items: @cart_items) %>
+          
+          <% full_cart_total_money = @cart.full_total_money %>
+          <% remaining_balance = full_cart_total_money - amount_due_money %>
 
-          <div class="space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-            <div class="flex items-center justify-between">
-              <span>Cart total</span>
-              <strong class="text-slate-900"><%= number_to_currency(display_cart_total_money.cents / 100.0, unit: display_cart_total_money.currency.iso_code) %></strong>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>Payment option</span>
-              <strong class="text-slate-900">
-                <%= @selected_payment_mode == "staggered" && @selected_payment_plan ? @selected_payment_plan.name : "Pay in full" %>
-              </strong>
-            </div>
-          </div>
-
-          <% if @selected_payment_mode == "staggered" && @current_installment.present? %>
-            <div class="space-y-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-              <p class="text-sm font-semibold text-slate-900">
-                Current payment · Installment <%= @current_installment[:number] %> of <%= @installment_total_count %>
-              </p>
-              <p>
-                Amount due now:
-                <strong class="text-slate-900"><%= number_to_currency(@current_installment[:amount].cents / 100.0, unit: @current_installment[:amount].currency.iso_code) %></strong>
-              </p>
-              <p class="text-xs text-slate-500">
-                <% if @current_installment[:due_at].present? %>
-                  Due <%= l(@current_installment[:due_at], format: :long) %>
-                <% elsif @current_installment[:due_on].present? %>
-                  Due <%= l(@current_installment[:due_on], format: :long) %>
-                <% else %>
-                  Due today
+          <div class="">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <%= @selected_payment_mode == "staggered" ? "Amount due today" : "Amount due" %>
+            </p>
+            <p class="text-2xl font-semibold text-slate-900">
+                <%= number_to_currency(amount_due_money.cents / 100.0, unit: amount_due_money.currency.iso_code) %>
+            </p>
+            <% if @selected_payment_mode == "staggered" && @current_installment.present? %>
+                <p class="text-sm text-slate-600">
+                Installment <%= @current_installment[:number] %> of <%= @installment_total_count %>.
+                <% if remaining_balance.cents.positive? %>
+                    <span class="text-slate-500">
+                    <%= number_to_currency(remaining_balance.cents / 100.0, unit: remaining_balance.currency.iso_code) %> remains for future payments.
+                    </span>
                 <% end %>
-              </p>
-            </div>
-          <% end %>
-
-          <% if current_club.active_staggered_payment_plans.exists? %>
-            <div class="flex justify-end">
-              <%= link_to "Change payment option",
-                          members_membership_registration_path(step: "payment_option", club_id: current_club.id),
-                          class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
-            </div>
-          <% end %>
+                </p>
+            <% end %>
+          </div>
         </section>
       </div>
       <section class="space-y-6 rounded-xl border border-slate-200 bg-white px-4 py-6 shadow-sm">
@@ -205,9 +183,16 @@
             </label>
           </div>
 
-          <% amount_due_money = @cart.display_total_for_mode(mode: @selected_payment_mode, cart_items: @cart_items) %>
+          <% amount_due_money ||= if @selected_payment_mode == "staggered" && @current_installment.present?
+                                    @current_installment[:amount]
+                                  else
+                                    @cart.display_total_for_mode(mode: @selected_payment_mode, cart_items: @cart_items)
+                                  end %>
           <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-            <p>Total amount due: <strong><%= number_to_currency(amount_due_money.cents / 100.0, unit: amount_due_money.currency.iso_code) %></strong>.</p>
+            <p>
+              <%= @selected_payment_mode == "staggered" ? "Charged today" : "Total amount due" %>:
+              <strong><%= number_to_currency(amount_due_money.cents / 100.0, unit: amount_due_money.currency.iso_code) %></strong>.
+            </p>
             <p>Payments are processed instantly via PayGate PayHost. Card data never touches Easy Club servers.</p>
           </div>
 

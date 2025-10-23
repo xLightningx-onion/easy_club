@@ -26,6 +26,10 @@
         <%= link_to "My Account",
           "",
           class: "flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10" %>
+        <%= link_to "Log out",
+          destroy_user_session_path,
+          data: { turbo_method: :delete },
+          class: "flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10" %>
       </div>
     </div>
   </header>

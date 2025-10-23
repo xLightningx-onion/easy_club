@@ -19697,6 +19697,7 @@ var membership_start_controller_default = class extends Controller {
     const url = new URL(basePath, window.location.origin);
     url.searchParams.set("club_id", clubId);
     url.searchParams.set("step", "personal");
+    url.searchParams.set("restart", "true");
     window.location = url.toString();
   }
 };

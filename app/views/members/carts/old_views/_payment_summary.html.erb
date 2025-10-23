@@ -1,0 +1,116 @@
+<section class="space-y-6 rounded-xl border border-slate-200 bg-white px-4 py-6 shadow-sm">
+    <header class="space-y-1">
+    <h2 class="text-base font-semibold text-slate-900">Payment summary</h2>
+    <% if @selected_payment_mode == "staggered" && @current_installment.present? %>
+        <p class="text-sm text-slate-600">
+        Only the amount shown below will be charged right now. Future installments will be billed automatically.
+        </p>
+    <% else %>
+        <p class="text-sm text-slate-600">Review your selected payment option before completing checkout.</p>
+    <% end %>
+    </header>
+
+    <% display_cart_total_money = @cart.display_total_for_mode(mode: @selected_payment_mode, cart_items: @cart_items) %>
+    <% amount_due_money = if @selected_payment_mode == "staggered" && @current_installment.present?
+                            @current_installment[:amount]
+                            else
+                            display_cart_total_money
+                            end %>
+    <% full_cart_total_money = @cart.full_total_money %>
+    <% remaining_balance = full_cart_total_money - amount_due_money %>
+
+    <div class="space-y-2 rounded-xl border border-slate-900/10 bg-slate-900/5 px-4 py-4">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <%= @selected_payment_mode == "staggered" ? "Amount due today" : "Amount due" %>
+    </p>
+    <p class="text-2xl font-semibold text-slate-900">
+        <%= number_to_currency(amount_due_money.cents / 100.0, unit: amount_due_money.currency.iso_code) %>
+    </p>
+    <% if @selected_payment_mode == "staggered" && @current_installment.present? %>
+        <p class="text-sm text-slate-600">
+        Installment <%= @current_installment[:number] %> of <%= @installment_total_count %>.
+        <% if remaining_balance.cents.positive? %>
+            <span class="text-slate-500">
+            <%= number_to_currency(remaining_balance.cents / 100.0, unit: remaining_balance.currency.iso_code) %> remains for future payments.
+            </span>
+        <% end %>
+        </p>
+    <% end %>
+    </div>
+
+    <% unless @selected_payment_mode == "staggered" %>
+    <div class="space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+        <div class="flex items-center justify-between">
+        <span>Total membership cost</span>
+        <strong class="text-slate-900"><%= number_to_currency(full_cart_total_money.cents / 100.0, unit: full_cart_total_money.currency.iso_code) %></strong>
+        </div>
+        <div class="flex items-center justify-between">
+        <span>Payment option</span>
+        <strong class="text-slate-900">
+            <%= @selected_payment_mode == "staggered" && @selected_payment_plan ? @selected_payment_plan.name : "Pay in full" %>
+        </strong>
+        </div>
+    </div>
+    <% end %>
+
+    <% if @selected_payment_mode == "staggered" && @current_installment.present? %>
+    <% current_number = @current_installment[:number].to_i %>
+    <% upcoming_installments = [] %>
+    <% if @staggered_schedule&.installments&.any? %>
+        <% schedule_installments = @staggered_schedule.installments.order(:position, :id).to_a %>
+        <% upcoming_installments = schedule_installments.drop(current_number).map.with_index(1) do |installment, idx|
+            {
+                number: current_number + idx,
+                amount: installment.amount,
+                due_on: installment.due_at&.to_date
+            }
+            end %>
+    <% elsif @selected_plan_breakdown.present? %>
+        <% upcoming_installments = @selected_plan_breakdown.drop(current_number).map.with_index(1) do |(plan_installment, amount), idx|
+            {
+                number: current_number + idx,
+                amount: amount,
+                due_on: plan_installment.due_on
+            }
+            end %>
+    <% end %>
+
+    <% if upcoming_installments.present? %>
+        <div class="space-y-3 rounded-lg border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
+        <p class="text-sm font-semibold text-slate-900">
+            Upcoming installments
+        </p>
+        <ul class="space-y-2 text-xs text-slate-500">
+            <% upcoming_installments.each do |installment| %>
+            <% due_date = installment[:due_on] %>
+            <li class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                <span class="font-semibold text-slate-700">
+                Installment <%= installment[:number] %>
+                </span>
+                <span class="text-slate-600">
+                <% if due_date.present? %>
+                    Due <%= l(due_date, format: :long) %>
+                <% else %>
+                    Due date to be confirmed
+                <% end %>
+                </span>
+                <span class="font-semibold text-slate-900">
+                <%= number_to_currency(installment[:amount].cents / 100.0, unit: installment[:amount].currency.iso_code) %>
+                </span>
+            </li>
+            <% end %>
+        </ul>
+        </div>
+    <% end %>
+    <% end %>
+
+    <% if current_club.active_staggered_payment_plans.exists? %>
+    <div class="flex justify-end">
+        <%#= link_to "Add another", members_membership_registration_path(step: "personal", club_id: current_club.id, restart: true), class: "text-sm font-semibold text-slate-600 transition hover:text-slate-900" %>
+
+        <%= link_to "Change payment option",
+                    members_membership_registration_path(step: "payment_option", club_id: current_club.id, cart_id: @cart.id),
+                    class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
+    </div>
+    <% end %>
+</section>
