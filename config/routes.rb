@@ -1,7 +1,7 @@
 require "sidekiq/web"
 Rails.application.routes.draw do
   resource :example, constraints: -> { Rails.env.development? }
-  devise_for :users
+  devise_for :users, controllers: { registrations: "users/registrations" }
 
   get "up" => "rails/health#show", as: :rails_health_check
 

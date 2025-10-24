@@ -17,6 +17,7 @@ class Admin::UsersController < Admin::BaseController
 
   def create
     @user = User.new(user_params)
+    @user.skip_terms_validation = true
     if @user.save
       redirect_to admin_user_path(@user), notice: "User created."
     else
@@ -28,6 +29,7 @@ class Admin::UsersController < Admin::BaseController
 
   def update
     attributes = user_params.dup
+    @user.skip_terms_validation = true
     if attributes[:password].blank?
       attributes.delete(:password)
       attributes.delete(:password_confirmation)
@@ -52,6 +54,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def user_params
-    params.require(:user).permit(:email, :password, :password_confirmation, :staff, :role)
+    params.require(:user).permit(:first_name, :last_name, :email, :country_code, :mobile_number,
+                                 :password, :password_confirmation, :staff, :role)
   end
 end

@@ -20317,6 +20317,446 @@ var club_theme_color_controller_default = class extends Controller {
   }
 };
 
+// app/javascript/lib/country_codes.js
+var countryCodes = [
+  { name: "Afghanistan", dial_code: "+93", code: "AF", flag: "\u{1F1E6}\u{1F1EB}" },
+  { name: "Albania", dial_code: "+355", code: "AL", flag: "\u{1F1E6}\u{1F1F1}" },
+  { name: "Algeria", dial_code: "+213", code: "DZ", flag: "\u{1F1E9}\u{1F1FF}" },
+  { name: "American Samoa", dial_code: "+1684", code: "AS", flag: "\u{1F1E6}\u{1F1F8}" },
+  { name: "Andorra", dial_code: "+376", code: "AD", flag: "\u{1F1E6}\u{1F1E9}" },
+  { name: "Angola", dial_code: "+244", code: "AO", flag: "\u{1F1E6}\u{1F1F4}" },
+  { name: "Anguilla", dial_code: "+1264", code: "AI", flag: "\u{1F1E6}\u{1F1EE}" },
+  { name: "Antigua and Barbuda", dial_code: "+1268", code: "AG", flag: "\u{1F1E6}\u{1F1EC}" },
+  { name: "Argentina", dial_code: "+54", code: "AR", flag: "\u{1F1E6}\u{1F1F7}" },
+  { name: "Armenia", dial_code: "+374", code: "AM", flag: "\u{1F1E6}\u{1F1F2}" },
+  { name: "Aruba", dial_code: "+297", code: "AW", flag: "\u{1F1E6}\u{1F1FC}" },
+  { name: "Australia", dial_code: "+61", code: "AU", flag: "\u{1F1E6}\u{1F1FA}" },
+  { name: "Austria", dial_code: "+43", code: "AT", flag: "\u{1F1E6}\u{1F1F9}" },
+  { name: "Azerbaijan", dial_code: "+994", code: "AZ", flag: "\u{1F1E6}\u{1F1FF}" },
+  { name: "Bahamas", dial_code: "+1242", code: "BS", flag: "\u{1F1E7}\u{1F1F8}" },
+  { name: "Bahrain", dial_code: "+973", code: "BH", flag: "\u{1F1E7}\u{1F1ED}" },
+  { name: "Bangladesh", dial_code: "+880", code: "BD", flag: "\u{1F1E7}\u{1F1E9}" },
+  { name: "Barbados", dial_code: "+1246", code: "BB", flag: "\u{1F1E7}\u{1F1E7}" },
+  { name: "Belarus", dial_code: "+375", code: "BY", flag: "\u{1F1E7}\u{1F1FE}" },
+  { name: "Belgium", dial_code: "+32", code: "BE", flag: "\u{1F1E7}\u{1F1EA}" },
+  { name: "Belize", dial_code: "+501", code: "BZ", flag: "\u{1F1E7}\u{1F1FF}" },
+  { name: "Benin", dial_code: "+229", code: "BJ", flag: "\u{1F1E7}\u{1F1EF}" },
+  { name: "Bermuda", dial_code: "+1441", code: "BM", flag: "\u{1F1E7}\u{1F1F2}" },
+  { name: "Bhutan", dial_code: "+975", code: "BT", flag: "\u{1F1E7}\u{1F1F9}" },
+  { name: "Bolivia", dial_code: "+591", code: "BO", flag: "\u{1F1E7}\u{1F1F4}" },
+  { name: "Bosnia and Herzegovina", dial_code: "+387", code: "BA", flag: "\u{1F1E7}\u{1F1E6}" },
+  { name: "Botswana", dial_code: "+267", code: "BW", flag: "\u{1F1E7}\u{1F1FC}" },
+  { name: "Brazil", dial_code: "+55", code: "BR", flag: "\u{1F1E7}\u{1F1F7}" },
+  { name: "British Indian Ocean Territory", dial_code: "+246", code: "IO", flag: "\u{1F1EE}\u{1F1F4}" },
+  { name: "British Virgin Islands", dial_code: "+1284", code: "VG", flag: "\u{1F1FB}\u{1F1EC}" },
+  { name: "Brunei", dial_code: "+673", code: "BN", flag: "\u{1F1E7}\u{1F1F3}" },
+  { name: "Bulgaria", dial_code: "+359", code: "BG", flag: "\u{1F1E7}\u{1F1EC}" },
+  { name: "Burkina Faso", dial_code: "+226", code: "BF", flag: "\u{1F1E7}\u{1F1EB}" },
+  { name: "Burundi", dial_code: "+257", code: "BI", flag: "\u{1F1E7}\u{1F1EE}" },
+  { name: "Cambodia", dial_code: "+855", code: "KH", flag: "\u{1F1F0}\u{1F1ED}" },
+  { name: "Cameroon", dial_code: "+237", code: "CM", flag: "\u{1F1E8}\u{1F1F2}" },
+  { name: "Canada", dial_code: "+1", code: "CA", flag: "\u{1F1E8}\u{1F1E6}" },
+  { name: "Cape Verde", dial_code: "+238", code: "CV", flag: "\u{1F1E8}\u{1F1FB}" },
+  { name: "Cayman Islands", dial_code: "+1345", code: "KY", flag: "\u{1F1F0}\u{1F1FE}" },
+  { name: "Central African Republic", dial_code: "+236", code: "CF", flag: "\u{1F1E8}\u{1F1EB}" },
+  { name: "Chad", dial_code: "+235", code: "TD", flag: "\u{1F1F9}\u{1F1E9}" },
+  { name: "Chile", dial_code: "+56", code: "CL", flag: "\u{1F1E8}\u{1F1F1}" },
+  { name: "China", dial_code: "+86", code: "CN", flag: "\u{1F1E8}\u{1F1F3}" },
+  { name: "Colombia", dial_code: "+57", code: "CO", flag: "\u{1F1E8}\u{1F1F4}" },
+  { name: "Comoros", dial_code: "+269", code: "KM", flag: "\u{1F1F0}\u{1F1F2}" },
+  { name: "Cook Islands", dial_code: "+682", code: "CK", flag: "\u{1F1E8}\u{1F1F0}" },
+  { name: "Costa Rica", dial_code: "+506", code: "CR", flag: "\u{1F1E8}\u{1F1F7}" },
+  { name: "C\xF4te d'Ivoire", dial_code: "+225", code: "CI", flag: "\u{1F1E8}\u{1F1EE}" },
+  { name: "Croatia", dial_code: "+385", code: "HR", flag: "\u{1F1ED}\u{1F1F7}" },
+  { name: "Cuba", dial_code: "+53", code: "CU", flag: "\u{1F1E8}\u{1F1FA}" },
+  { name: "Cyprus", dial_code: "+357", code: "CY", flag: "\u{1F1E8}\u{1F1FE}" },
+  { name: "Czechia", dial_code: "+420", code: "CZ", flag: "\u{1F1E8}\u{1F1FF}" },
+  { name: "Democratic Republic of the Congo", dial_code: "+243", code: "CD", flag: "\u{1F1E8}\u{1F1E9}" },
+  { name: "Denmark", dial_code: "+45", code: "DK", flag: "\u{1F1E9}\u{1F1F0}" },
+  { name: "Djibouti", dial_code: "+253", code: "DJ", flag: "\u{1F1E9}\u{1F1EF}" },
+  { name: "Dominica", dial_code: "+1767", code: "DM", flag: "\u{1F1E9}\u{1F1F2}" },
+  { name: "Dominican Republic", dial_code: "+1", code: "DO", flag: "\u{1F1E9}\u{1F1F4}" },
+  { name: "Ecuador", dial_code: "+593", code: "EC", flag: "\u{1F1EA}\u{1F1E8}" },
+  { name: "Egypt", dial_code: "+20", code: "EG", flag: "\u{1F1EA}\u{1F1EC}" },
+  { name: "El Salvador", dial_code: "+503", code: "SV", flag: "\u{1F1F8}\u{1F1FB}" },
+  { name: "Equatorial Guinea", dial_code: "+240", code: "GQ", flag: "\u{1F1EC}\u{1F1F6}" },
+  { name: "Eritrea", dial_code: "+291", code: "ER", flag: "\u{1F1EA}\u{1F1F7}" },
+  { name: "Estonia", dial_code: "+372", code: "EE", flag: "\u{1F1EA}\u{1F1EA}" },
+  { name: "Eswatini", dial_code: "+268", code: "SZ", flag: "\u{1F1F8}\u{1F1FF}" },
+  { name: "Ethiopia", dial_code: "+251", code: "ET", flag: "\u{1F1EA}\u{1F1F9}" },
+  { name: "Fiji", dial_code: "+679", code: "FJ", flag: "\u{1F1EB}\u{1F1EF}" },
+  { name: "Finland", dial_code: "+358", code: "FI", flag: "\u{1F1EB}\u{1F1EE}" },
+  { name: "France", dial_code: "+33", code: "FR", flag: "\u{1F1EB}\u{1F1F7}" },
+  { name: "French Guiana", dial_code: "+594", code: "GF", flag: "\u{1F1EC}\u{1F1EB}" },
+  { name: "French Polynesia", dial_code: "+689", code: "PF", flag: "\u{1F1F5}\u{1F1EB}" },
+  { name: "Gabon", dial_code: "+241", code: "GA", flag: "\u{1F1EC}\u{1F1E6}" },
+  { name: "Gambia", dial_code: "+220", code: "GM", flag: "\u{1F1EC}\u{1F1F2}" },
+  { name: "Georgia", dial_code: "+995", code: "GE", flag: "\u{1F1EC}\u{1F1EA}" },
+  { name: "Germany", dial_code: "+49", code: "DE", flag: "\u{1F1E9}\u{1F1EA}" },
+  { name: "Ghana", dial_code: "+233", code: "GH", flag: "\u{1F1EC}\u{1F1ED}" },
+  { name: "Gibraltar", dial_code: "+350", code: "GI", flag: "\u{1F1EC}\u{1F1EE}" },
+  { name: "Greece", dial_code: "+30", code: "GR", flag: "\u{1F1EC}\u{1F1F7}" },
+  { name: "Greenland", dial_code: "+299", code: "GL", flag: "\u{1F1EC}\u{1F1F1}" },
+  { name: "Grenada", dial_code: "+1473", code: "GD", flag: "\u{1F1EC}\u{1F1E9}" },
+  { name: "Guadeloupe", dial_code: "+590", code: "GP", flag: "\u{1F1EC}\u{1F1F5}" },
+  { name: "Guam", dial_code: "+1671", code: "GU", flag: "\u{1F1EC}\u{1F1FA}" },
+  { name: "Guatemala", dial_code: "+502", code: "GT", flag: "\u{1F1EC}\u{1F1F9}" },
+  { name: "Guernsey", dial_code: "+44", code: "GG", flag: "\u{1F1EC}\u{1F1EC}" },
+  { name: "Guinea", dial_code: "+224", code: "GN", flag: "\u{1F1EC}\u{1F1F3}" },
+  { name: "Guinea-Bissau", dial_code: "+245", code: "GW", flag: "\u{1F1EC}\u{1F1FC}" },
+  { name: "Guyana", dial_code: "+592", code: "GY", flag: "\u{1F1EC}\u{1F1FE}" },
+  { name: "Haiti", dial_code: "+509", code: "HT", flag: "\u{1F1ED}\u{1F1F9}" },
+  { name: "Honduras", dial_code: "+504", code: "HN", flag: "\u{1F1ED}\u{1F1F3}" },
+  { name: "Hong Kong", dial_code: "+852", code: "HK", flag: "\u{1F1ED}\u{1F1F0}" },
+  { name: "Hungary", dial_code: "+36", code: "HU", flag: "\u{1F1ED}\u{1F1FA}" },
+  { name: "Iceland", dial_code: "+354", code: "IS", flag: "\u{1F1EE}\u{1F1F8}" },
+  { name: "India", dial_code: "+91", code: "IN", flag: "\u{1F1EE}\u{1F1F3}" },
+  { name: "Indonesia", dial_code: "+62", code: "ID", flag: "\u{1F1EE}\u{1F1E9}" },
+  { name: "Iran", dial_code: "+98", code: "IR", flag: "\u{1F1EE}\u{1F1F7}" },
+  { name: "Iraq", dial_code: "+964", code: "IQ", flag: "\u{1F1EE}\u{1F1F6}" },
+  { name: "Ireland", dial_code: "+353", code: "IE", flag: "\u{1F1EE}\u{1F1EA}" },
+  { name: "Isle of Man", dial_code: "+44", code: "IM", flag: "\u{1F1EE}\u{1F1F2}" },
+  { name: "Israel", dial_code: "+972", code: "IL", flag: "\u{1F1EE}\u{1F1F1}" },
+  { name: "Italy", dial_code: "+39", code: "IT", flag: "\u{1F1EE}\u{1F1F9}" },
+  { name: "Jamaica", dial_code: "+1876", code: "JM", flag: "\u{1F1EF}\u{1F1F2}" },
+  { name: "Japan", dial_code: "+81", code: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
+  { name: "Jersey", dial_code: "+44", code: "JE", flag: "\u{1F1EF}\u{1F1EA}" },
+  { name: "Jordan", dial_code: "+962", code: "JO", flag: "\u{1F1EF}\u{1F1F4}" },
+  { name: "Kazakhstan", dial_code: "+7", code: "KZ", flag: "\u{1F1F0}\u{1F1FF}" },
+  { name: "Kenya", dial_code: "+254", code: "KE", flag: "\u{1F1F0}\u{1F1EA}" },
+  { name: "Kiribati", dial_code: "+686", code: "KI", flag: "\u{1F1F0}\u{1F1EE}" },
+  { name: "Kuwait", dial_code: "+965", code: "KW", flag: "\u{1F1F0}\u{1F1FC}" },
+  { name: "Kyrgyzstan", dial_code: "+996", code: "KG", flag: "\u{1F1F0}\u{1F1EC}" },
+  { name: "Laos", dial_code: "+856", code: "LA", flag: "\u{1F1F1}\u{1F1E6}" },
+  { name: "Latvia", dial_code: "+371", code: "LV", flag: "\u{1F1F1}\u{1F1FB}" },
+  { name: "Lebanon", dial_code: "+961", code: "LB", flag: "\u{1F1F1}\u{1F1E7}" },
+  { name: "Lesotho", dial_code: "+266", code: "LS", flag: "\u{1F1F1}\u{1F1F8}" },
+  { name: "Liberia", dial_code: "+231", code: "LR", flag: "\u{1F1F1}\u{1F1F7}" },
+  { name: "Libya", dial_code: "+218", code: "LY", flag: "\u{1F1F1}\u{1F1FE}" },
+  { name: "Liechtenstein", dial_code: "+423", code: "LI", flag: "\u{1F1F1}\u{1F1EE}" },
+  { name: "Lithuania", dial_code: "+370", code: "LT", flag: "\u{1F1F1}\u{1F1F9}" },
+  { name: "Luxembourg", dial_code: "+352", code: "LU", flag: "\u{1F1F1}\u{1F1FA}" },
+  { name: "Macao", dial_code: "+853", code: "MO", flag: "\u{1F1F2}\u{1F1F4}" },
+  { name: "Madagascar", dial_code: "+261", code: "MG", flag: "\u{1F1F2}\u{1F1EC}" },
+  { name: "Malawi", dial_code: "+265", code: "MW", flag: "\u{1F1F2}\u{1F1FC}" },
+  { name: "Malaysia", dial_code: "+60", code: "MY", flag: "\u{1F1F2}\u{1F1FE}" },
+  { name: "Maldives", dial_code: "+960", code: "MV", flag: "\u{1F1F2}\u{1F1FB}" },
+  { name: "Mali", dial_code: "+223", code: "ML", flag: "\u{1F1F2}\u{1F1F1}" },
+  { name: "Malta", dial_code: "+356", code: "MT", flag: "\u{1F1F2}\u{1F1F9}" },
+  { name: "Marshall Islands", dial_code: "+692", code: "MH", flag: "\u{1F1F2}\u{1F1ED}" },
+  { name: "Martinique", dial_code: "+596", code: "MQ", flag: "\u{1F1F2}\u{1F1F6}" },
+  { name: "Mauritania", dial_code: "+222", code: "MR", flag: "\u{1F1F2}\u{1F1F7}" },
+  { name: "Mauritius", dial_code: "+230", code: "MU", flag: "\u{1F1F2}\u{1F1FA}" },
+  { name: "Mayotte", dial_code: "+262", code: "YT", flag: "\u{1F1FE}\u{1F1F9}" },
+  { name: "Mexico", dial_code: "+52", code: "MX", flag: "\u{1F1F2}\u{1F1FD}" },
+  { name: "Micronesia", dial_code: "+691", code: "FM", flag: "\u{1F1EB}\u{1F1F2}" },
+  { name: "Moldova", dial_code: "+373", code: "MD", flag: "\u{1F1F2}\u{1F1E9}" },
+  { name: "Monaco", dial_code: "+377", code: "MC", flag: "\u{1F1F2}\u{1F1E8}" },
+  { name: "Mongolia", dial_code: "+976", code: "MN", flag: "\u{1F1F2}\u{1F1F3}" },
+  { name: "Montenegro", dial_code: "+382", code: "ME", flag: "\u{1F1F2}\u{1F1EA}" },
+  { name: "Montserrat", dial_code: "+1664", code: "MS", flag: "\u{1F1F2}\u{1F1F8}" },
+  { name: "Morocco", dial_code: "+212", code: "MA", flag: "\u{1F1F2}\u{1F1E6}" },
+  { name: "Mozambique", dial_code: "+258", code: "MZ", flag: "\u{1F1F2}\u{1F1FF}" },
+  { name: "Myanmar", dial_code: "+95", code: "MM", flag: "\u{1F1F2}\u{1F1F2}" },
+  { name: "Namibia", dial_code: "+264", code: "NA", flag: "\u{1F1F3}\u{1F1E6}" },
+  { name: "Nauru", dial_code: "+674", code: "NR", flag: "\u{1F1F3}\u{1F1F7}" },
+  { name: "Nepal", dial_code: "+977", code: "NP", flag: "\u{1F1F3}\u{1F1F5}" },
+  { name: "Netherlands", dial_code: "+31", code: "NL", flag: "\u{1F1F3}\u{1F1F1}" },
+  { name: "New Caledonia", dial_code: "+687", code: "NC", flag: "\u{1F1F3}\u{1F1E8}" },
+  { name: "New Zealand", dial_code: "+64", code: "NZ", flag: "\u{1F1F3}\u{1F1FF}" },
+  { name: "Nicaragua", dial_code: "+505", code: "NI", flag: "\u{1F1F3}\u{1F1EE}" },
+  { name: "Niger", dial_code: "+227", code: "NE", flag: "\u{1F1F3}\u{1F1EA}" },
+  { name: "Nigeria", dial_code: "+234", code: "NG", flag: "\u{1F1F3}\u{1F1EC}" },
+  { name: "Niue", dial_code: "+683", code: "NU", flag: "\u{1F1F3}\u{1F1FA}" },
+  { name: "Norfolk Island", dial_code: "+672", code: "NF", flag: "\u{1F1F3}\u{1F1EB}" },
+  { name: "North Macedonia", dial_code: "+389", code: "MK", flag: "\u{1F1F2}\u{1F1F0}" },
+  { name: "Northern Mariana Islands", dial_code: "+1670", code: "MP", flag: "\u{1F1F2}\u{1F1F5}" },
+  { name: "Norway", dial_code: "+47", code: "NO", flag: "\u{1F1F3}\u{1F1F4}" },
+  { name: "Oman", dial_code: "+968", code: "OM", flag: "\u{1F1F4}\u{1F1F2}" },
+  { name: "Pakistan", dial_code: "+92", code: "PK", flag: "\u{1F1F5}\u{1F1F0}" },
+  { name: "Palau", dial_code: "+680", code: "PW", flag: "\u{1F1F5}\u{1F1FC}" },
+  { name: "Palestine", dial_code: "+970", code: "PS", flag: "\u{1F1F5}\u{1F1F8}" },
+  { name: "Panama", dial_code: "+507", code: "PA", flag: "\u{1F1F5}\u{1F1E6}" },
+  { name: "Papua New Guinea", dial_code: "+675", code: "PG", flag: "\u{1F1F5}\u{1F1EC}" },
+  { name: "Paraguay", dial_code: "+595", code: "PY", flag: "\u{1F1F5}\u{1F1FE}" },
+  { name: "Peru", dial_code: "+51", code: "PE", flag: "\u{1F1F5}\u{1F1EA}" },
+  { name: "Philippines", dial_code: "+63", code: "PH", flag: "\u{1F1F5}\u{1F1ED}" },
+  { name: "Poland", dial_code: "+48", code: "PL", flag: "\u{1F1F5}\u{1F1F1}" },
+  { name: "Portugal", dial_code: "+351", code: "PT", flag: "\u{1F1F5}\u{1F1F9}" },
+  { name: "Puerto Rico", dial_code: "+1", code: "PR", flag: "\u{1F1F5}\u{1F1F7}" },
+  { name: "Qatar", dial_code: "+974", code: "QA", flag: "\u{1F1F6}\u{1F1E6}" },
+  { name: "R\xE9union", dial_code: "+262", code: "RE", flag: "\u{1F1F7}\u{1F1EA}" },
+  { name: "Romania", dial_code: "+40", code: "RO", flag: "\u{1F1F7}\u{1F1F4}" },
+  { name: "Russia", dial_code: "+7", code: "RU", flag: "\u{1F1F7}\u{1F1FA}" },
+  { name: "Rwanda", dial_code: "+250", code: "RW", flag: "\u{1F1F7}\u{1F1FC}" },
+  { name: "Saint Barth\xE9lemy", dial_code: "+590", code: "BL", flag: "\u{1F1E7}\u{1F1F1}" },
+  { name: "Saint Helena", dial_code: "+290", code: "SH", flag: "\u{1F1F8}\u{1F1ED}" },
+  { name: "Saint Kitts and Nevis", dial_code: "+1869", code: "KN", flag: "\u{1F1F0}\u{1F1F3}" },
+  { name: "Saint Lucia", dial_code: "+1758", code: "LC", flag: "\u{1F1F1}\u{1F1E8}" },
+  { name: "Saint Martin", dial_code: "+590", code: "MF", flag: "\u{1F1F2}\u{1F1EB}" },
+  { name: "Saint Pierre and Miquelon", dial_code: "+508", code: "PM", flag: "\u{1F1F5}\u{1F1F2}" },
+  { name: "Saint Vincent and the Grenadines", dial_code: "+1784", code: "VC", flag: "\u{1F1FB}\u{1F1E8}" },
+  { name: "Samoa", dial_code: "+685", code: "WS", flag: "\u{1F1FC}\u{1F1F8}" },
+  { name: "San Marino", dial_code: "+378", code: "SM", flag: "\u{1F1F8}\u{1F1F2}" },
+  { name: "S\xE3o Tom\xE9 and Pr\xEDncipe", dial_code: "+239", code: "ST", flag: "\u{1F1F8}\u{1F1F9}" },
+  { name: "Saudi Arabia", dial_code: "+966", code: "SA", flag: "\u{1F1F8}\u{1F1E6}" },
+  { name: "Senegal", dial_code: "+221", code: "SN", flag: "\u{1F1F8}\u{1F1F3}" },
+  { name: "Serbia", dial_code: "+381", code: "RS", flag: "\u{1F1F7}\u{1F1F8}" },
+  { name: "Seychelles", dial_code: "+248", code: "SC", flag: "\u{1F1F8}\u{1F1E8}" },
+  { name: "Sierra Leone", dial_code: "+232", code: "SL", flag: "\u{1F1F8}\u{1F1F1}" },
+  { name: "Singapore", dial_code: "+65", code: "SG", flag: "\u{1F1F8}\u{1F1EC}" },
+  { name: "Sint Maarten", dial_code: "+1721", code: "SX", flag: "\u{1F1F8}\u{1F1FD}" },
+  { name: "Slovakia", dial_code: "+421", code: "SK", flag: "\u{1F1F8}\u{1F1F0}" },
+  { name: "Slovenia", dial_code: "+386", code: "SI", flag: "\u{1F1F8}\u{1F1EE}" },
+  { name: "Solomon Islands", dial_code: "+677", code: "SB", flag: "\u{1F1F8}\u{1F1E7}" },
+  { name: "Somalia", dial_code: "+252", code: "SO", flag: "\u{1F1F8}\u{1F1F4}" },
+  { name: "South Africa", dial_code: "+27", code: "ZA", flag: "\u{1F1FF}\u{1F1E6}" },
+  { name: "South Korea", dial_code: "+82", code: "KR", flag: "\u{1F1F0}\u{1F1F7}" },
+  { name: "South Sudan", dial_code: "+211", code: "SS", flag: "\u{1F1F8}\u{1F1F8}" },
+  { name: "Spain", dial_code: "+34", code: "ES", flag: "\u{1F1EA}\u{1F1F8}" },
+  { name: "Sri Lanka", dial_code: "+94", code: "LK", flag: "\u{1F1F1}\u{1F1F0}" },
+  { name: "Sudan", dial_code: "+249", code: "SD", flag: "\u{1F1F8}\u{1F1E9}" },
+  { name: "Suriname", dial_code: "+597", code: "SR", flag: "\u{1F1F8}\u{1F1F7}" },
+  { name: "Sweden", dial_code: "+46", code: "SE", flag: "\u{1F1F8}\u{1F1EA}" },
+  { name: "Switzerland", dial_code: "+41", code: "CH", flag: "\u{1F1E8}\u{1F1ED}" },
+  { name: "Syria", dial_code: "+963", code: "SY", flag: "\u{1F1F8}\u{1F1FE}" },
+  { name: "Taiwan", dial_code: "+886", code: "TW", flag: "\u{1F1F9}\u{1F1FC}" },
+  { name: "Tajikistan", dial_code: "+992", code: "TJ", flag: "\u{1F1F9}\u{1F1EF}" },
+  { name: "Tanzania", dial_code: "+255", code: "TZ", flag: "\u{1F1F9}\u{1F1FF}" },
+  { name: "Thailand", dial_code: "+66", code: "TH", flag: "\u{1F1F9}\u{1F1ED}" },
+  { name: "Timor-Leste", dial_code: "+670", code: "TL", flag: "\u{1F1F9}\u{1F1F1}" },
+  { name: "Togo", dial_code: "+228", code: "TG", flag: "\u{1F1F9}\u{1F1EC}" },
+  { name: "Tokelau", dial_code: "+690", code: "TK", flag: "\u{1F1F9}\u{1F1F0}" },
+  { name: "Tonga", dial_code: "+676", code: "TO", flag: "\u{1F1F9}\u{1F1F4}" },
+  { name: "Trinidad and Tobago", dial_code: "+1868", code: "TT", flag: "\u{1F1F9}\u{1F1F9}" },
+  { name: "Tunisia", dial_code: "+216", code: "TN", flag: "\u{1F1F9}\u{1F1F3}" },
+  { name: "Turkey", dial_code: "+90", code: "TR", flag: "\u{1F1F9}\u{1F1F7}" },
+  { name: "Turkmenistan", dial_code: "+993", code: "TM", flag: "\u{1F1F9}\u{1F1F2}" },
+  { name: "Turks and Caicos Islands", dial_code: "+1649", code: "TC", flag: "\u{1F1F9}\u{1F1E8}" },
+  { name: "Tuvalu", dial_code: "+688", code: "TV", flag: "\u{1F1F9}\u{1F1FB}" },
+  { name: "Uganda", dial_code: "+256", code: "UG", flag: "\u{1F1FA}\u{1F1EC}" },
+  { name: "Ukraine", dial_code: "+380", code: "UA", flag: "\u{1F1FA}\u{1F1E6}" },
+  { name: "United Arab Emirates", dial_code: "+971", code: "AE", flag: "\u{1F1E6}\u{1F1EA}" },
+  { name: "United Kingdom", dial_code: "+44", code: "GB", flag: "\u{1F1EC}\u{1F1E7}" },
+  { name: "United States", dial_code: "+1", code: "US", flag: "\u{1F1FA}\u{1F1F8}" },
+  { name: "Uruguay", dial_code: "+598", code: "UY", flag: "\u{1F1FA}\u{1F1FE}" },
+  { name: "Uzbekistan", dial_code: "+998", code: "UZ", flag: "\u{1F1FA}\u{1F1FF}" },
+  { name: "Vanuatu", dial_code: "+678", code: "VU", flag: "\u{1F1FB}\u{1F1FA}" },
+  { name: "Vatican City", dial_code: "+379", code: "VA", flag: "\u{1F1FB}\u{1F1E6}" },
+  { name: "Venezuela", dial_code: "+58", code: "VE", flag: "\u{1F1FB}\u{1F1EA}" },
+  { name: "Vietnam", dial_code: "+84", code: "VN", flag: "\u{1F1FB}\u{1F1F3}" },
+  { name: "Wallis and Futuna", dial_code: "+681", code: "WF", flag: "\u{1F1FC}\u{1F1EB}" },
+  { name: "Yemen", dial_code: "+967", code: "YE", flag: "\u{1F1FE}\u{1F1EA}" },
+  { name: "Zambia", dial_code: "+260", code: "ZM", flag: "\u{1F1FF}\u{1F1F2}" },
+  { name: "Zimbabwe", dial_code: "+263", code: "ZW", flag: "\u{1F1FF}\u{1F1FC}" }
+];
+var country_codes_default = countryCodes;
+
+// app/javascript/controllers/country_code_selector_controller.js
+var country_code_selector_controller_default = class extends Controller {
+  static targets = ["input", "button", "buttonLabel", "overlay", "list", "search"];
+  static values = {
+    initial: String
+  };
+  connect() {
+    this.codes = country_codes_default;
+    this.selectedCode = this.inputTarget.value || this.initialValue || "+27";
+    if (!this.inputTarget.value) {
+      this.inputTarget.value = this.selectedCode;
+    }
+    this.updateButtonLabel();
+    this.renderList(this.codes);
+    this.dispatchChange();
+  }
+  open(event) {
+    event.preventDefault();
+    this.overlayTarget.classList.remove("hidden");
+    this.overlayTarget.classList.add("flex");
+    document.addEventListener("keydown", this.handleKeydown);
+    if (this.hasSearchTarget) {
+      this.searchTarget.value = "";
+    }
+    this.renderList(this.codes);
+    if (this.hasSearchTarget) {
+      requestAnimationFrame(() => {
+        this.searchTarget.focus();
+      });
+    }
+  }
+  close(event) {
+    if (event) event.preventDefault();
+    this.overlayTarget.classList.add("hidden");
+    this.overlayTarget.classList.remove("flex");
+    document.removeEventListener("keydown", this.handleKeydown);
+    this.buttonTarget.focus();
+  }
+  filter(event) {
+    const term = event.target.value.trim().toLowerCase();
+    if (term === "") {
+      this.renderList(this.codes);
+      return;
+    }
+    const filtered = this.codes.filter((code) => {
+      return code.name.toLowerCase().includes(term) || code.dial_code.replace("+", "").includes(term.replace("+", "")) || code.code.toLowerCase().includes(term);
+    });
+    this.renderList(filtered);
+  }
+  choose(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const code = button.dataset.code;
+    const flag = button.dataset.flag;
+    this.selectedCode = code;
+    this.inputTarget.value = code;
+    this.updateButtonLabel(flag, code);
+    this.dispatchChange();
+    this.close();
+  }
+  overlayClick(event) {
+    if (event.target === this.overlayTarget) {
+      this.close();
+    }
+  }
+  disconnect() {
+    document.removeEventListener("keydown", this.handleKeydown);
+  }
+  handleKeydown = (event) => {
+    if (event.key === "Escape") {
+      this.close();
+    }
+  };
+  updateButtonLabel(flag, code) {
+    const current = this.codes.find((item) => item.dial_code === this.selectedCode) || {};
+    const displayFlag = flag || current.flag || "\u{1F30D}";
+    const displayCode = code || current.dial_code || this.selectedCode;
+    this.buttonLabelTarget.innerHTML = `
+      <span class="text-xl leading-none">${displayFlag}</span>
+      <span class="ml-2 text-sm font-semibold text-slate-900">${displayCode}</span>
+    `;
+  }
+  renderList(codes) {
+    this.listTarget.innerHTML = "";
+    if (codes.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "px-3 py-6 text-center text-sm text-slate-500";
+      empty.textContent = "No matches found.";
+      this.listTarget.appendChild(empty);
+      return;
+    }
+    codes.forEach((code) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = [
+        "flex w-full items-center justify-between gap-3 px-3 py-3 text-left text-sm transition",
+        "hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200",
+        code.dial_code === this.selectedCode ? "bg-sky-50 text-sky-600" : "text-slate-700"
+      ].join(" ");
+      button.dataset.action = "country-code-selector#choose";
+      button.dataset.code = code.dial_code;
+      button.dataset.name = code.name;
+      button.dataset.flag = code.flag;
+      button.innerHTML = `
+        <span class="flex items-center gap-3">
+          <span class="text-xl">${code.flag}</span>
+          <span>
+            <span class="block text-sm font-medium">${code.name}</span>
+            <span class="block text-xs text-slate-400 uppercase tracking-wide">${code.code}</span>
+          </span>
+        </span>
+        <span class="text-sm font-semibold">${code.dial_code}</span>
+      `;
+      this.listTarget.appendChild(button);
+    });
+  }
+  dispatchChange() {
+    const detail = {
+      code: this.selectedCode,
+      inputId: this.inputTarget.id
+    };
+    const dispatchTarget = typeof window !== "undefined" ? window : this.element;
+    dispatchTarget.dispatchEvent(
+      new CustomEvent("country-code:changed", {
+        detail,
+        bubbles: true
+      })
+    );
+  }
+};
+
+// app/javascript/controllers/mobile_number_controller.js
+var DEFAULT_CODE = "+27";
+var MAX_DIGITS = 9;
+var GROUP_SIZES = [2, 3, 4];
+var mobile_number_controller_default = class extends Controller {
+  static targets = ["input"];
+  static values = {
+    code: String,
+    countryInput: String
+  };
+  connect() {
+    this.currentCode = this.codeValue || DEFAULT_CODE;
+    this.digits = this.extractDigits(this.inputTarget.value || "");
+    this.digits = this.digits.slice(0, MAX_DIGITS);
+    this.applyMask();
+    this.inputTarget.addEventListener("input", this.handleInput);
+    this.inputTarget.addEventListener("blur", this.handleBlur);
+    window.addEventListener("country-code:changed", this.updateMask);
+  }
+  disconnect() {
+    this.inputTarget.removeEventListener("input", this.handleInput);
+    this.inputTarget.removeEventListener("blur", this.handleBlur);
+    window.removeEventListener("country-code:changed", this.updateMask);
+  }
+  updateMask = (event) => {
+    const { code, inputId } = event.detail || {};
+    if (this.hasCountryInputValue && inputId && inputId !== this.countryInputValue) {
+      return;
+    }
+    if (code) {
+      this.currentCode = code;
+      this.applyMask();
+    }
+  };
+  handleInput = (event) => {
+    this.digits = this.extractDigits(event.target.value);
+    this.digits = this.digits.slice(0, MAX_DIGITS);
+    this.applyMask();
+  };
+  handleBlur = () => {
+    this.applyMask();
+  };
+  applyMask() {
+    if (this.digits.length === 0) {
+      this.inputTarget.value = "";
+      return;
+    }
+    const formattedDigits = this.groupDigits(this.digits);
+    this.inputTarget.value = `${this.currentCode} ${formattedDigits}`.trim();
+  }
+  extractDigits(value) {
+    let numeric = (value || "").replace(/\D+/g, "");
+    const codeDigits = (this.currentCode || "").replace(/\D+/g, "");
+    if (numeric.startsWith(codeDigits)) {
+      numeric = numeric.slice(codeDigits.length);
+    }
+    return numeric;
+  }
+  groupDigits(digits) {
+    const parts = [];
+    let position = 0;
+    GROUP_SIZES.forEach((size) => {
+      if (position >= digits.length) return;
+      const chunk = digits.slice(position, position + size);
+      parts.push(chunk);
+      position += size;
+    });
+    if (position < digits.length) {
+      parts.push(digits.slice(position));
+    }
+    return parts.join(" ");
+  }
+};
+
 // app/javascript/controllers/index.js
 application.register("hello", hello_controller_default);
 application.register("squad", squad_controller_default);
@@ -20333,6 +20773,8 @@ application.register("payment-method", payment_method_controller_default);
 application.register("staggered-payment-plan", staggered_payment_plan_controller_default);
 application.register("payment-plan-selector", payment_plan_selector_controller_default);
 application.register("club-theme-color", club_theme_color_controller_default);
+application.register("country-code-selector", country_code_selector_controller_default);
+application.register("mobile-number", mobile_number_controller_default);
 
 // app/javascript/application.js
 var import_cropper = __toESM(require_cropper());

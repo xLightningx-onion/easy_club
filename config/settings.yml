@@ -1,5 +1,5 @@
-base_domain: "12625af51204.ngrok-free.app"
-base_url: "https://12625af51204.ngrok-free.app"
+base_domain: "c74b6cf69e5f.ngrok-free.app"
+base_url: "https://c74b6cf69e5f.ngrok-free.app"
 
 # Bunny CDN/Storage (used by ActiveStorage Bunny service)
 bunny:

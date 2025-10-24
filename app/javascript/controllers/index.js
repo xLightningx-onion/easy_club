@@ -48,3 +48,9 @@ application.register("payment-plan-selector", PaymentPlanSelectorController)
 
 import ClubThemeColorController from "./club_theme_color_controller"
 application.register("club-theme-color", ClubThemeColorController)
+
+import CountryCodeSelectorController from "./country_code_selector_controller"
+application.register("country-code-selector", CountryCodeSelectorController)
+
+import MobileNumberController from "./mobile_number_controller"
+application.register("mobile-number", MobileNumberController)

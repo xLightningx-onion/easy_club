@@ -4,9 +4,25 @@
   <% end %>
 
   <div class="grid gap-4 md:grid-cols-2">
+    <div>
+      <%= form.label :first_name, class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :first_name, autocomplete: "given-name", class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+    </div>
+    <div>
+      <%= form.label :last_name, class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :last_name, autocomplete: "family-name", class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+    </div>
     <div class="md:col-span-2">
       <%= form.label :email, class: "block text-sm font-medium text-slate-700" %>
       <%= form.email_field :email, class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+    </div>
+    <div>
+      <%= form.label :country_code, class: "block text-sm font-medium text-slate-700" %>
+      <%= form.text_field :country_code, autocomplete: "tel-country-code", class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+    </div>
+    <div>
+      <%= form.label :mobile_number, class: "block text-sm font-medium text-slate-700" %>
+      <%= form.telephone_field :mobile_number, autocomplete: "tel-national", class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
     </div>
     <div>
       <%= form.label :password, class: "block text-sm font-medium text-slate-700" %>

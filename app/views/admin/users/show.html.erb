@@ -9,6 +9,22 @@
 
   <dl class="grid gap-4 px-4 py-4 text-sm text-slate-600 md:grid-cols-2">
     <div>
+      <dt class="font-medium text-slate-500">First name</dt>
+      <dd class="text-slate-900"><%= @user.first_name %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Last name</dt>
+      <dd class="text-slate-900"><%= @user.last_name %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Email</dt>
+      <dd class="text-slate-900"><%= @user.email %></dd>
+    </div>
+    <div>
+      <dt class="font-medium text-slate-500">Mobile</dt>
+      <dd class="text-slate-900"><%= "#{@user.country_code} #{@user.mobile_number}" %></dd>
+    </div>
+    <div>
       <dt class="font-medium text-slate-500">Staff</dt>
       <dd class="text-slate-900"><%= @user.staff? ? "Yes" : "No" %></dd>
     </div>
