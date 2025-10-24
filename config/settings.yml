@@ -1,5 +1,6 @@
-base_domain: "c74b6cf69e5f.ngrok-free.app"
-base_url: "https://c74b6cf69e5f.ngrok-free.app"
+# Domain Settings
+base_domain: <%= ENV.fetch("BASE_DOMAIN") %>
+base_url: <%= ENV.fetch("BASE_URL") %>
 
 # Bunny CDN/Storage (used by ActiveStorage Bunny service)
 bunny:

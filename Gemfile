@@ -11,6 +11,9 @@ gem "pg", "~> 1.1"
 # Authentication & authorization
 gem "devise"
 gem "devise-two-factor"
+gem "omniauth"
+gem "omniauth-google-oauth2", "~> 1.1"
+gem "omniauth-rails_csrf_protection"
 gem "action_policy"
 gem "pwned"
 # Security & rate limiting

@@ -1,0 +1,95 @@
+<% club ||= nil %>
+<div class="relative mt-8 w-full max-w-md">
+  <% if club&.logo.present? %>
+    <div class="rounded-3xl bg-white px-6 py-10 shadow-2xl ring-1 ring-sky-100 mb-8 flex justify-center">
+      <%= image_tag serve_image_remote_url(club.logo), alt: "#{club.name} logo", class: "max-h-32 w-auto" %>
+    </div>
+  <% end %>
+
+  <div class="rounded-3xl bg-white px-6 py-10 shadow-2xl ring-1 ring-sky-100">
+    <div class="mb-6 text-center">
+      <h1 class="text-2xl font-semibold text-slate-900">Log in to Easyclub</h1>
+      <p class="mt-2 text-sm text-slate-500">
+        Access your memberships, payments, and club updates from one secure dashboard.
+      </p>
+    </div>
+
+    <% form_html_options = { class: "space-y-4" }
+       form_html_options[:data] = { turbo: false } %>
+
+    <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: form_html_options) do |f| %>
+      <% if club&.id.present? %>
+        <%= hidden_field_tag :club_id, club.id %>
+      <% end %>
+
+      <%= render "devise/shared/error_messages", resource: resource %>
+
+      <div>
+        <%= f.label :email, class: "sr-only" %>
+        <%= f.email_field :email,
+                          autofocus: true,
+                          autocomplete: "email",
+                          placeholder: "Email Address",
+                          class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+      </div>
+
+      <div>
+        <%= f.label :password, class: "sr-only" %>
+        <%= f.password_field :password,
+                             autocomplete: "current-password",
+                             placeholder: "Password",
+                             class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+      </div>
+
+      <% if devise_mapping.rememberable? %>
+        <div class="flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <label class="inline-flex items-center gap-2 text-slate-600">
+            <%= f.check_box :remember_me,
+                            class: "h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" %>
+            <span>Remember me</span>
+          </label>
+          <%= link_to "Forgot your password?",
+                      new_password_path(resource_name, club_id: club&.id),
+                      class: "font-semibold text-sky-600 hover:text-sky-700",
+                      data: { turbo_frame: "_top" } %>
+      </div>
+      <% end %>
+
+      <div>
+        <%= f.submit "Log in",
+                     class: "w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300" %>
+      </div>
+    <% end %>
+
+    <div class="mt-6 text-center text-sm text-slate-500">
+      Need an account?
+      <%= link_to "Create one",
+                  new_registration_path(resource_name, club_id: club&.id),
+                  class: "font-semibold text-sky-600 hover:text-sky-700",
+                  data: { turbo_frame: "_top" } %>
+    </div>
+
+    <div class="mt-4 flex items-center gap-4 text-xs uppercase tracking-wide text-slate-300">
+      <div class="h-px flex-1 bg-slate-200"></div>
+      <span>or</span>
+      <div class="h-px flex-1 bg-slate-200"></div>
+    </div>
+
+    <div class="mt-4">
+      <%= button_to user_google_oauth2_omniauth_authorize_path,
+                    params: { club_id: club&.id },
+                    method: :post,
+                    form: { data: { turbo: false }, class: "w-full" },
+                    class: "flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200" do %>
+        <svg class="h-5 w-5" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.5 30.47 0 24 0 14.62 0 6.51 5.38 2.6 13.08l7.98 6.2C11.74 13.07 17.34 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.57-.14-3.06-.39-4.5H24v9h12.7c-.55 2.9-2.22 5.36-4.7 6.98l7.51 5.84C43.73 37.34 46.5 31.4 46.5 24.5z"/>
+          <path fill="#FBBC05" d="M10.58 28.88c-.48-1.44-.76-2.99-.76-4.58 0-1.6.28-3.14.76-4.58l-7.98-6.2C.91 16.53 0 20.17 0 24.3c0 4.12.91 7.77 2.6 10.78l7.98-6.2z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.82l-7.51-5.84C30.3 37.89 27.3 38.9 24 38.9c-6.66 0-12.26-3.57-15.42-8.78l-7.98 6.2C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Log in with Google
+      <% end %>
+    </div>
+  </div>
+</div>

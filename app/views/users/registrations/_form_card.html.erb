@@ -15,7 +15,7 @@
     </div>
 
     <% form_html_options = { class: "space-y-4" }
-       form_html_options[:data] = { turbo: false } if club.present? %>
+       form_html_options[:data] = { turbo: false } %>
 
     <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: form_html_options) do |f| %>
       <% if club&.id.present? %>
@@ -129,7 +129,10 @@
 
     <div class="mt-6 text-center text-sm text-slate-500">
       Already have an account?
-      <%= link_to "Log in", new_session_path(resource_name), class: "font-semibold text-sky-600 hover:text-sky-700" %>
+      <%= link_to "Log in",
+                  new_session_path(resource_name, club_id: club&.id),
+                  class: "font-semibold text-sky-600 hover:text-sky-700",
+                  data: { turbo_frame: "_top" } %>
     </div>
 
     <div class="mt-4 flex items-center gap-4 text-xs uppercase tracking-wide text-slate-300">
@@ -139,8 +142,11 @@
     </div>
 
     <div class="mt-4">
-      <button type="button"
-              class="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200">
+      <%= button_to user_google_oauth2_omniauth_authorize_path,
+                    params: { club_id: club&.id },
+                    method: :post,
+                    form: { data: { turbo: false }, class: "w-full" },
+                    class: "flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200" do %>
         <svg class="h-5 w-5" viewBox="0 0 48 48" aria-hidden="true">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.5 30.47 0 24 0 14.62 0 6.51 5.38 2.6 13.08l7.98 6.2C11.74 13.07 17.34 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.5 24.5c0-1.57-.14-3.06-.39-4.5H24v9h12.7c-.55 2.9-2.22 5.36-4.7 6.98l7.51 5.84C43.73 37.34 46.5 31.4 46.5 24.5z"/>
@@ -149,7 +155,7 @@
           <path fill="none" d="M0 0h48v48H0z"/>
         </svg>
         Sign up with Google
-      </button>
+      <% end %>
     </div>
   </div>
 </div>

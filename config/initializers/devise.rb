@@ -5,10 +5,10 @@ Devise.setup do |config|
 
   require "devise/orm/active_record"
 
-  config.case_insensitive_keys = [:email]
-  config.strip_whitespace_keys = [:email]
+  config.case_insensitive_keys = [ :email ]
+  config.strip_whitespace_keys = [ :email ]
 
-  config.skip_session_storage = [:http_auth]
+  config.skip_session_storage = [ :http_auth ]
 
   config.stretches = Rails.env.test? ? 1 : 12
 
@@ -18,4 +18,28 @@ Devise.setup do |config|
 
   config.sign_out_via = :delete
 
+  google_client_id = ENV["GOOGLE_CLIENT_ID"].presence
+  google_client_secret = ENV["GOOGLE_CLIENT_SECRET"].presence
+
+  if google_client_id && google_client_secret
+    scopes = [
+      "openid",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+
+    if ENV["GOOGLE_ENABLE_PHONE_SCOPE"].to_s.casecmp("true").zero?
+      scopes << "https://www.googleapis.com/auth/user.phonenumbers.read"
+    end
+
+    config.omniauth :google_oauth2,
+                    google_client_id,
+                    google_client_secret,
+                    prompt: "select_account",
+                    scope: scopes,
+                    access_type: "offline",
+                    image_aspect_ratio: "square",
+                    image_size: 200,
+                    callback_path: "/users/auth/google_oauth2/callback"
+  end
 end

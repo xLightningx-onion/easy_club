@@ -18,7 +18,7 @@ class ApplicationController < ActionController::Base
 
   def default_signed_in_path_for(resource)
     if resource.respond_to?(:staff?) && resource.staff?
-      admin_dashboard
+      admin_dashboard_path
     elsif resource.respond_to?(:club_roles) && resource.club_roles.exists?
       club_root_path
     else

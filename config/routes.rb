@@ -1,7 +1,16 @@
 require "sidekiq/web"
 Rails.application.routes.draw do
   resource :example, constraints: -> { Rails.env.development? }
-  devise_for :users, controllers: { registrations: "users/registrations" }
+  devise_for :users, controllers: {
+    registrations: "users/registrations",
+    sessions: "users/sessions",
+    omniauth_callbacks: "users/omniauth_callbacks"
+  }
+
+  match "/google-auth/success",
+        to: "users/omniauth_callbacks#google_oauth2",
+        via: %i[get post],
+        as: :google_oauth2_callback
 
   get "up" => "rails/health#show", as: :rails_health_check
 
