@@ -1,0 +1,82 @@
+<% content_for :title, "Add your mobile number" %>
+
+<section class="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+  <h1 class="text-2xl font-semibold text-slate-900">We need your mobile number</h1>
+  <p class="mt-2 text-sm text-slate-600">
+    Please provide your mobile number so we can keep your account secure and share important membership updates.
+    We&apos;ll text you a verification code right away.
+  </p>
+
+  <% if @form.errors.any? %>
+    <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <p class="font-medium">We couldn&apos;t save those details:</p>
+      <ul class="mt-2 list-disc space-y-1 pl-5">
+        <% @form.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with url: users_mobile_verification_path, scope: :mobile_verification, class: "mt-6 space-y-5" do |f| %>
+    <div class="flex flex-col gap-3 md:flex-row">
+      <div class="md:w-40" data-controller="country-code-selector"
+           data-country-code-selector-initial-value="<%= @form.country_code.presence || '+27' %>">
+        <%= f.hidden_field :country_code,
+                           value: @form.country_code,
+                           data: { country_code_selector_target: "input" } %>
+        <button type="button"
+                class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                data-country-code-selector-target="button"
+                data-action="country-code-selector#open">
+          <span data-country-code-selector-target="buttonLabel" class="flex w-full items-center justify-between"></span>
+        </button>
+
+        <div class="fixed inset-0 z-50 hidden items-start justify-center bg-slate-900/50 px-4 py-16"
+             data-country-code-selector-target="overlay"
+             data-action="click->country-code-selector#overlayClick">
+          <div class="w-full max-w-md rounded-3xl bg-white shadow-xl ring-1 ring-slate-200"
+               data-country-code-selector-target="dialog">
+            <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <h2 class="text-sm font-semibold text-slate-900">Select country code</h2>
+              <button type="button"
+                      class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                      data-action="country-code-selector#close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">Close</span>
+              </button>
+            </div>
+            <div class="px-5 py-4">
+              <input type="search"
+                     placeholder="Search country or code"
+                     aria-label="Search country or dial code"
+                     class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                     data-country-code-selector-target="search"
+                     data-action="input->country-code-selector#filter">
+            </div>
+            <div class="max-h-80 overflow-y-auto" data-country-code-selector-target="list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="md:flex-1"
+           data-controller="mobile-number"
+           data-mobile-number-code-value="<%= @form.country_code.presence || '+27' %>"
+           data-mobile-number-country-input-value="mobile_verification_country_code">
+        <%= f.label :mobile_number, "Mobile number", class: "sr-only" %>
+        <%= f.telephone_field :mobile_number,
+                              value: @form.mobile_number,
+                              autocomplete: "tel-national",
+                              placeholder: "Mobile number",
+                              class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200",
+                              data: { mobile_number_target: "input" } %>
+      </div>
+    </div>
+
+    <div class="pt-2">
+      <%= f.submit "Send verification code",
+                   class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300" %>
+    </div>
+  <% end %>
+</section>
+

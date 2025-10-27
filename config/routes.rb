@@ -7,6 +7,14 @@ Rails.application.routes.draw do
     omniauth_callbacks: "users/omniauth_callbacks"
   }
 
+  namespace :users do
+    resource :mobile_verification, only: %i[new create], controller: "mobile_verifications" do
+      get :verify
+      post :confirm
+      post :resend
+    end
+  end
+
   match "/google-auth/success",
         to: "users/omniauth_callbacks#google_oauth2",
         via: %i[get post],
