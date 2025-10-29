@@ -5,6 +5,10 @@ staff = User.find_or_create_by!(email: "staff@example.com") do |user|
   user.password_confirmation = "123456789012"
   user.staff = true
   user.role = "admin"
+  user.first_name = "Admin"
+  user.last_name = "User"
+  user.country_code = "+27"
+  user.mobile_number = "0000000000"
 end
 
 club = Club.find_or_create_by!(name: "Acme FC") do |record|
