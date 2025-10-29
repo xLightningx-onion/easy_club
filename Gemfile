@@ -67,7 +67,7 @@ gem "prawn"
 gem "grover"
 
 # Background processing & jobs
-gem "sidekiq", "~> 7.3"
+gem "sidekiq", "~> 8.0"
 gem "sidekiq-unique-jobs", "~> 8.0"
 
 # HTTP client for integrations
