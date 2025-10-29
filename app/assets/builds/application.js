@@ -20630,8 +20630,8 @@ var country_code_selector_controller_default = class extends Controller {
     const displayFlag = flag || current.flag || "\u{1F30D}";
     const displayCode = code || current.dial_code || this.selectedCode;
     this.buttonLabelTarget.innerHTML = `
-      <span class="text-xl leading-none">${displayFlag}</span>
-      <span class="ml-2 text-sm font-semibold text-slate-900">${displayCode}</span>
+      <span class="text-xl leading-none hidden md:block">${displayFlag}</span>
+      <span class="lg:ml-2 text-sm font-semibold text-slate-900">${displayCode}</span>
     `;
   }
   renderList(codes) {
