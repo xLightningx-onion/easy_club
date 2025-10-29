@@ -22,11 +22,10 @@
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
-  <body class="bg-grey-custom">
+  <body class="bg-grey-custom overflow-x-hidden">
     <div class="w-full pb-10 pt-20">
-      <div class="absolute w-[200vw] h-[200vw] club-header-color top-[-160vw] lg:top-[-185vw] left-[-50vw] rounded-[50%] z-[0]">
-      </div>
-      <div class="absolute w-[100vw] h-20 top-0 flex justify-center items-center">
+      <%= render 'shared/half_moon_header' %>
+      <div class="absolute w-full h-20 top-0 flex justify-center items-center">
         <%= image_tag asset_path("easyclub-logo.png"), class: "max-w-[30%]" %>
       </div>
 
@@ -38,10 +37,10 @@
         <div class="container mx-auto h-5 lg:h-20 xl:h-25 lg:w-[35%]">
         </div>
     </div>
-    <div class="relative w-full flex justify-center bottom-8 lg:bottom-22 z-[3]">
+    <div class="relative w-full flex justify-center bottom-8 lg:bottom-18 z-[1]">
         <%= yield :progress_bar %>
     </div>
-    <div class="relative w-full pb-10 z-[2]">
+    <div class="relative w-full pb-10">
         <div class="container mx-auto w-[90%] md:w-[80%] lg:w-[60%] xl:w-[32%]">
             <div class="flex flex-col bg-white rounded-t-xl px-6 lg:px-10 pt-10 pb-7">
                 <%# <h2 class="text-3xl lg:text-4xl font-semibold text-center lg:text-start mb-3"> %>
