@@ -92,6 +92,10 @@ class Club < ApplicationRecord
     whatsapp_order_confirmation_template_id.presence || Settings.whatsapp.order_confirmation_template_id.presence
   end
 
+  def whatsapp_payment_failure_template_id_with_fallback
+    whatsapp_payment_failure_template_id.presence || Settings.whatsapp.payment_failure_template_id.presence
+  end
+
   def whatsapp_access_token_with_fallback
     whatsapp_access_token.presence || Settings.whatsapp.access_token.presence
   end

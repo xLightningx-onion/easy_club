@@ -22,14 +22,14 @@ module StaggeredPayments
       StaggeredPaymentScheduleInstallment
         .joins(:schedule)
         .merge(StaggeredPaymentSchedule.active)
-        .where(status: %w[pending scheduled])
+        .where(status: %w[pending scheduled failed])
         .where("staggered_payment_schedule_installments.due_at <= ?", Time.current)
         .order(:due_at)
     end
 
     def transition_to_processing!(installment)
       installment.with_lock do
-        return false unless installment.status_pending? || installment.status_scheduled?
+        return false unless installment.status_pending? || installment.status_scheduled? || installment.status_failed?
 
         installment.update!(status: :processing)
       end

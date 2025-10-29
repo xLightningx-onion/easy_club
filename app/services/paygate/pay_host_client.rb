@@ -10,6 +10,46 @@ require "active_support/core_ext/object/blank"
 
 module Paygate
   class PayHostClient
+  RESULT_MESSAGES = {
+    "900001" => "Card issuer requires a phone authorisation (Call for approval).",
+    "900002" => "Card expired. Please use a different card.",
+    "900003" => "Insufficient funds. Ask the card holder to contact their bank.",
+    "900004" => "Invalid card number. Please check the digits entered.",
+    "900005" => "Bank interface timeout. Please try again shortly.",
+    "900006" => "Invalid card. Please use another card.",
+    "900007" => "Payment declined by the bank.",
+    "900009" => "Card reported lost. Use a different payment method.",
+    "900010" => "Invalid card length. Please verify the card number.",
+    "900011" => "Payment flagged as suspected fraud.",
+    "900012" => "Card reported stolen. Use a different payment method.",
+    "900013" => "Card has restrictions. Ask the card holder to contact their bank.",
+    "900014" => "Card usage limit exceeded.",
+    "900015" => "Card blacklisted. Use another payment method.",
+    "900017" => "Paid amount did not match the requested amount.",
+    "900019" => "This card vault token is out of scope.",
+    "900207" => "3-D Secure authentication failed.",
+    "900208" => "Card not enrolled for authentication.",
+    "900205" => "Unexpected authentication result. Please retry.",
+    "900206" => "Unexpected authentication result. Please retry.",
+    "990001" => "Internal processing error. Please retry later.",
+    "990022" => "Issuing bank unavailable. Try again later.",
+    "990053" => "Error processing transaction. Please retry.",
+    "900209" => "Transaction verification failed. Please retry.",
+    "900210" => "Authentication complete, restart the transaction.",
+    "990024" => "Duplicate transaction detected. Please confirm before resubmitting.",
+    "990028" => "Transaction was cancelled.",
+    "990017" => "Payment authorised."
+  }.freeze
+
+  def human_result_message(code, fallback)
+    return fallback if code.blank?
+
+    resolved = RESULT_MESSAGES[code.to_s] || fallback.presence || "Payment could not be processed."
+    return resolved if code.to_s == "990017"
+
+    resolved.include?(code.to_s) ? resolved : "#{resolved} (code #{code})"
+  end
+
     class Error < StandardError; end
 
     Response = Struct.new(
@@ -24,6 +64,9 @@ module Paygate
       :card_brand,
       :card_expiry_month,
       :card_expiry_year,
+      :result_code,
+      :transaction_status_code,
+      :transaction_status_description,
       :successful?,
       :error_message,
       keyword_init: true
@@ -100,8 +143,11 @@ module Paygate
         card_brand: payment_brand,
         card_expiry_month: expiry_month,
         card_expiry_year: expiry_year,
+        result_code: status[:result_code],
+        transaction_status_code: status[:transaction_status_code],
+        transaction_status_description: status[:transaction_status_description],
         successful?: status[:approved],
-        error_message: status[:message]
+        error_message: human_result_message(status[:result_code], status[:message])
       )
     end
 
@@ -137,8 +183,11 @@ module Paygate
         card_brand: payment_method.brand,
         card_expiry_month: payment_method.expiry_month,
         card_expiry_year: payment_method.expiry_year,
+        result_code: status[:result_code],
+        transaction_status_code: status[:transaction_status_code],
+        transaction_status_description: status[:transaction_status_description],
         successful?: status[:approved],
-        error_message: status[:message]
+        error_message: human_result_message(status[:result_code], status[:message])
       )
     end
 
@@ -243,13 +292,25 @@ module Paygate
 
       result_code = status[:ResultCode].to_s
       status_name = status[:StatusName].to_s
-      status_code = status[:StatusCode].to_s
+      status_code = status[:StatusCode].to_s.presence
+      transaction_status_code = status[:TransactionStatusCode].to_s.presence
+      transaction_status_description = status[:TransactionStatusDescription].to_s
 
-      approved = (%w[990017 0 1].include?(result_code) || %w[0 1].include?(status_code) || status_name.casecmp("completed").zero?)
+      decision_code = transaction_status_code || status_code
+
+      approved = false
+      approved ||= result_code == "990017"
+      approved ||= decision_code == "1"
+      approved ||= status_name.casecmp("approved").zero?
+      approved ||= transaction_status_description.casecmp("approved").zero?
 
       {
         approved: approved,
         message: status[:ResultDescription],
+        result_code: result_code,
+        status_code: status_code,
+        transaction_status_code: transaction_status_code,
+        transaction_status_description: transaction_status_description,
         transaction_id: status[:TransactionId] || card_response[:TransactionId],
         reference: status[:Reference] || card_response[:Reference],
         vault_id: status[:VaultId] || card_response[:VaultId],

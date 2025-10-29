@@ -680,11 +680,14 @@
                  end.sort_by { |(label, _)| label.to_s.downcase } %>
               <% otp_template_id = @club.whatsapp_otp_template_id_with_fallback.presence %>
               <% order_template_id = @club.whatsapp_order_confirmation_template_id_with_fallback.presence %>
+              <% failure_template_id = @club.whatsapp_payment_failure_template_id_with_fallback.presence %>
               <% otp_template = otp_template_id && @whatsapp_templates_index[otp_template_id.to_s] %>
               <% order_template = order_template_id && @whatsapp_templates_index[order_template_id.to_s] %>
+              <% failure_template = failure_template_id && @whatsapp_templates_index[failure_template_id.to_s] %>
               <% otp_label = otp_template ? ([otp_template[:name] || otp_template["name"], otp_template[:language] || otp_template.dig(:language, :code) || otp_template.dig("language", "code")].compact.join(" · ").presence || otp_template[:id]) : otp_template_id %>
               <% order_label = order_template ? ([order_template[:name] || order_template["name"], order_template[:language] || order_template.dig(:language, :code) || order_template.dig("language", "code")].compact.join(" · ").presence || order_template[:id]) : order_template_id %>
-              <div class="grid gap-4 rounded border border-slate-200 bg-white px-4 py-4 shadow-sm sm:grid-cols-2">
+              <% failure_label = failure_template ? ([failure_template[:name] || failure_template["name"], failure_template[:language] || failure_template.dig(:language, :code) || failure_template.dig("language", "code")].compact.join(" · ").presence || failure_template[:id]) : failure_template_id %>
+              <div class="grid gap-4 rounded border border-slate-200 bg-white px-4 py-4 shadow-sm sm:grid-cols-3">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">OTP template</p>
                   <p class="mt-1 text-sm font-medium text-slate-900"><%= @club.whatsapp_otp_template_id.present? ? "Club specific" : "Default" %></p>
@@ -695,10 +698,15 @@
                   <p class="mt-1 text-sm font-medium text-slate-900"><%= @club.whatsapp_order_confirmation_template_id.present? ? "Club specific" : "Default" %></p>
                   <p class="text-xs text-slate-500 break-all"><%= order_label.presence || Settings.whatsapp.order_confirmation_template_id || "Not configured" %></p>
                 </div>
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Payment failure template</p>
+                  <p class="mt-1 text-sm font-medium text-slate-900"><%= @club.whatsapp_payment_failure_template_id.present? ? "Club specific" : "Default" %></p>
+                  <p class="text-xs text-slate-500 break-all"><%= failure_label.presence || Settings.whatsapp.payment_failure_template_id || "Not configured" %></p>
+                </div>
               </div>
 
               <%= form_with model: [:admin, @club], url: admin_club_path(@club), method: :patch, local: true, class: "space-y-4 rounded border border-slate-200 bg-white p-4 shadow-sm" do |form| %>
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-4 md:grid-cols-3">
                   <div>
                     <%= form.label :whatsapp_otp_template_id, "OTP template", class: "block text-sm font-medium text-slate-700" %>
                     <%= form.select :whatsapp_otp_template_id,
@@ -714,6 +722,14 @@
                       {},
                       class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
                     <p class="mt-1 text-xs text-slate-500">Fallback: <%= Settings.whatsapp.order_confirmation_template_id.presence || "Not configured" %></p>
+                  </div>
+                  <div>
+                    <%= form.label :whatsapp_payment_failure_template_id, "Payment failure template", class: "block text-sm font-medium text-slate-700" %>
+                    <%= form.select :whatsapp_payment_failure_template_id,
+                      options_for_select([["Use default template", ""]] + template_options, @club.whatsapp_payment_failure_template_id),
+                      {},
+                      class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+                    <p class="mt-1 text-xs text-slate-500">Fallback: <%= Settings.whatsapp.payment_failure_template_id.presence || "Not configured" %></p>
                   </div>
                 </div>
                 <div class="flex justify-end">

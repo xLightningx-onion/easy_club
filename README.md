@@ -4,6 +4,7 @@ This README would normally document whatever steps are necessary to get the
 application up and running.
 
 ## Background jobs
+- Set `WHATSAPP_PAYMENT_FAILURE_TEMPLATE_ID` if you want WhatsApp alerts for failed payments to use a custom template.
 - Staggered installments are auto-charged via `StaggeredPayments::SchedulerJob`; ensure your recurring scheduler (e.g. `config/recurring.yml`) is running so Sidekiq picks it up.
 
 

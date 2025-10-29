@@ -4,7 +4,7 @@ class Members::CheckoutsController < Members::ApplicationController
   include Members::CartContext
   include Members::OrderSummary
 
-  before_action :set_cart
+  before_action :set_cart, only: :create
 
   def create
     authorize! @cart, :update?
@@ -52,9 +52,9 @@ class Members::CheckoutsController < Members::ApplicationController
 
     card_details = if payment_source == "new"
                      normalize_card_details(checkout[:card])
-                   else
+    else
                      {}
-                   end
+    end
 
     result = Checkouts::Submit.new(
       cart: @cart,
@@ -68,6 +68,17 @@ class Members::CheckoutsController < Members::ApplicationController
     ).call
 
     redirect_to members_checkout_success_path(reference: result.order.number)
+  rescue Checkouts::Submit::Failure => e
+    Rails.logger.warn("Checkout payment failed: #{e.message}")
+
+    # SendPaymentFailedJob.perform_later(e.order.id, message: nil, payment_transaction_id: e.payment_tx.id) rescue nil
+    redirect_to members_checkout_failure_path(
+                  transaction: e.transaction&.id,
+                  reference: e.order&.number,
+                  order_id: e.order&.id,
+                  installment_id: e.installment&.id
+                ),
+                alert: e.message
   rescue Checkouts::Submit::EmptyCartError
     redirect_to members_cart_redirect_path, alert: "Your cart is empty."
   rescue Checkouts::Submit::Error => e
@@ -87,7 +98,7 @@ class Members::CheckoutsController < Members::ApplicationController
                 :payment_method,
                 :user,
                 { payment_transactions: :payment_method },
-                { order_items: [:member, { plan: :product }] },
+                { order_items: [ :member, { plan: :product } ] },
                 { staggered_payment_schedule: :installments }
               )
               .find_by("UPPER(orders.number) = ?", reference.upcase)
@@ -101,6 +112,41 @@ class Members::CheckoutsController < Members::ApplicationController
 
     payment_transaction = @order.payment_transactions.max_by { |tx| tx.processed_at || tx.created_at }
     prepare_order_summary(@order, payment_transaction:)
+  end
+
+  def failure
+    transaction_id = params[:transaction]
+    reference = params[:reference]
+
+    @transaction = PaymentTransaction.find_by(id: transaction_id) if transaction_id.present?
+    @order = @transaction&.order
+    @order ||= policy_scope(Order).find_by(id: params[:order_id]) if params[:order_id].present?
+    @order ||= policy_scope(Order).includes(:payment_transactions, :payment_method, :user, { order_items: [ :member, { plan: :product } ] }, { staggered_payment_schedule: :installments }).find_by("UPPER(orders.number) = ?", reference.to_s.upcase) if reference.present?
+
+    unless @order
+      redirect_to members_cart_redirect_path, alert: "We couldn't find that payment attempt."
+      return
+    end
+
+    authorize! @order, :show?
+
+    prepare_order_summary(@order, payment_transaction: @transaction)
+
+    @failed_installment = find_failed_installment(params[:installment_id])
+    @installment_details = build_installment_details(@failed_installment)
+
+    @amount_attempted =
+      if @transaction
+        Money.new(@transaction.amount_cents, @transaction.amount_currency)
+      elsif @installment_details&.dig(:amount).is_a?(Money)
+        @installment_details[:amount]
+      else
+        Money.new(@order.total_cents, @order.total_currency)
+      end
+    @installment_count = @schedule_installments&.size.to_i
+
+    @error_message = flash[:alert].presence || @transaction&.metadata&.fetch("error", nil).presence || "Payment could not be processed."
+    flash.now[:alert] = @error_message
   end
 
   private
@@ -124,6 +170,37 @@ class Members::CheckoutsController < Members::ApplicationController
     ).to_h
 
     permitted.deep_symbolize_keys
+  end
+
+  def find_failed_installment(param_installment_id)
+    return StaggeredPaymentScheduleInstallment.find_by(id: param_installment_id) if param_installment_id.present?
+    return nil unless @order&.staggered_payment_schedule
+
+    if (metadata_id = @transaction&.metadata&.fetch("installment_id", nil))
+      return StaggeredPaymentScheduleInstallment.find_by(id: metadata_id)
+    end
+
+    @schedule_installments&.find do |installment|
+      installment.status_failed? && installment.payment_transaction_id == @transaction&.id
+    end
+  end
+
+  def build_installment_details(installment)
+    return nil unless installment
+
+    amount = Money.new(installment.amount_cents, installment.amount_currency)
+    position = nil
+    if @schedule_installments.present?
+      idx = @schedule_installments.index { |inst| inst.id == installment.id }
+      position = idx + 1 if idx
+    end
+
+    {
+      installment: installment,
+      number: position,
+      amount: amount,
+      due_at: installment.due_at
+    }
   end
 
   def resolve_payment_method(checkout)
@@ -158,7 +235,7 @@ class Members::CheckoutsController < Members::ApplicationController
       raise Checkouts::Submit::Error, "The card you entered is expired."
     end
 
-    fallback_name = [current_user.first_name.to_s, current_user.last_name.to_s].reject(&:blank?).join(" ")
+    fallback_name = [ current_user.first_name.to_s, current_user.last_name.to_s ].reject(&:blank?).join(" ")
     fallback_name = current_user.email.split("@").first if fallback_name.blank?
 
     {

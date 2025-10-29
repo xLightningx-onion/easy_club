@@ -6,6 +6,20 @@ module Checkouts
 
     class Error < StandardError; end
     class EmptyCartError < Error; end
+    class Failure < Error
+      attr_reader :order, :transaction, :response, :installment, :payment_method, :amount_cents, :amount_currency
+
+      def initialize(order:, transaction:, response:, installment:, payment_method:, amount_cents:, amount_currency:, message:)
+        super(message)
+        @order = order
+        @transaction = transaction
+        @response = response
+        @installment = installment
+        @payment_method = payment_method
+        @amount_cents = amount_cents
+        @amount_currency = amount_currency
+      end
+    end
 
     def initialize(cart:, user:, payment_method: nil, tokenize: false, card_details: {}, saved_card_cvv: nil, payment_mode: nil, staggered_payment_plan: nil, client: nil)
       @cart = cart
@@ -37,22 +51,39 @@ module Checkouts
           charge_amount_cents = installment_to_charge.amount_cents
         end
 
-        payment_tx = order.payment_transactions.create!(
-          status: :initialized,
-          gateway: "paygate",
-          amount_cents: charge_amount_cents,
-          amount_currency: order.total_currency,
-          payment_method: payment_method
-        )
-
-        response = initiate_payment!(order, payment_tx, amount_cents: charge_amount_cents)
+        response = initiate_payment!(order, amount_cents: charge_amount_cents, payment_method: payment_method)
 
         unless response.successful?
-          raise Error, response.error_message.presence || "Payment was declined."
+          failure_message = response.error_message.presence || "Payment was declined."
+
+          raise Failure.new(
+            order:,
+            transaction: nil,
+            response:,
+            installment: installment_to_charge,
+            payment_method: payment_method,
+            amount_cents: charge_amount_cents,
+            amount_currency: order.total_currency,
+            message: failure_message
+          )
         end
 
         saved_payment_method = persist_tokenized_card(response) if tokenize? && response.card_token.present?
         applied_payment_method = saved_payment_method || payment_method
+
+        payment_tx = create_payment_transaction!(
+          order: order,
+          payment_method: applied_payment_method,
+          status: :succeeded,
+          amount_cents: charge_amount_cents,
+          amount_currency: order.total_currency,
+          request_payload: response.request_payload || {},
+          response_payload: response.parsed_body || {},
+          request_reference: response.request_reference,
+          response_reference: response.response_reference,
+          processed_at: Time.current,
+          metadata: { "result_code" => response.result_code }
+        )
 
         if staggered_payment?
           finalize_staggered_order!(order, schedule, installment_to_charge, applied_payment_method, payment_tx)
@@ -64,16 +95,6 @@ module Checkouts
           order.mark_paid!(Time.current)
         end
 
-        payment_tx.update!(
-          status: :succeeded,
-          request_payload: response.request_payload,
-          response_payload: response.parsed_body,
-          request_reference: response.request_reference,
-          response_reference: response.response_reference,
-          processed_at: Time.current,
-          payment_method: applied_payment_method
-        )
-
         Result.new(
           order:,
           transaction: payment_tx,
@@ -82,6 +103,9 @@ module Checkouts
           schedule: order.staggered_payment_schedule
         )
       end
+      rescue Failure => e
+        persist_failed_transaction!(e)
+        raise e
       rescue StandardError => e
         raise Error, e.message
     end
@@ -98,9 +122,9 @@ module Checkouts
 
       order_total_money = if staggered_payment?
                             base_total_money || full_total_money
-                          else
+      else
                             full_total_money
-                          end
+      end
 
       subtotal_cents = order_total_money.cents
       currency = order_total_money.currency.iso_code
@@ -131,15 +155,15 @@ module Checkouts
 
         unit_money = if staggered_payment? && membership_type&.base_price
                         membership_type.base_price
-                      else
+        else
                         Money.new(item.unit_price_cents, item.unit_price_currency)
-                      end
+        end
 
         item_total_money = if staggered_payment?
                               unit_money * quantity
-                            else
+        else
                               Money.new(item.total_price_cents, item.total_price_currency)
-                            end
+        end
 
         item_total_money ||= Money.new(item.total_price_cents, item.total_price_currency)
 
@@ -159,14 +183,14 @@ module Checkouts
       order
     end
 
-    def initiate_payment!(order, payment_tx, amount_cents:)
+    def initiate_payment!(order, amount_cents:, payment_method:)
       return_url = Settings.paygate.pay_host.return_url
       notify_url = Settings.paygate.pay_host.notify_url
 
       if payment_method
         client.token_payment(
           order:,
-          transaction: payment_tx,
+          transaction: PaymentTransaction.new,
           payment_method:,
           cvv: saved_card_cvv.presence,
           return_url:,
@@ -176,7 +200,7 @@ module Checkouts
       else
         client.card_payment(
           order:,
-          transaction: payment_tx,
+          transaction: PaymentTransaction.new,
           card_details:,
           tokenize: tokenize?,
           return_url:,
@@ -256,11 +280,11 @@ module Checkouts
 
           due_time = if index.zero?
                        Time.current
-                     else
+          else
                        due_date = plan_installment.due_on || order.created_at&.to_date || Date.current
                        zone = Time.zone || ActiveSupport::TimeZone["UTC"]
                        zone.local(due_date.year, due_date.month, due_date.day, 23, 59, 59)
-                     end
+          end
 
           schedule.installments.build(
             position: index,
@@ -277,7 +301,7 @@ module Checkouts
       end
 
       next_installment = schedule.installments.order(:position, :id).detect { |installment| !installment.status_paid? }
-      [schedule, next_installment]
+      [ schedule, next_installment ]
     end
 
     def finalize_staggered_order!(order, schedule, installment, payment_method, payment_tx)
@@ -310,6 +334,55 @@ module Checkouts
         password: Settings.paygate.pay_host.password,
         endpoint: Settings.paygate.pay_host.endpoint
       )
+    end
+
+    def persist_failed_transaction!(failure)
+      order = failure.order
+      return unless order
+
+      failed_tx = create_payment_transaction!(
+        order: order,
+        payment_method: failure.payment_method,
+        status: :failed,
+        amount_cents: failure.amount_cents,
+        amount_currency: failure.amount_currency,
+        request_payload: failure.response.request_payload || {},
+        response_payload: failure.response.parsed_body || {},
+        request_reference: failure.response.request_reference,
+        response_reference: failure.response.response_reference,
+        processed_at: Time.current,
+        metadata: {
+          "error" => failure.message,
+          "result_code" => failure.response.result_code,
+          "installment_id" => failure.installment&.id
+        }
+      )
+
+      failure.instance_variable_set(:@transaction, failed_tx)
+
+      SendPaymentFailedJob.perform_later(
+        order.id,
+        message: nil,
+        payment_transaction_id: failed_tx.id
+      ) rescue nil
+    end
+
+    def create_payment_transaction!(order:, payment_method:, status:, amount_cents:, amount_currency:, request_payload:, response_payload:, request_reference:, response_reference:, processed_at:, metadata: {})
+      PaymentTransaction.transaction(requires_new: true) do
+        order.payment_transactions.create!(
+          status: status,
+          gateway: "paygate",
+          amount_cents: amount_cents,
+          amount_currency: amount_currency,
+          request_payload: request_payload,
+          response_payload: response_payload,
+          request_reference: request_reference,
+          response_reference: response_reference,
+          processed_at: processed_at,
+          payment_method: payment_method,
+          metadata: metadata.compact
+        )
+      end
     end
   end
 end

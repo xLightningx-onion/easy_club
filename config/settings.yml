@@ -27,3 +27,4 @@ whatsapp:
   business_id: <%= ENV.fetch("WHATSAPP_BUSINESS_ID", nil) %>
   otp_template_id: <%= ENV.fetch("WHATSAPP_OTP_TEMPLATE_ID", nil) %>
   order_confirmation_template_id: <%= ENV.fetch("WHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID", nil) %>
+  payment_failure_template_id: <%= ENV.fetch("WHATSAPP_PAYMENT_FAILURE_TEMPLATE_ID", nil) %>

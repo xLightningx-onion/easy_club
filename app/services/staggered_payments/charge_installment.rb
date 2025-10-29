@@ -93,6 +93,7 @@ module StaggeredPayments
         "error" => error_message
       }
       payload["response_reference"] = response.response_reference if response&.response_reference
+      payload["result_code"] = response.result_code if response&.respond_to?(:result_code)
 
       payment_transaction.update!(
         status: :failed,
@@ -105,6 +106,7 @@ module StaggeredPayments
       )
 
       installment.update!(status: :failed)
+      Notifications::PaymentFailureNotifier.new(order: order, message: error_message).deliver rescue nil
     end
 
     def client
