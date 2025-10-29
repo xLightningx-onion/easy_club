@@ -22,10 +22,9 @@
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
-  <body class="bg-grey-custom">
+  <body class="bg-grey-custom overflow-x-hidden">
     <div class="w-full pb-10 pt-20">
-      <div class="absolute w-full h-[200vw] club-header-color top-[-160vw] lg:top-[-185vw] left-[-50vw] rounded-[50%] z-[0]">
-      </div>
+      <%= render 'shared/half_moon_header' %>
       <div class="absolute w-full h-20 top-0 flex justify-center items-center">
         <%= image_tag asset_path("easyclub-logo.png"), class: "max-w-[30%]" %>
       </div>
