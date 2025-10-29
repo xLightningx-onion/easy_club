@@ -9,4 +9,8 @@
 #     priority: 2
 #     schedule: at 5am every day
 
-production: {}
+production:
+  staggered_payments_process_due_installments:
+    class: "StaggeredPayments::SchedulerJob"
+    queue: default
+    schedule: every 10 minutes

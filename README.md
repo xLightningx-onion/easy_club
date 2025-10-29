@@ -4,6 +4,8 @@ This README would normally document whatever steps are necessary to get the
 application up and running.
 
 ## Background jobs
+- Staggered installments are auto-charged via `StaggeredPayments::SchedulerJob`; ensure your recurring scheduler (e.g. `config/recurring.yml`) is running so Sidekiq picks it up.
+
 
 - `bin/dev` now starts a Sidekiq worker alongside the Rails server (see `Procfile.dev`).
 - You can run the worker directly with `bin/jobs`, which executes `bundle exec sidekiq -C config/sidekiq.yml`.
