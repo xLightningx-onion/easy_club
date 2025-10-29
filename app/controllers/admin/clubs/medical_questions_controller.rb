@@ -155,6 +155,7 @@ class Admin::Clubs::MedicalQuestionsController < Admin::BaseController
       end
       format.html do
         @medical_questions = medical_questions_scope
+        @default_price_tiers = @club.default_price_tiers.ordered
         render "admin/clubs/show", status: :unprocessable_entity
       end
     end

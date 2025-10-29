@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_22_100000) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_114500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -147,6 +147,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_100000) do
     t.index ["user_id"], name: "index_carts_on_user_id"
   end
 
+  create_table "club_default_price_tiers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "club_id", null: false
+    t.string "label", null: false
+    t.date "starts_on", null: false
+    t.date "ends_on", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["club_id", "position"], name: "index_club_default_price_tiers_on_club_id_and_position"
+    t.index ["club_id"], name: "index_club_default_price_tiers_on_club_id"
+  end
+
   create_table "club_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "club_id", null: false
     t.uuid "user_id", null: false
@@ -202,6 +214,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_100000) do
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.string "google_place_id"
+    t.text "whatsapp_access_token"
+    t.string "whatsapp_sender_id"
+    t.string "whatsapp_business_id"
+    t.string "whatsapp_otp_template_id"
+    t.string "whatsapp_order_confirmation_template_id"
     t.index ["google_place_id"], name: "index_clubs_on_google_place_id", unique: true, where: "(google_place_id IS NOT NULL)"
     t.index ["public_listing"], name: "index_clubs_on_public_listing"
   end
@@ -804,6 +821,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_100000) do
   add_foreign_key "carts", "clubs"
   add_foreign_key "carts", "staggered_payment_plans"
   add_foreign_key "carts", "users"
+  add_foreign_key "club_default_price_tiers", "clubs"
   add_foreign_key "club_roles", "clubs"
   add_foreign_key "club_roles", "users"
   add_foreign_key "club_term_acceptances", "club_terms"

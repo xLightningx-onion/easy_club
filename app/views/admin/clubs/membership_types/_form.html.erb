@@ -1,4 +1,5 @@
 <% frame_dom_id = local_assigns[:frame_id] || (membership_type.persisted? ? dom_id(membership_type) : dom_id(club, :new_membership_type)) %>
+<% currency = club.settings.dig("finance", "currency") rescue nil %>
 <%= turbo_frame_tag frame_dom_id do %>
   <%= form_with model: [:admin, club, membership_type], class: "space-y-4" do |form| %>
     <% if membership_type.errors.any? %>
@@ -40,7 +41,6 @@
       <div class="space-y-1">
         <%= form.label :base_price, "Base cost", class: "block text-sm font-medium text-slate-700" %>
         <div class="relative">
-          <% currency = club.settings.dig("finance", "currency") rescue nil %>
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-500"><%= currency || "ZAR" %></span>
           <%= form.number_field :base_price,
             value: membership_type.base_price&.to_f,
@@ -50,6 +50,40 @@
         </div>
       </div>
     </div>
+
+    <% if membership_type.new_record? && club.default_price_tiers.any? %>
+      <section class="space-y-3 rounded border border-dashed border-slate-200 px-4 py-4">
+        <header class="space-y-1">
+          <h3 class="text-sm font-semibold text-slate-900">Default price tiers</h3>
+          <p class="text-xs text-slate-500">Capture tier amounts now and we'll create them now. If left empty, they will be ignored.</p>
+        </header>
+
+        <div class="space-y-4">
+          <% amounts = (membership_type.default_price_tier_amounts.presence || {}).transform_keys(&:to_s) %>
+          <% club.default_price_tiers.each do |template| %>
+            <% stored_amount = amounts[template.id.to_s] %>
+            <div class="flex flex-col gap-3 border border-slate-100 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div class="space-y-1">
+                <p class="text-sm font-semibold text-slate-900"><%= template.label %></p>
+                <p class="text-xs uppercase tracking-wide text-slate-400">Applies <%= template.starts_on.to_fs(:long) %> &ndash; <%= template.ends_on.to_fs(:long) %></p>
+              </div>
+              <div class="w-full sm:max-w-xs">
+                <label class="block text-xs font-medium text-slate-500">Tier amount (optional)</label>
+                <div class="relative mt-1">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-500"><%= currency || "ZAR" %></span>
+                  <%= number_field_tag "membership_type[default_price_tier_amounts][#{template.id}]",
+                    stored_amount,
+                    step: 0.01,
+                    min: 0,
+                    class: "w-full rounded border border-slate-300 px-3 py-2 pl-16 text-sm focus:border-slate-500 focus:outline-none focus:ring",
+                    placeholder: "0.00" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
 
     <div class="flex items-center justify-end gap-3">
       <% if membership_type.persisted? %>

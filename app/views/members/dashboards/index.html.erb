@@ -165,7 +165,7 @@
                               <% end %>
                             </span>
                             <%= link_to "Pay now",
-                                        members_cart_path(club_id: cart.club_id),
+                                        cart.order ? members_cart_path(club_id: cart.club_id, cart_id: cart.id, order_id: cart.order.id, resume: true) : members_cart_path(club_id: cart.club_id),
                                         class: "inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-slate-800" %>
                           </div>
                         <% else %>
@@ -191,9 +191,15 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-end gap-3">
-              <%= link_to "Resume checkout",
-                          members_cart_path(club_id: cart.club_id),
-                          class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
+              <% if cart.order.present? %>
+                <%= link_to "View order details",
+                            members_order_path(cart.order),
+                            class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
+              <% else %>
+                <%= link_to "Resume checkout",
+                            members_cart_path(club_id: cart.club_id),
+                            class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
+              <% end %>
             </div>
           </article>
         <% end %>

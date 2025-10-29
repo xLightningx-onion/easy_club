@@ -46,7 +46,10 @@ class Members::CartItemsController < Members::ApplicationController
   private
 
   def set_cart
-    @cart = current_cart
+    @cart = requested_cart || current_cart
+    unless @cart&.user_id == current_user&.id
+      redirect_to members_dashboards_path, alert: "We couldn't find that cart." and return
+    end
   end
 
   def set_cart_item

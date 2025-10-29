@@ -77,6 +77,9 @@ Rails.application.routes.draw do
                   module: :membership_types,
                   except: %i[index show]
       end
+      resources :default_price_tiers,
+                module: :clubs,
+                except: %i[index]
       resources :membership_questions,
                 module: :clubs,
                 except: %i[index]
@@ -130,6 +133,7 @@ Rails.application.routes.draw do
     end
     resource :checkout, only: :create
     resources :payment_methods, only: :destroy
+    resources :orders, only: :show
     get "checkout/success", to: "checkouts#success", as: :checkout_success
   end
 

@@ -2,6 +2,7 @@
 
 class Members::CheckoutsController < Members::ApplicationController
   include Members::CartContext
+  include Members::OrderSummary
 
   before_action :set_cart
 
@@ -82,7 +83,13 @@ class Members::CheckoutsController < Members::ApplicationController
     end
 
     @order = policy_scope(Order)
-              .includes(:payment_method, :user, :payment_transactions, order_items: [:member, { plan: :product }])
+              .includes(
+                :payment_method,
+                :user,
+                { payment_transactions: :payment_method },
+                { order_items: [:member, { plan: :product }] },
+                { staggered_payment_schedule: :installments }
+              )
               .find_by("UPPER(orders.number) = ?", reference.upcase)
 
     unless @order && (@order.status_paid? || @order.status_pending_payment?)
@@ -90,45 +97,19 @@ class Members::CheckoutsController < Members::ApplicationController
       return
     end
 
-    @payment_transaction = @order.payment_transactions.max_by { |tx| tx.processed_at || tx.created_at }
-    @schedule = @order.staggered_payment_schedule
-    @schedule_installments = if @schedule
-                               @schedule.installments.order(:position, :id).to_a
-                             else
-                               []
-                             end
+    authorize! @order, :show?
 
-    currency_code = @order.total_currency
-
-    if @schedule_installments.any?
-      @completed_installments = @schedule_installments.select(&:status_paid?)
-      @upcoming_installments = @schedule_installments.reject { |inst| inst.status_paid? || inst.status_cancelled? }
-      paid_cents = @completed_installments.sum(&:amount_cents)
-      outstanding_cents = @upcoming_installments.sum(&:amount_cents)
-      @current_installment = @completed_installments.last
-      @next_installment = @upcoming_installments.first
-    else
-      @completed_installments = []
-      @upcoming_installments = []
-      paid_cents = @order.total_cents
-      outstanding_cents = 0
-      @current_installment = nil
-      @next_installment = nil
-    end
-
-    @amount_paid_so_far = Money.new(paid_cents, currency_code)
-    @outstanding_amount = Money.new(outstanding_cents, currency_code)
-    @amount_captured_now = if @payment_transaction
-                             Money.new(@payment_transaction.amount_cents, @payment_transaction.amount_currency)
-                           else
-                             Money.new(0, currency_code)
-                           end
+    payment_transaction = @order.payment_transactions.max_by { |tx| tx.processed_at || tx.created_at }
+    prepare_order_summary(@order, payment_transaction:)
   end
 
   private
 
   def set_cart
-    @cart = current_cart
+    @cart = requested_cart || current_cart
+    unless @cart&.user_id == current_user&.id
+      redirect_to members_dashboards_path, alert: "We couldn't find an active cart. Start a membership to begin checkout." and return
+    end
   end
 
   def checkout_params

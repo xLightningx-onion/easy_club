@@ -30,6 +30,7 @@ class Order < ApplicationRecord
   validate :validate_payment_mode_consistency
 
   before_validation :assign_number, on: :create
+  after_commit :enqueue_whatsapp_order_confirmation, if: :send_whatsapp_order_confirmation?
 
   scope :recent, -> { order(created_at: :desc) }
 
@@ -47,6 +48,14 @@ class Order < ApplicationRecord
   end
 
   private
+
+  def send_whatsapp_order_confirmation?
+    saved_change_to_status? && status_paid? && staggered_payment_schedule.blank?
+  end
+
+  def enqueue_whatsapp_order_confirmation
+    SendOrderConfirmationJob.perform_later(id)
+  end
 
   def assign_number
     return if number.present?

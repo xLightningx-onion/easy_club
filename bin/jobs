@@ -1,6 +1,7 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env bash
 
-require_relative "../config/environment"
-require "solid_queue/cli"
+set -euo pipefail
 
-SolidQueue::Cli.start(ARGV)
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+exec bundle exec sidekiq -C "$APP_ROOT/config/sidekiq.yml" "$@"

@@ -58,6 +58,7 @@ class Admin::Clubs::MembershipQuestionsController < Admin::BaseController
         end
         format.html do
           @membership_questions = @club.membership_questions
+          @default_price_tiers = @club.default_price_tiers.ordered
           render "admin/clubs/show", status: :unprocessable_entity
         end
       end
@@ -110,6 +111,7 @@ class Admin::Clubs::MembershipQuestionsController < Admin::BaseController
         end
         format.html do
           @membership_questions = @club.membership_questions
+          @default_price_tiers = @club.default_price_tiers.ordered
           render "admin/clubs/show", status: :unprocessable_entity
         end
       end

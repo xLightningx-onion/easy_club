@@ -20,3 +20,10 @@ paygate:
 
 google:
   places_api_key: <%= ENV.fetch("GOOGLE_PLACES_API_KEY", "") %>
+
+whatsapp:
+  access_token: <%= ENV.fetch("WHATSAPP_ACCESS_TOKEN", nil) %>
+  sender_id: <%= ENV.fetch("WHATSAPP_SENDER_ID", nil) %>
+  business_id: <%= ENV.fetch("WHATSAPP_BUSINESS_ID", nil) %>
+  otp_template_id: <%= ENV.fetch("WHATSAPP_OTP_TEMPLATE_ID", nil) %>
+  order_confirmation_template_id: <%= ENV.fetch("WHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID", nil) %>

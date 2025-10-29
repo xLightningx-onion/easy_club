@@ -119,12 +119,13 @@
           <p class="text-sm text-slate-600">PayGate securely processes the payment. We never store your full card number.</p>
         </header>
 
-        <%= form_with url: members_checkout_path(club_id: @club.id),
+        <%= form_with url: members_checkout_path(club_id: @club.id, cart_id: @cart.id),
                       method: :post,
                       local: true,
                       data: { controller: "payment-method" },
                       html: { id: "checkout-payment-form" },
                       class: "space-y-6" do %>
+          <%= hidden_field_tag :cart_id, @cart.id %>
           <%= hidden_field_tag "checkout[payment_source]", default_source, data: { payment_method_target: "sourceInput" } %>
           <%= hidden_field_tag "checkout[payment_method_id]", default_source == "saved" ? default_method&.id : "", data: { payment_method_target: "methodInput" } %>
 

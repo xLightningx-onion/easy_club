@@ -40,6 +40,11 @@ class Club < ApplicationRecord
   has_many :club_terms, -> { order(:position, :created_at) }, dependent: :destroy
   has_many :club_term_acceptances, through: :club_terms
   has_many :medical_questions, dependent: :destroy
+  has_many :default_price_tiers,
+           -> { order(:position, :starts_on, :created_at) },
+           class_name: "ClubDefaultPriceTier",
+           dependent: :destroy,
+           inverse_of: :club
 
   accepts_nested_attributes_for :membership_questions, allow_destroy: true, reject_if: proc { |attributes| attributes["prompt"].blank? }
 
@@ -77,5 +82,37 @@ class Club < ApplicationRecord
 
   def oklch_color
     color_palette["theme_oklch"]
+  end
+
+  def whatsapp_otp_template_id_with_fallback
+    whatsapp_otp_template_id.presence || Settings.whatsapp.otp_template_id.presence
+  end
+
+  def whatsapp_order_confirmation_template_id_with_fallback
+    whatsapp_order_confirmation_template_id.presence || Settings.whatsapp.order_confirmation_template_id.presence
+  end
+
+  def whatsapp_access_token_with_fallback
+    whatsapp_access_token.presence || Settings.whatsapp.access_token.presence
+  end
+
+  def whatsapp_sender_id_with_fallback
+    whatsapp_sender_id.presence || Settings.whatsapp.sender_id.presence
+  end
+
+  def whatsapp_business_id_with_fallback
+    whatsapp_business_id.presence || Settings.whatsapp.business_id.presence
+  end
+
+  def whatsapp_credentials
+    {
+      access_token: whatsapp_access_token_with_fallback,
+      sender_id: whatsapp_sender_id_with_fallback,
+      business_id: whatsapp_business_id_with_fallback
+    }.with_indifferent_access
+  end
+
+  def whatsapp_configured?
+    whatsapp_credentials.values.all?(&:present?)
   end
 end

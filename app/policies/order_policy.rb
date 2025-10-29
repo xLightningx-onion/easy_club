@@ -6,16 +6,21 @@ class OrderPolicy < ApplicationPolicy
   end
 
   def show?
-    staff?
+    staff? || owns_order?
   end
 
   scope_for :relation do |relation|
-    if staff?
-      relation
-    elsif scoped_club
-      relation.where(club_id: scoped_club.id)
-    else
-      relation.none
-    end
+    return relation if staff?
+    return relation.none unless user
+
+    rel = relation
+    rel = rel.where(club_id: scoped_club.id) if scoped_club && rel.column_names.include?("club_id")
+    rel.where(user_id: user.id)
+  end
+
+  private
+
+  def owns_order?
+    user && record.respond_to?(:user_id) && record.user_id == user.id
   end
 end

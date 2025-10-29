@@ -4,7 +4,8 @@ class Admin::UsersController < Admin::BaseController
   before_action :set_user, only: %i[show edit update destroy]
 
   def index
-    @users = User.order(:email)
+    @super_admins = User.where(staff: true).order(:email)
+    @users = User.where(staff: false).order(:email)
   end
 
   def show

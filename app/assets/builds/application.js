@@ -20757,6 +20757,70 @@ var mobile_number_controller_default = class extends Controller {
   }
 };
 
+// app/javascript/controllers/tabs_controller.js
+var tabs_controller_default = class extends Controller {
+  static targets = ["trigger", "panel"];
+  static classes = ["active", "inactive"];
+  static values = {
+    defaultTab: String,
+    activeTab: String
+  };
+  connect() {
+    if (!this.hasActiveTabValue) {
+      const firstTrigger = this.triggerTargets[0];
+      const fallback = this.defaultTabValue || firstTrigger && firstTrigger.dataset[this.tabDatasetKey];
+      if (fallback) {
+        this.activeTabValue = fallback;
+      }
+    }
+    this.update();
+  }
+  show(event) {
+    event.preventDefault();
+    const params2 = event.params || {};
+    const tabParam = typeof params2.tab === "string" ? params2.tab : null;
+    const currentTarget = event.currentTarget;
+    const datasetTab = currentTarget && currentTarget.dataset ? currentTarget.dataset[this.tabDatasetKey] : null;
+    const tab = tabParam || datasetTab;
+    if (tab && tab !== this.activeTabValue) {
+      this.activeTabValue = tab;
+      this.update();
+    }
+  }
+  update() {
+    const active2 = this.activeTabValue;
+    this.triggerTargets.forEach((trigger) => {
+      const isActive = trigger.dataset[this.tabDatasetKey] === active2;
+      trigger.setAttribute("aria-selected", isActive);
+      trigger.setAttribute("tabindex", isActive ? "0" : "-1");
+      this.activeClasses.forEach((className) => trigger.classList.toggle(className, isActive));
+      this.inactiveClasses.forEach((className) => trigger.classList.toggle(className, !isActive));
+    });
+    this.panelTargets.forEach((panel) => {
+      const isActive = panel.dataset[this.panelDatasetKey] === active2;
+      panel.hidden = !isActive;
+      panel.setAttribute("aria-hidden", (!isActive).toString());
+    });
+  }
+  get activeClasses() {
+    if (!this.hasActiveClass) return [];
+    return this.activeClass.split(/\s+/).filter(Boolean);
+  }
+  get inactiveClasses() {
+    if (!this.hasInactiveClass) return [];
+    return this.inactiveClass.split(/\s+/).filter(Boolean);
+  }
+  get identifierPrefix() {
+    return this.identifier.replace(/-(\w)/g, (_match, char) => char.toUpperCase());
+  }
+  get tabDatasetKey() {
+    return `${this.identifierPrefix}Tab`;
+  }
+  get panelDatasetKey() {
+    return `${this.identifierPrefix}Panel`;
+  }
+};
+
 // app/javascript/controllers/index.js
 application.register("hello", hello_controller_default);
 application.register("squad", squad_controller_default);
@@ -20775,6 +20839,8 @@ application.register("payment-plan-selector", payment_plan_selector_controller_d
 application.register("club-theme-color", club_theme_color_controller_default);
 application.register("country-code-selector", country_code_selector_controller_default);
 application.register("mobile-number", mobile_number_controller_default);
+application.register("tabs", tabs_controller_default);
+application.register("club-settings-tabs", tabs_controller_default);
 
 // app/javascript/application.js
 var import_cropper = __toESM(require_cropper());

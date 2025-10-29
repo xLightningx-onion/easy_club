@@ -117,7 +117,7 @@ class User < ApplicationRecord
   end
 
   def formatted_mobile_number
-    [ country_code, mobile_number ].compact.join(" ").strip
+    mobile_number.strip
   end
 
   private

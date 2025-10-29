@@ -11,6 +11,6 @@ class Admin::BaseController < ApplicationController
   def require_staff!
     return if current_user&.staff?
 
-    redirect_to root_path, alert: "Staff access required."
+    redirect_to root_path, alert: "Super admin access required."
   end
 end

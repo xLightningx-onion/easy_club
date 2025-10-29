@@ -1,0 +1,16 @@
+<% if default_price_tiers.any? %>
+  <div class="divide-y divide-slate-200">
+    <% default_price_tiers.each do |default_price_tier| %>
+      <%= render "admin/clubs/default_price_tiers/default_price_tier",
+                 club: club,
+                 default_price_tier: default_price_tier %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="px-4 py-8 text-center text-sm text-slate-500">
+    <p class="font-medium text-slate-700">No default tiers yet</p>
+    <p class="mt-1 text-xs text-slate-500">
+      Create shared registration windows here to auto-suggest tier pricing whenever you add a new membership type.
+    </p>
+  </div>
+<% end %>

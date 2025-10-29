@@ -1,0 +1,293 @@
+<%
+  paid_in_full = @order.status_paid?
+  payment_plan = @order.payment_mode_staggered?
+  has_schedule = payment_plan && @schedule_installments.any?
+  outstanding_positive = @outstanding_amount.cents.positive?
+  last_payment_at = @order.paid_at || @payment_transaction&.processed_at
+  next_due_at = @next_installment&.due_at
+  total_label = number_to_currency(@order.total_cents / 100.0, unit: @order.total_currency)
+  amount_today_label = number_to_currency(@amount_captured_now.cents / 100.0, unit: @amount_captured_now.currency.iso_code)
+  amount_paid_label = number_to_currency(@amount_paid_so_far.cents / 100.0, unit: @amount_paid_so_far.currency.iso_code)
+  outstanding_label = number_to_currency(@outstanding_amount.cents / 100.0, unit: @outstanding_amount.currency.iso_code)
+  header_title = paid_in_full ? "Payment received" : "Installment captured"
+  frame_border_class = paid_in_full ? "border-emerald-200" : "border-amber-200"
+  badge_color_class = paid_in_full ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+  accent_band_class = paid_in_full ? "border-emerald-100 bg-emerald-50" : "border-amber-100 bg-amber-50"
+  accent_text_class = paid_in_full ? "text-emerald-700" : "text-amber-700"
+  memberships_heading = paid_in_full ? "Memberships activated" : "Memberships pending final payment"
+  status_label = paid_in_full ? "Paid in full" : "Payment plan in progress"
+  club_name = @order.club&.name || @club&.name || current_club&.name || "EasyClub"
+%>
+<% content_for :title, "#{paid_in_full ? 'Payment successful' : 'Payment in progress'} · #{club_name}" %>
+
+<div class="mx-auto max-w-4xl px-4 py-12">
+  <div class="overflow-hidden rounded-3xl border <%= frame_border_class %> bg-white shadow-sm">
+    <div class="space-y-4 px-8 py-10 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full <%= badge_color_class %>">
+        <% if paid_in_full %>
+          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m5 13 4 4L19 7" />
+          </svg>
+          <span class="sr-only">Payment successful</span>
+        <% else %>
+          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <polyline points="12 7 12 12 15 15" />
+          </svg>
+          <span class="sr-only">Installment captured</span>
+        <% end %>
+      </div>
+      <h1 class="text-2xl font-semibold text-slate-900"><%= header_title %></h1>
+      <p class="mx-auto max-w-2xl text-sm text-slate-600">
+        <% if paid_in_full %>
+          Thanks for completing checkout. We emailed a receipt to
+          <span class="font-medium text-slate-900"><%= @order.user.email %></span>.
+          Memberships listed below are now active.
+        <% else %>
+          We've applied your payment of
+          <span class="font-medium text-slate-900"><%= amount_today_label %></span>.
+          <% if outstanding_positive %>
+            <span class="text-slate-500">
+              <%= outstanding_label %> remains across
+              <%= pluralize(@upcoming_installments.size, "upcoming installment") %>.
+            </span>
+          <% end %>
+          <% if next_due_at %>
+            Next payment is scheduled for
+            <span class="font-medium text-slate-900"><%= l(next_due_at, format: :long) %></span>.
+          <% end %>
+          A receipt was sent to
+          <span class="font-medium text-slate-900"><%= @order.user.email %></span>.
+          We'll remind you ahead of future charges.
+        <% end %>
+      </p>
+    </div>
+
+    <dl class="grid gap-6 border-t <%= accent_band_class %> px-8 py-6 text-sm text-slate-700 sm:grid-cols-4">
+      <div>
+        <dt class="text-[11px] font-semibold uppercase tracking-wide <%= accent_text_class %>">Order reference</dt>
+        <dd class="mt-1 font-semibold text-slate-900"><%= @order.number %></dd>
+      </div>
+      <div>
+        <dt class="text-[11px] font-semibold uppercase tracking-wide <%= accent_text_class %>">Order status</dt>
+        <dd class="mt-1 font-medium text-slate-900"><%= status_label %></dd>
+      </div>
+      <div>
+        <dt class="text-[11px] font-semibold uppercase tracking-wide <%= accent_text_class %>"><%= paid_in_full ? "Paid on" : "Last payment" %></dt>
+        <dd class="mt-1 font-medium text-slate-900">
+          <%= last_payment_at ? l(last_payment_at, format: :long) : "Pending" %>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-[11px] font-semibold uppercase tracking-wide <%= accent_text_class %>"><%= payment_plan ? "Plan total" : "Total amount" %></dt>
+        <dd class="mt-1 text-base font-semibold text-slate-900"><%= total_label %></dd>
+      </div>
+      <% if outstanding_positive %>
+        <div class="sm:col-span-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <p class="font-medium">Outstanding balance: <span class="text-amber-900"><%= outstanding_label %></span></p>
+          <% if next_due_at %>
+            <p class="text-xs text-amber-600">Next payment due <%= l(next_due_at, format: :long) %>.</p>
+          <% end %>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <section class="mt-10 grid gap-6 lg:grid-cols-[3fr_2fr]">
+    <div class="space-y-4 rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+      <header class="flex items-center justify-between">
+        <h2 class="text-base font-semibold text-slate-900"><%= memberships_heading %></h2>
+        <% if current_club && current_club.id == @order.club_id %>
+          <%= link_to "Add another membership",
+                      members_membership_registration_path(step: "personal", club_id: current_club.id, restart: true),
+                      class: "text-xs font-semibold text-slate-600 transition hover:text-slate-900" %>
+        <% end %>
+      </header>
+
+      <% if @order.order_items.any? %>
+        <div class="space-y-4">
+          <% @order.order_items.each do |item| %>
+            <% member = item.member %>
+            <% plan = item.plan %>
+            <% product = plan&.product %>
+
+            <article class="rounded-xl border border-slate-200 px-4 py-4">
+              <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div class="space-y-1">
+                  <p class="text-sm font-semibold text-slate-900"><%= member&.display_name || "Member" %></p>
+                  <p class="text-xs text-slate-500"><%= product&.name || "Membership plan" %></p>
+                  <% if !paid_in_full %>
+                    <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                      Partially paid
+                    </span>
+                  <% end %>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold text-slate-900">
+                    <%= number_to_currency(item.total_price_cents / 100.0, unit: item.total_price_currency) %>
+                  </p>
+                  <p class="text-xs text-slate-500">Qty <%= item.quantity %></p>
+                </div>
+              </div>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+          <p class="text-sm text-slate-500">No order items were recorded for this payment.</p>
+        </div>
+      <% end %>
+
+      <% if has_schedule %>
+        <div class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5">
+          <h3 class="text-sm font-semibold text-slate-900">Installment schedule</h3>
+          <ul class="space-y-2 text-xs text-slate-600">
+            <% @schedule_installments.each_with_index do |installment, index| %>
+              <% paid = installment.status_paid? %>
+              <% cancelled = installment.status_cancelled? %>
+              <% status_text =
+                   if cancelled
+                     "Cancelled"
+                   elsif paid
+                     "Paid"
+                   elsif installment.status_failed?
+                     "Failed"
+                   elsif installment.status_processing?
+                     "Processing"
+                   else
+                     "Upcoming"
+                   end %>
+              <% status_style =
+                   if cancelled
+                     "bg-slate-100 text-slate-500"
+                   elsif paid
+                     "bg-emerald-100 text-emerald-700"
+                   elsif installment.status_failed?
+                     "bg-rose-100 text-rose-600"
+                   else
+                     "bg-amber-100 text-amber-700"
+                   end %>
+              <% due_time = installment.due_at %>
+              <% paid_time = installment.paid_at %>
+              <li class="flex flex-col gap-2 rounded-lg bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">Installment <%= index + 1 %></p>
+                  <p class="text-[11px] uppercase tracking-wide text-slate-400">
+                    <% if paid && paid_time %>
+                      Paid <%= l(paid_time, format: :long) %>
+                    <% elsif due_time %>
+                      Due <%= l(due_time, format: :long) %>
+                    <% else %>
+                      Due date to be confirmed
+                    <% end %>
+                  </p>
+                </div>
+                <div class="flex items-center gap-3 sm:text-right">
+                  <span class="text-sm font-semibold text-slate-900">
+                    <%= number_to_currency(installment.amount_cents / 100.0, unit: installment.amount_currency) %>
+                  </span>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide <%= status_style %>">
+                    <%= status_text %>
+                  </span>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+
+    <aside class="space-y-5 rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+      <div class="space-y-2">
+        <h3 class="text-sm font-semibold text-slate-900">Payment summary</h3>
+        <% if payment_plan %>
+          <dl class="space-y-3 text-sm text-slate-600">
+            <div class="flex items-center justify-between">
+              <dt>Plan total</dt>
+              <dd class="font-medium text-slate-900"><%= total_label %></dd>
+            </div>
+            <div class="flex items-center justify-between">
+              <dt>Charged today</dt>
+              <dd class="font-medium text-slate-900"><%= amount_today_label %></dd>
+            </div>
+            <div class="flex items-center justify-between">
+              <dt>Paid to date</dt>
+              <dd class="font-medium text-slate-900"><%= amount_paid_label %></dd>
+            </div>
+            <div class="flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold <%= outstanding_positive ? 'text-amber-700' : 'text-slate-900' %>">
+              <dt>Outstanding balance</dt>
+              <dd><%= outstanding_label %></dd>
+            </div>
+            <% if has_schedule && @upcoming_installments.any? %>
+              <div class="flex items-center justify-between text-xs text-slate-500">
+                <dt>Installments remaining</dt>
+                <dd><%= @upcoming_installments.size %></dd>
+              </div>
+            <% end %>
+          </dl>
+        <% else %>
+          <dl class="space-y-3 text-sm text-slate-600">
+            <div class="flex items-center justify-between">
+              <dt>Subtotal</dt>
+              <dd class="font-medium text-slate-900"><%= number_to_currency(@order.subtotal_cents / 100.0, unit: @order.subtotal_currency) %></dd>
+            </div>
+            <% if @order.discount_cents.to_i.positive? %>
+              <div class="flex items-center justify-between text-rose-600">
+                <dt>Discounts</dt>
+                <dd>-<%= number_to_currency(@order.discount_cents / 100.0, unit: @order.discount_currency) %></dd>
+              </div>
+            <% end %>
+            <div class="flex items-center justify-between border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
+              <dt>Total paid</dt>
+              <dd><%= total_label %></dd>
+            </div>
+          </dl>
+        <% end %>
+      </div>
+
+      <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+        <div class="flex items-start justify-between gap-4">
+          <span class="text-slate-500">Payment method</span>
+          <span class="text-right font-medium text-slate-900"><%= @order.payment_method&.masked_label || "Card payment" %></span>
+        </div>
+        <% if @payment_transaction&.response_reference.present? %>
+          <div class="flex items-start justify-between gap-4">
+            <span class="text-slate-500">Gateway reference</span>
+            <span class="text-right font-medium text-slate-900"><%= @payment_transaction.response_reference %></span>
+          </div>
+        <% end %>
+        <% if @payment_transaction&.processed_at.present? %>
+          <div class="flex items-start justify-between gap-4">
+            <span class="text-slate-500"><%= payment_plan ? "Processed at" : "Payment time" %></span>
+            <span class="text-right font-medium text-slate-900"><%= l(@payment_transaction.processed_at, format: :long) %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <% if payment_plan %>
+        <div class="space-y-3">
+          <div class="space-y-2 text-xs text-slate-500">
+            <p>We will email reminders before each installment is charged. You can review your payment plan anytime from this order summary.</p>
+          </div>
+
+          <% if @upcoming_installments.any? && @order.cart.present? %>
+            <div class="flex flex-wrap items-center justify-end gap-3">
+              <%= link_to "Pay next installment",
+                          members_cart_path(club_id: @order.club_id, cart_id: @order.cart_id, order_id: @order.id, resume: true),
+                          class: "inline-flex min-w-[200px] items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="space-y-2 text-xs text-slate-500">
+          <p>Need a record? Download detailed payment reports from the invoices area of the club dashboard.</p>
+        </div>
+      <% end %>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <%= link_to "Back to dashboard", members_dashboards_path, class: "inline-flex flex-1 items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+        <%= link_to "View invoices", members_dashboards_path, class: "inline-flex flex-1 items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
+      </div>
+    </aside>
+  </section>
+</div>

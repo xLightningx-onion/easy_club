@@ -1,0 +1,7 @@
+.tab-active {
+    @apply bg-slate-900 text-white
+}
+
+.tab-inactive {
+    @apply text-slate-600 hover:text-slate-900
+}
