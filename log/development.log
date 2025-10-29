@@ -19464,3 +19464,1259 @@ Started GET "/admin/sidekiq/stats" for ::1 at 2025-10-29 09:53:27 +0200
 [dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
 [dotenv] Loaded [33m.env[0m
   [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
+[dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
+[dotenv] Loaded [33m.env[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(3913020606401898390) /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='EasyClub'*/[0m
+Migrating to AddMobileVerificationToUsers (20251022100000)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='EasyClub'*/[0m
+  [1m[35m (4.1ms)[0m  [1m[35mALTER TABLE "users" ADD "mobile_verification_code_digest" character varying /*application='EasyClub'*/[0m
+  [1m[35m (0.8ms)[0m  [1m[35mALTER TABLE "users" ADD "mobile_verification_sent_at" timestamp(6) /*application='EasyClub'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mALTER TABLE "users" ADD "mobile_verified_at" timestamp(6) /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20251022100000') RETURNING "version" /*application='EasyClub'*/[0m
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mCOMMIT /*application='EasyClub'*/[0m
+Migrating to CreateClubDefaultPriceTiers (20251022110000)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN /*application='EasyClub'*/[0m
+  [1m[35m (12.2ms)[0m  [1m[35mCREATE TABLE "club_default_price_tiers" ("id" uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY, "club_id" uuid NOT NULL, "label" character varying NOT NULL, "starts_on" date NOT NULL, "ends_on" date NOT NULL, "position" integer DEFAULT 0 NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_9347a0d249"
+FOREIGN KEY ("club_id")
+  REFERENCES "clubs" ("id")
+) /*application='EasyClub'*/[0m
+  [1m[35m (1.6ms)[0m  [1m[35mCREATE INDEX "index_club_default_price_tiers_on_club_id" ON "club_default_price_tiers" ("club_id") /*application='EasyClub'*/[0m
+  [1m[35m (2.8ms)[0m  [1m[35mCREATE INDEX "index_club_default_price_tiers_on_club_id_and_position" ON "club_default_price_tiers" ("club_id", "position") /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20251022110000') RETURNING "version" /*application='EasyClub'*/[0m
+  [1m[36mTRANSACTION (1.3ms)[0m  [1m[35mCOMMIT /*application='EasyClub'*/[0m
+Migrating to AddWhatsappFieldsToClubs (20251022113000)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='EasyClub'*/[0m
+  [1m[35m (1.5ms)[0m  [1m[35mALTER TABLE "clubs" ADD "whatsapp_access_token" text /*application='EasyClub'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mALTER TABLE "clubs" ADD "whatsapp_sender_id" character varying /*application='EasyClub'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mALTER TABLE "clubs" ADD "whatsapp_business_id" character varying /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20251022113000') RETURNING "version" /*application='EasyClub'*/[0m
+  [1m[36mTRANSACTION (0.9ms)[0m  [1m[35mCOMMIT /*application='EasyClub'*/[0m
+Migrating to AddWhatsappTemplateMappingsToClubs (20251022114500)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='EasyClub'*/[0m
+  [1m[35m (0.8ms)[0m  [1m[35mALTER TABLE "clubs" ADD "whatsapp_otp_template_id" character varying /*application='EasyClub'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mALTER TABLE "clubs" ADD "whatsapp_order_confirmation_template_id" character varying /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.2ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20251022114500') RETURNING "version" /*application='EasyClub'*/[0m
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mCOMMIT /*application='EasyClub'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_advisory_unlock(3913020606401898390) /*application='EasyClub'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
+[dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
+[dotenv] Loaded [33m.env[0m
+[dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
+[dotenv] Loaded [33m.env[0m
+Started GET "/" for ::1 at 2025-10-29 10:02:48 +0200
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
+Processing by Members::DashboardsController#index as HTML
+  [1m[36mClub Load (1.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+Completed 401 Unauthorized in 64ms (ActiveRecord: 7.1ms (2 queries, 0 cached) | GC: 0.3ms)
+
+
+Started GET "/users/sign_in" for ::1 at 2025-10-29 10:02:49 +0200
+Processing by Users::SessionsController#new as HTML
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='new',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='new',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" IS NULL LIMIT 1 /*action='new',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/users/sessions_controller.rb:34:in 'Users::SessionsController#set_club'
+  Rendering layout layouts/application.html.erb
+  Rendering users/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered users/sessions/_form_card.html.erb (Duration: 5.7ms | GC: 0.0ms)
+  Rendered users/sessions/new.html.erb within layouts/application (Duration: 11.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 16.6ms | GC: 0.0ms)
+Completed 200 OK in 101ms (Views: 27.7ms | ActiveRecord: 4.9ms (3 queries, 0 cached) | GC: 0.0ms)
+
+
+Started POST "/users/sign_in" for ::1 at 2025-10-29 10:02:52 +0200
+Processing by Users::SessionsController#create as HTML
+  Parameters: {"authenticity_token" => "[FILTERED]", "user" => {"email" => "[FILTERED]", "password" => "[FILTERED]", "remember_me" => "0"}, "commit" => "Log in"}
+  [1m[36mUser Load (1.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = 'staff@example.com' ORDER BY "users"."id" ASC LIMIT 1 /*action='create',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mCACHE User Load (0.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = 'staff@example.com' ORDER BY "users"."id" ASC LIMIT 1[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='create',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='create',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" IS NULL LIMIT 1 /*action='create',application='EasyClub',controller='sessions'*/[0m
+  ↳ app/controllers/users/sessions_controller.rb:34:in 'Users::SessionsController#set_club'
+Redirected to http://localhost:3000/
+Completed 302 Found in 233ms (ActiveRecord: 2.0ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2025-10-29 10:02:52 +0200
+Processing by Members::DashboardsController#index as HTML
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (2.7ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mMember Load (1.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:6:in 'Members::DashboardsController#index'
+  [1m[36mMember Load (1.3ms)[0m  [1m[34mSELECT "members".* FROM "members" INNER JOIN "guardianships" ON "members"."id" = "guardianships"."member_id" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."guardian_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:6:in 'Members::DashboardsController#index'
+  [1m[36mClub Load (1.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" INNER JOIN "club_roles" ON "clubs"."id" = "club_roles"."club_id" WHERE "club_roles"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_roles"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:7:in 'Members::DashboardsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering members/dashboards/index.html.erb within layouts/application
+  [1m[36mCart Exists? (1.8ms)[0m  [1m[34mSELECT 1 AS one FROM "carts" INNER JOIN "cart_items" ON "cart_items"."cart_id" = "carts"."id" WHERE "carts"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "carts"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' AND "carts"."status" IN ('unpaid', 'pending_payment', 'partially_paid') LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/views/members/dashboards/index.html.erb:88
+  [1m[36mCACHE Cart Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "carts" INNER JOIN "cart_items" ON "cart_items"."cart_id" = "carts"."id" WHERE "carts"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "carts"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' AND "carts"."status" IN ('unpaid', 'pending_payment', 'partially_paid') LIMIT 1[0m
+  ↳ app/views/members/dashboards/index.html.erb:93
+  [1m[36mActiveStorage::Attachment Load (0.9ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/views/members/dashboards/index.html.erb:228
+  Rendered members/dashboards/index.html.erb within layouts/application (Duration: 33.7ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 35.2ms | GC: 0.0ms)
+Completed 200 OK in 103ms (Views: 29.6ms | ActiveRecord: 18.9ms (9 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:02:57 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/" for ::1 at 2025-10-29 10:04:03 +0200
+Processing by Members::DashboardsController#index as HTML
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:6:in 'Members::DashboardsController#index'
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" INNER JOIN "guardianships" ON "members"."id" = "guardianships"."member_id" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."guardian_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:6:in 'Members::DashboardsController#index'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" INNER JOIN "club_roles" ON "clubs"."id" = "club_roles"."club_id" WHERE "club_roles"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_roles"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:7:in 'Members::DashboardsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering members/dashboards/index.html.erb within layouts/application
+  [1m[36mCart Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "carts" INNER JOIN "cart_items" ON "cart_items"."cart_id" = "carts"."id" WHERE "carts"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "carts"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' AND "carts"."status" IN ('unpaid', 'pending_payment', 'partially_paid') LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/views/members/dashboards/index.html.erb:88
+  [1m[36mCACHE Cart Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "carts" INNER JOIN "cart_items" ON "cart_items"."cart_id" = "carts"."id" WHERE "carts"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "carts"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' AND "carts"."status" IN ('unpaid', 'pending_payment', 'partially_paid') LIMIT 1[0m
+  ↳ app/views/members/dashboards/index.html.erb:93
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/views/members/dashboards/index.html.erb:228
+  Rendered members/dashboards/index.html.erb within layouts/application (Duration: 10.3ms | GC: 0.6ms)
+  Rendered layout layouts/application.html.erb (Duration: 12.0ms | GC: 0.6ms)
+Completed 200 OK in 37ms (Views: 11.9ms | ActiveRecord: 2.3ms (9 queries, 1 cached) | GC: 1.1ms)
+
+
+[dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
+[dotenv] Loaded [33m.env[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."email" = 'staff@example.com' LIMIT 1 /*application='EasyClub'*/[0m
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."name" = 'Acme FC' LIMIT 1 /*application='EasyClub'*/[0m
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."name" = 'Cape Town Lightning' LIMIT 1 /*application='EasyClub'*/[0m
+  [1m[36mClubRole Load (0.4ms)[0m  [1m[34mSELECT "club_roles".* FROM "club_roles" WHERE "club_roles"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_roles"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' LIMIT 1 /*application='EasyClub'*/[0m
+  [1m[36mClubRole Load (0.2ms)[0m  [1m[34mSELECT "club_roles".* FROM "club_roles" WHERE "club_roles"."club_id" = '091950ee-9c78-4c77-96a4-66f59fd62aaf' AND "club_roles"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' LIMIT 1 /*application='EasyClub'*/[0m
+  [1m[36mConsentType Load (1.1ms)[0m  [1m[34mSELECT "consent_types".* FROM "consent_types" WHERE "consent_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "consent_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "consent_types"."key" = 'media' AND "consent_types"."version" = 1 LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mAgeBand Load (0.8ms)[0m  [1m[34mSELECT "age_bands".* FROM "age_bands" WHERE "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."name" = 'U8' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mAgeBand Load (0.4ms)[0m  [1m[34mSELECT "age_bands".* FROM "age_bands" WHERE "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."name" = 'U10' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mAgeBand Load (0.3ms)[0m  [1m[34mSELECT "age_bands".* FROM "age_bands" WHERE "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."name" = 'U12' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mAgeBand Load (0.2ms)[0m  [1m[34mSELECT "age_bands".* FROM "age_bands" WHERE "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."name" = 'U13' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mAgeBand Load (1.9ms)[0m  [1m[34mSELECT "age_bands".* FROM "age_bands" WHERE "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."name" = 'U15' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mAgeBand Load (0.2ms)[0m  [1m[34mSELECT "age_bands".* FROM "age_bands" WHERE "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "age_bands"."name" = 'U17' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMembershipType Load (4.5ms)[0m  [1m[34mSELECT "membership_types".* FROM "membership_types" WHERE "membership_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "membership_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "membership_types"."label" = 'Junior Player' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mProduct Load (1.2ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "products"."sku" = 'membership-type-52de68e2-7a6f-4ca2-86c5-b62e7874eef3' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mPlan Load (1.4ms)[0m  [1m[34mSELECT "plans".* FROM "plans" WHERE "plans"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "plans"."id" = '4dd4f4b5-79f0-4367-a073-4d29aa6b7a18' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMembershipType Load (0.3ms)[0m  [1m[34mSELECT "membership_types".* FROM "membership_types" WHERE "membership_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "membership_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "membership_types"."label" = 'Senior Player' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mProduct Load (0.3ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "products"."sku" = 'membership-type-2cd691f3-b628-4bc1-b2bd-81684fa7f7a5' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mPlan Load (0.3ms)[0m  [1m[34mSELECT "plans".* FROM "plans" WHERE "plans"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "plans"."id" = '6dd28861-b2be-4899-9e12-9d67e240fda9' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMembershipType Load (0.3ms)[0m  [1m[34mSELECT "membership_types".* FROM "membership_types" WHERE "membership_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "membership_types"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "membership_types"."label" = 'Coach' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mProduct Load (0.3ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "products"."sku" = 'membership-type-31e61a8e-b723-495b-bdd2-626e80b97255' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mPlan Load (0.3ms)[0m  [1m[34mSELECT "plans".* FROM "plans" WHERE "plans"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "plans"."id" = '349508c0-c5e0-4ccd-b3f6-d6fec245b744' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMedicalQuestion Load (1.0ms)[0m  [1m[34mSELECT "medical_questions".* FROM "medical_questions" WHERE "medical_questions"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "medical_questions"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "medical_questions"."prompt" = 'Does the member have any allergies?' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMedicalQuestion Load (0.3ms)[0m  [1m[34mSELECT "medical_questions".* FROM "medical_questions" WHERE "medical_questions"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "medical_questions"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "medical_questions"."prompt" = 'Is an inhaler required during activity?' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mClubTerm Load (0.8ms)[0m  [1m[34mSELECT "club_terms".* FROM "club_terms" WHERE "club_terms"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_terms"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_terms"."title" = 'Parent/guardian consent' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mClubTerm Load (0.2ms)[0m  [1m[34mSELECT "club_terms".* FROM "club_terms" WHERE "club_terms"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_terms"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_terms"."title" = 'Photography release' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mProduct Load (0.1ms)[0m  [1m[34mSELECT "products".* FROM "products" WHERE "products"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "products"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "products"."name" = 'Registration Fee' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mPlan Load (0.2ms)[0m  [1m[34mSELECT "plans".* FROM "plans" WHERE "plans"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "plans"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "plans"."product_id" = '0e8950a2-7a3f-4fc0-80d5-e6dd3b4fb8fb' AND "plans"."plan_type" = 'once_off' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mTemplate Load (0.7ms)[0m  [1m[34mSELECT "templates".* FROM "templates" WHERE "templates"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "templates"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "templates"."name" = 'Payment Reminder' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."first_name" = 'Damian' AND "members"."last_name" = 'Giulietti' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."first_name" = 'Naledi' AND "members"."last_name" = 'Mokoena' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."first_name" = 'Alex' AND "members"."last_name" = 'Pretorius' LIMIT 1 /*application='EasyClub'*/[0m
+  ↳ app/models/club.rb:54:in 'Club.with_current'
+[dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
+[dotenv] Loaded [33m.env[0m
+[dotenv] Set [36mBASE_DOMAIN[0m, [36mBASE_URL[0m, [36mBUNNY_ACCESS_KEY[0m, [36mBUNNY_API_KEY[0m, [36mBUNNY_STORAGE_ZONE[0m, [36mBUNNY_REGION[0m, [36mBUNNY_CDN_ENDPOINT[0m, [36mPAYGATE_PAY_HOST_ENDPOINT[0m, [36mPAYGATE_MERCHANT_ID[0m, [36mPAYGATE_RETURN_URL[0m, [36mPAYGATE_NOTIFY_URL[0m, [36mPAYGATE_PASSWORD[0m, [36mGOOGLE_PLACES_API_KEY[0m, [36mGOOGLE_CLIENT_ID[0m, [36mGOOGLE_CLIENT_SECRET[0m, [36mGOOGLE_ENABLE_PHONE_SCOPE[0m, [36mWHATSAPP_ACCESS_TOKEN[0m, [36mWHATSAPP_SENDER_ID[0m, [36mWHATSAPP_BUSINESS_ID[0m, [36mWHATSAPP_OTP_TEMPLATE_ID[0m, and [36mWHATSAPP_ORDER_CONFIRMATION_TEMPLATE_ID[0m
+[dotenv] Loaded [33m.env[0m
+Started GET "/" for ::1 at 2025-10-29 10:16:25 +0200
+  [1m[36mActiveRecord::SchemaMigration Load (1.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='EasyClub'*/[0m
+Processing by Members::DashboardsController#index as HTML
+  Rendering public/406-unsupported-browser.html
+  Rendered public/406-unsupported-browser.html (Duration: 1.0ms | GC: 0.0ms)
+Filter chain halted as #<Proc:0x00007f9cf0ae55f8 /usr/share/rvm/gems/ruby-3.4.4/gems/actionpack-8.0.3/lib/action_controller/metal/allow_browser.rb:58 (lambda)> rendered or redirected
+Completed 406 Not Acceptable in 16ms (Views: 4.7ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.1ms)
+
+
+Started GET "/" for ::1 at 2025-10-29 10:16:32 +0200
+Processing by Members::DashboardsController#index as HTML
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:6:in 'Members::DashboardsController#index'
+  [1m[36mMember Load (0.6ms)[0m  [1m[34mSELECT "members".* FROM "members" INNER JOIN "guardianships" ON "members"."id" = "guardianships"."member_id" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."guardian_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:6:in 'Members::DashboardsController#index'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" INNER JOIN "club_roles" ON "clubs"."id" = "club_roles"."club_id" WHERE "club_roles"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_roles"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/controllers/members/dashboards_controller.rb:7:in 'Members::DashboardsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering members/dashboards/index.html.erb within layouts/application
+  [1m[36mCart Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "carts" INNER JOIN "cart_items" ON "cart_items"."cart_id" = "carts"."id" WHERE "carts"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "carts"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' AND "carts"."status" IN ('unpaid', 'pending_payment', 'partially_paid') LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/views/members/dashboards/index.html.erb:88
+  [1m[36mCACHE Cart Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "carts" INNER JOIN "cart_items" ON "cart_items"."cart_id" = "carts"."id" WHERE "carts"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "carts"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' AND "carts"."status" IN ('unpaid', 'pending_payment', 'partially_paid') LIMIT 1[0m
+  ↳ app/views/members/dashboards/index.html.erb:93
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='index',application='EasyClub',controller='dashboards'*/[0m
+  ↳ app/views/members/dashboards/index.html.erb:228
+  Rendered members/dashboards/index.html.erb within layouts/application (Duration: 38.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 46.9ms | GC: 0.0ms)
+Completed 200 OK in 519ms (Views: 41.2ms | ActiveRecord: 29.7ms (9 queries, 1 cached) | GC: 134.1ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:16:33 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/selection/new?frame_id=members_selection_modal" for ::1 at 2025-10-29 10:16:34 +0200
+Processing by Members::SelectionsController#new as HTML
+  Parameters: {"frame_id" => "members_selection_modal"}
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mMember Load (0.6ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/members/selections_controller.rb:28:in 'Enumerable#map'
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" INNER JOIN "guardianships" ON "members"."id" = "guardianships"."member_id" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "guardianships"."guardian_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/members/selections_controller.rb:29:in 'Enumerable#map'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" INNER JOIN "club_roles" ON "clubs"."id" = "club_roles"."club_id" WHERE "club_roles"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "club_roles"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/members/selections_controller.rb:30:in 'Members::SelectionsController#fetch_known_clubs'
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='new',application='EasyClub',controller='selections'*/[0m
+  ↳ app/views/members/selections/_modal.html.erb:28
+  Rendered members/selections/_modal.html.erb (Duration: 4.1ms | GC: 0.0ms)
+Completed 200 OK in 33ms (Views: 4.8ms | ActiveRecord: 2.3ms (7 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/members/selection/search?frame_id=members_selection_modal" for ::1 at 2025-10-29 10:16:36 +0200
+Processing by Members::SelectionsController#search as HTML
+  Parameters: {"frame_id" => "members_selection_modal"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Count (0.9ms)[0m  [1m[34mSELECT COUNT(*) FROM (SELECT 1 AS one FROM "clubs" WHERE "clubs"."public_listing" = TRUE LIMIT 50) subquery_for_count /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/views/members/selections/_search.html.erb:28
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."public_listing" = TRUE ORDER BY "clubs"."name" ASC LIMIT 50 /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/views/members/selections/_results.html.erb:3
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/views/members/selections/_results.html.erb:14
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '091950ee-9c78-4c77-96a4-66f59fd62aaf' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='search',application='EasyClub',controller='selections'*/[0m
+  ↳ app/views/members/selections/_results.html.erb:14
+  Rendered members/selections/_results.html.erb (Duration: 4.5ms | GC: 0.0ms)
+  Rendered members/selections/_search.html.erb (Duration: 11.5ms | GC: 0.0ms)
+Completed 200 OK in 29ms (Views: 10.3ms | ActiveRecord: 2.5ms (7 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:16:39 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 7.1ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 1.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.8ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 22.6ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 25.3ms | GC: 0.0ms)
+Completed 200 OK in 63ms (Views: 26.0ms | ActiveRecord: 1.9ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:16:39 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:16:49 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:17:18 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 2.0ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 6.2ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 6.8ms | GC: 0.0ms)
+Completed 200 OK in 25ms (Views: 6.9ms | ActiveRecord: 1.2ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:18:37 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:20:32 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 3.8ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 7.3ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 7.7ms | GC: 0.0ms)
+Completed 200 OK in 43ms (Views: 7.6ms | ActiveRecord: 1.5ms (6 queries, 0 cached) | GC: 1.1ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:20:32 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:21:25 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 13.0ms | GC: 0.2ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 21.0ms | GC: 0.2ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 22.0ms | GC: 0.2ms)
+Completed 200 OK in 137ms (Views: 22.4ms | ActiveRecord: 10.1ms (6 queries, 0 cached) | GC: 4.3ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:21:26 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:22:17 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 3.9ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 8.4ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 9.0ms | GC: 0.0ms)
+Completed 200 OK in 24ms (Views: 8.8ms | ActiveRecord: 1.2ms (6 queries, 0 cached) | GC: 0.8ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:22:17 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:22:33 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 1.8ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 5.3ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 5.7ms | GC: 0.0ms)
+Completed 200 OK in 22ms (Views: 6.0ms | ActiveRecord: 1.3ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:22:33 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:24:29 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 15.1ms | GC: 0.5ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 23.1ms | GC: 1.2ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 26.8ms | GC: 1.2ms)
+Completed 200 OK in 170ms (Views: 26.9ms | ActiveRecord: 15.5ms (6 queries, 0 cached) | GC: 23.2ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:24:30 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:24:42 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 9.7ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 16.4ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 17.4ms | GC: 0.0ms)
+Completed 200 OK in 139ms (Views: 16.2ms | ActiveRecord: 14.5ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:24:43 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:24:53 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 17.5ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 29.4ms | GC: 0.5ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 34.0ms | GC: 0.5ms)
+Completed 200 OK in 136ms (Views: 32.3ms | ActiveRecord: 14.1ms (6 queries, 0 cached) | GC: 5.8ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:24:53 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:25:02 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 21.2ms | GC: 8.4ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 35.3ms | GC: 10.4ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 39.4ms | GC: 10.5ms)
+Completed 200 OK in 127ms (Views: 39.2ms | ActiveRecord: 12.0ms (6 queries, 0 cached) | GC: 14.4ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:25:02 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:25:26 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 12.9ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 28.0ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 30.7ms | GC: 0.0ms)
+Completed 200 OK in 116ms (Views: 31.0ms | ActiveRecord: 14.5ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:25:26 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:26:02 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 15.4ms | GC: 1.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 28.4ms | GC: 1.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 31.7ms | GC: 2.4ms)
+Completed 200 OK in 130ms (Views: 33.1ms | ActiveRecord: 14.3ms (6 queries, 0 cached) | GC: 24.2ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:26:02 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:26:18 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 6.7ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 12.4ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 13.3ms | GC: 0.0ms)
+Completed 200 OK in 78ms (Views: 13.2ms | ActiveRecord: 12.1ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:26:18 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:27:48 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 22.8ms | GC: 11.5ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 33.8ms | GC: 16.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 38.2ms | GC: 16.9ms)
+Completed 200 OK in 153ms (Views: 43.1ms | ActiveRecord: 10.0ms (6 queries, 0 cached) | GC: 59.1ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:27:48 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:27:54 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (6.6ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 12.4ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 25.5ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 27.2ms | GC: 0.0ms)
+Completed 200 OK in 115ms (Views: 27.4ms | ActiveRecord: 20.1ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:27:55 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:28:09 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 41.7ms | GC: 24.8ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 2.0ms | GC: 1.5ms)
+  [1m[36mMember Load (1.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 54.4ms | GC: 26.4ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 57.6ms | GC: 26.4ms)
+Completed 200 OK in 130ms (Views: 56.0ms | ActiveRecord: 16.3ms (6 queries, 0 cached) | GC: 26.4ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:28:10 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:28:49 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (1.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 7.9ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 16.1ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 17.6ms | GC: 0.0ms)
+Completed 200 OK in 127ms (Views: 20.0ms | ActiveRecord: 14.6ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:28:49 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:29:04 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 22.6ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 40.2ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 47.7ms | GC: 0.0ms)
+Completed 200 OK in 144ms (Views: 47.5ms | ActiveRecord: 14.4ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:29:04 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:29:07 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 3.9ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 10.1ms | GC: 0.4ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 10.9ms | GC: 0.4ms)
+Completed 200 OK in 41ms (Views: 11.8ms | ActiveRecord: 1.3ms (6 queries, 0 cached) | GC: 0.8ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:29:07 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:29:18 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 11.0ms | GC: 0.4ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 18.5ms | GC: 0.4ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 26.7ms | GC: 0.9ms)
+Completed 200 OK in 101ms (Views: 27.0ms | ActiveRecord: 9.3ms (6 queries, 0 cached) | GC: 8.8ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:29:19 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:29:35 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 8.7ms | GC: 0.4ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.1ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 15.6ms | GC: 1.1ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 16.7ms | GC: 1.1ms)
+Completed 200 OK in 93ms (Views: 17.4ms | ActiveRecord: 13.6ms (6 queries, 0 cached) | GC: 6.9ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:29:35 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:29:48 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 11.4ms | GC: 0.1ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  [1m[36mMember Load (0.1ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 17.2ms | GC: 0.1ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 20.3ms | GC: 0.1ms)
+Completed 200 OK in 100ms (Views: 21.3ms | ActiveRecord: 10.5ms (6 queries, 0 cached) | GC: 4.9ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:29:48 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:29:55 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 21.0ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 33.1ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 40.1ms | GC: 0.0ms)
+Completed 200 OK in 111ms (Views: 40.4ms | ActiveRecord: 12.5ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:29:55 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:30:00 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 9.4ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 19.0ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 22.3ms | GC: 0.0ms)
+Completed 200 OK in 86ms (Views: 22.4ms | ActiveRecord: 9.6ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:30:00 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:32:22 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.5ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 25.2ms | GC: 9.7ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 35.8ms | GC: 13.9ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 41.9ms | GC: 15.7ms)
+Completed 200 OK in 180ms (Views: 41.9ms | ActiveRecord: 11.2ms (6 queries, 0 cached) | GC: 80.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:32:23 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:32:39 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.7ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 16.0ms | GC: 0.4ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 25.8ms | GC: 0.4ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 26.9ms | GC: 0.4ms)
+Completed 200 OK in 124ms (Views: 27.4ms | ActiveRecord: 14.1ms (6 queries, 0 cached) | GC: 3.3ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:32:39 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:32:58 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (3.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (3.5ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (3.7ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 20.5ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  [1m[36mMember Load (0.4ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 38.0ms | GC: 2.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 46.5ms | GC: 3.6ms)
+Completed 200 OK in 184ms (Views: 45.5ms | ActiveRecord: 26.4ms (6 queries, 0 cached) | GC: 18.7ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:32:58 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:33:22 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.1ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 1.7ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  [1m[36mMember Load (0.2ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 4.9ms | GC: 0.2ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 5.5ms | GC: 0.2ms)
+Completed 200 OK in 21ms (Views: 5.3ms | ActiveRecord: 1.2ms (6 queries, 0 cached) | GC: 0.2ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:33:22 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:33:46 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.6ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 8.1ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.1ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 16.1ms | GC: 1.9ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 17.2ms | GC: 1.9ms)
+Completed 200 OK in 123ms (Views: 16.7ms | ActiveRecord: 13.6ms (6 queries, 0 cached) | GC: 14.3ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:33:46 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:34:15 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (3.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (3.7ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 17.0ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 27.4ms | GC: 0.0ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 33.4ms | GC: 0.0ms)
+Completed 200 OK in 152ms (Views: 34.2ms | ActiveRecord: 27.2ms (6 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:34:16 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:34:21 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.1ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 10.2ms | GC: 0.0ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  [1m[36mMember Load (0.1ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 16.4ms | GC: 0.3ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 19.9ms | GC: 0.3ms)
+Completed 200 OK in 84ms (Views: 19.5ms | ActiveRecord: 9.5ms (6 queries, 0 cached) | GC: 2.2ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:34:22 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:35:12 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  Rendering public/406-unsupported-browser.html
+  Rendered public/406-unsupported-browser.html (Duration: 0.4ms | GC: 0.0ms)
+Filter chain halted as #<Proc:0x00007f9cbf3a5580 /usr/share/rvm/gems/ruby-3.4.4/gems/actionpack-8.0.3/lib/action_controller/metal/allow_browser.rb:58 (lambda)> rendered or redirected
+Completed 406 Not Acceptable in 12ms (Views: 2.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:35:13 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/favicon.ico" for ::1 at 2025-10-29 10:35:13 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/favicon.ico"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:35:15 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 12.9ms | GC: 1.2ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  [1m[36mMember Load (1.0ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 25.0ms | GC: 2.3ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 29.1ms | GC: 2.3ms)
+Completed 200 OK in 128ms (Views: 27.6ms | ActiveRecord: 10.8ms (6 queries, 0 cached) | GC: 31.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:35:15 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:36:06 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  Rendering public/406-unsupported-browser.html
+  Rendered public/406-unsupported-browser.html (Duration: 0.1ms | GC: 0.0ms)
+Filter chain halted as #<Proc:0x00007f9cbe720eb8 /usr/share/rvm/gems/ruby-3.4.4/gems/actionpack-8.0.3/lib/action_controller/metal/allow_browser.rb:58 (lambda)> rendered or redirected
+Completed 406 Not Acceptable in 9ms (Views: 1.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:36:06 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/members/membership_registration?club_id=9c2c8685-0ef9-4b33-9507-92aeeb48704e&step=personal&restart=true" for ::1 at 2025-10-29 10:36:09 +0200
+Processing by Members::MembershipRegistrationsController#show as HTML
+  Parameters: {"club_id" => "9c2c8685-0ef9-4b33-9507-92aeeb48704e", "step" => "personal", "restart" => "true"}
+  [1m[36mUser Load (0.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "users"."id" ASC LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:23:in 'ApplicationController#redirect_to_mobile_verification_if_needed'
+  [1m[36mClub Load (0.3ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."primary_domain" = 'localhost' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:77:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.2ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."subdomain" IS NULL LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/application_controller.rb:78:in 'ApplicationController#resolve_club_from_request'
+  [1m[36mClub Load (0.4ms)[0m  [1m[34mSELECT "clubs".* FROM "clubs" WHERE "clubs"."id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/controllers/members/membership_registrations_controller.rb:61:in 'Members::MembershipRegistrationsController#ensure_club_selected!'
+  Rendering layout layouts/membership_registration.html.erb
+  Rendering members/membership_registrations/personal.html.erb within layouts/membership_registration
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "active_storage_attachments"."record_type" = 'Club' AND "active_storage_attachments"."name" = 'logo' LIMIT 1 /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/helpers/application_helper.rb:3:in 'ApplicationHelper#serve_image_remote_url'
+  Rendered members/membership_registrations/_club_header.html.erb (Duration: 16.2ms | GC: 1.6ms)
+  Rendered members/membership_registrations/_progress_bar.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  [1m[36mMember Load (0.3ms)[0m  [1m[34mSELECT "members".* FROM "members" WHERE "members"."club_id" = '9c2c8685-0ef9-4b33-9507-92aeeb48704e' AND "members"."user_id" = '203dc070-8194-4c38-b24e-7d250949dcaa' ORDER BY "members"."first_name" ASC, "members"."last_name" ASC, "members"."created_at" ASC /*action='show',application='EasyClub',controller='membership_registrations'*/[0m
+  ↳ app/views/members/membership_registrations/personal.html.erb:76
+  Rendered members/membership_registrations/personal.html.erb within layouts/membership_registration (Duration: 26.7ms | GC: 1.6ms)
+  Rendered layout layouts/membership_registration.html.erb (Duration: 31.0ms | GC: 1.6ms)
+Completed 200 OK in 111ms (Views: 33.6ms | ActiveRecord: 10.0ms (6 queries, 0 cached) | GC: 15.4ms)
+
+
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:36:09 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
+Started GET "/.well-known/appspecific/com.chrome.devtools.json" for ::1 at 2025-10-29 10:36:28 +0200
+  
+ActionController::RoutingError (No route matches [GET] "/.well-known/appspecific/com.chrome.devtools.json"):
+  
