@@ -26,7 +26,7 @@
       <dd class="text-slate-900"><%= @club.sender_email.presence || "—" %></dd>
     </div>
     <div>
-      <dt class="font-medium text-slate-500">Members</dt>
+      <dt class="font-medium text-slate-500">Memberships</dt>
       <dd class="text-slate-900"><%= @members_count %></dd>
     </div>
     <div>
@@ -40,293 +40,808 @@
   </dl>
 </section>
 
-<section
-  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
-  data-controller="modal"
-  data-action="turbo:submit-end->modal#handleSubmitEnd"
->
-  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
-    <div>
-      <h2 class="text-base font-semibold text-slate-900">Staggered payment plans</h2>
-      <p class="text-sm text-slate-500">Offer flexible installment schedules for high-value memberships or orders.</p>
-    </div>
-    <turbo-frame id="<%= dom_id(@club, :new_staggered_payment_plan) %>">
-      <%= render "admin/clubs/staggered_payment_plans/new_button", club: @club %>
-    </turbo-frame>
-  </header>
-  <div class="border-t border-slate-200">
-    <turbo-frame id="<%= dom_id(@club, :staggered_payment_plans) %>">
-      <%= render "admin/clubs/staggered_payment_plans/list",
-                 club: @club,
-                 plans: @staggered_payment_plans %>
-    </turbo-frame>
+<%
+  overview_trigger_id = dom_id(@club, :overview_tab_trigger)
+  overview_panel_id = dom_id(@club, :overview_tab_panel)
+  settings_trigger_id = dom_id(@club, :settings_tab_trigger)
+  settings_panel_id = dom_id(@club, :settings_tab_panel)
+  settings_tab_ids = {
+    personal: {
+      trigger: dom_id(@club, :settings_personal_trigger),
+      panel: dom_id(@club, :settings_personal_panel)
+    },
+    medical: {
+      trigger: dom_id(@club, :settings_medical_trigger),
+      panel: dom_id(@club, :settings_medical_panel)
+    },
+    survey: {
+      trigger: dom_id(@club, :settings_survey_trigger),
+      panel: dom_id(@club, :settings_survey_panel)
+    },
+    terms: {
+      trigger: dom_id(@club, :settings_terms_trigger),
+      panel: dom_id(@club, :settings_terms_panel)
+    },
+    messaging: {
+      trigger: dom_id(@club, :settings_messaging_trigger),
+      panel: dom_id(@club, :settings_messaging_panel)
+    },
+    payment: {
+      trigger: dom_id(@club, :settings_payment_trigger),
+      panel: dom_id(@club, :settings_payment_panel)
+    }
+  }
+  setup_checks = [
+    {
+      key: :default_price_tiers,
+      title: "Default price tiers",
+      description: "Capture your standard season dates so new membership types start with matching tiers.",
+      count: @default_price_tiers.size,
+      unit: "tier",
+      completed: @default_price_tiers.any?,
+      required: false
+    },
+    {
+      key: :whatsapp_messaging,
+      title: "WhatsApp messaging",
+      description: "Connect WhatsApp so members receive real-time transactional updates.",
+      count: @whatsapp_templates.size,
+      unit: "template",
+      completed: @whatsapp_client.ready?,
+      required: false
+    },
+    {
+      key: :membership_types,
+      title: "Personal & memberships",
+      description: "Define who can join and the pricing options members see on the personal step.",
+      count: @membership_types.size,
+      unit: "type",
+      completed: @membership_types.any?,
+      required: true
+    },
+    {
+      key: :medical_questions,
+      title: "Medical questions",
+      description: "Capture the health information you need before members can continue.",
+      count: @medical_questions.size,
+      unit: "question",
+      completed: @medical_questions.any?,
+      required: false
+    },
+    {
+      key: :membership_questions,
+      title: "Survey questions",
+      description: "Ask the custom questions that appear on the survey step.",
+      count: @membership_questions.size,
+      unit: "question",
+      completed: @membership_questions.any?,
+      required: false
+    },
+    {
+      key: :club_terms,
+      title: "Terms & conditions",
+      description: "List the agreements members must accept before checkout.",
+      count: @club_terms.size,
+      unit: "term",
+      completed: @club_terms.any?,
+      required: true
+    },
+    {
+      key: :staggered_payment_plans,
+      title: "Payment options",
+      description: "Offer staggered payment plans to give members flexibility at checkout.",
+      count: @staggered_payment_plans.size,
+      unit: "plan",
+      completed: @staggered_payment_plans.any?,
+      required: false
+    }
+  ]
+  status_display = {
+    "active" => { label: "Paid members" },
+    "partially_paid" => { label: "Partially paid" },
+    "unpaid" => { label: "Unpaid" },
+    "suspended" => { label: "Suspended", optional: true }
+  }
+%>
+
+<div class="mt-8" data-controller="tabs" data-tabs-default-tab-value="overview" data-tabs-active-class="tab-active" data-tabs-inactive-class="tab-inactive">
+  <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-2" role="tablist" aria-label="Club management">
+    <button
+      type="button"
+      class="rounded-full px-4 py-2 text-sm font-semibold transition"
+      data-tabs-target="trigger"
+      data-action="click->tabs#show"
+      data-tabs-tab="overview"
+      id="<%= overview_trigger_id %>"
+      aria-controls="<%= overview_panel_id %>"
+      role="tab"
+    >
+      Overview
+    </button>
+    <button
+      type="button"
+      class="rounded-full px-4 py-2 text-sm font-semibold transition"
+      data-tabs-target="trigger"
+      data-action="click->tabs#show"
+      data-tabs-tab="settings"
+      id="<%= settings_trigger_id %>"
+      aria-controls="<%= settings_panel_id %>"
+      role="tab"
+    >
+      Settings
+    </button>
   </div>
 
-  <div
-    class="fixed inset-0 z-50 hidden"
-    data-modal-target="wrapper"
-    data-action="keydown.esc->modal#close"
-    role="dialog"
-    aria-modal="true"
-    aria-hidden="true"
-    tabindex="-1"
-  >
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
-    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-      <div class="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl">
-        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add staggered payment plan</h3>
+  <div class="pt-6">
+    <div data-tabs-target="panel" data-tabs-panel="overview" id="<%= overview_panel_id %>" role="tabpanel" aria-labelledby="<%= overview_trigger_id %>">
+      <div class="space-y-6">
+        <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">Setup progress</h3>
+              <p class="text-sm text-slate-500">Follow the same steps members see during registration.</p>
+            </div>
+            <button type="button" class="text-sm font-medium text-slate-700 hover:text-slate-900" data-action="click->tabs#show" data-tabs-tab-param="settings">
+              Go to settings
+            </button>
+          </header>
+          <ul class="divide-y divide-slate-200">
+            <% setup_checks.each do |check| %>
+              <% completed = check[:completed] %>
+              <% status_label, status_class = if completed
+                                                [ "Complete", "bg-emerald-50 text-emerald-700" ]
+                                              elsif check[:required]
+                                                [ "Action required", "bg-amber-50 text-amber-700" ]
+                                              else
+                                                [ "Recommended", "bg-sky-50 text-sky-700" ]
+                                              end %>
+              <li class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900"><%= check[:title] %></p>
+                  <p class="mt-1 text-sm text-slate-600"><%= check[:description] %></p>
+                  <p class="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-400"><%= pluralize(check[:count], check[:unit]) %></p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium <%= status_class %>"><%= status_label %></span>
+                  <button type="button" class="text-sm font-medium text-slate-700 hover:text-slate-900" data-action="click->tabs#show" data-tabs-tab-param="settings">
+                    <%= completed ? "View" : "Finish setup" %>
+                  </button>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+
+        <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <header class="border-b border-slate-200 px-4 py-4">
+            <h3 class="text-base font-semibold text-slate-900">Member registrations</h3>
+            <p class="mt-1 text-sm text-slate-500">Snapshot of progress across members, invoices, and payments.</p>
+          </header>
+          <div class="space-y-4 px-4 py-4">
+            <div class="grid gap-4 sm:grid-cols-3">
+              <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-medium text-slate-600">Memberships</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900"><%= @members_count %></p>
+              </div>
+              <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-medium text-slate-600">Invoices issued</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900"><%= @invoices_count %></p>
+              </div>
+              <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-sm font-medium text-slate-600">Payments processed</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900"><%= @payments_total.format %></p>
+              </div>
+            </div>
+            <details class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <summary class="flex cursor-pointer items-center justify-between gap-4 text-sm font-medium text-slate-700">
+                <span>Status breakdown</span>
+                <span class="text-xs uppercase tracking-wide text-slate-500">Expand</span>
+              </summary>
+              <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+                <% status_display.each do |status, config| %>
+                  <% count = @member_status_counts.fetch(status, 0) %>
+                  <% next if count.zero? && config[:optional] %>
+                  <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                    <dt class="text-sm font-medium text-slate-600"><%= config[:label] %></dt>
+                    <dd class="mt-1 text-lg font-semibold text-slate-900"><%= count %></dd>
+                  </div>
+                <% end %>
+              </dl>
+            </details>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div data-tabs-target="panel" data-tabs-panel="settings" id="<%= settings_panel_id %>" role="tabpanel" aria-labelledby="<%= settings_trigger_id %>" hidden>
+      <div
+        class="space-y-6"
+        data-controller="club-settings-tabs"
+        data-club-settings-tabs-default-tab-value="personal"
+        data-club-settings-tabs-active-class="border-slate-900 text-slate-900"
+        data-club-settings-tabs-inactive-class="border-transparent text-slate-500 hover:text-slate-900"
+      >
+        <div class="flex flex-wrap gap-4 border-b border-slate-200" role="tablist" aria-label="Setup sections">
           <button
             type="button"
-            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            data-action="modal#close"
-            aria-label="Close modal"
-            data-modal-initial-focus
+            class="border-b-2 px-3 py-2 text-sm font-semibold transition"
+            data-club-settings-tabs-target="trigger"
+            data-action="click->club-settings-tabs#show"
+            data-club-settings-tabs-tab="personal"
+            id="<%= settings_tab_ids[:personal][:trigger] %>"
+            aria-controls="<%= settings_tab_ids[:personal][:panel] %>"
+            role="tab"
           >
-            <span aria-hidden="true">&times;</span>
+            Personal &amp; memberships
           </button>
-        </header>
-        <div class="max-h-[calc(90vh-4.5rem)] overflow-y-auto px-4 py-4">
-          <turbo-frame
-            id="<%= dom_id(@club, :staggered_payment_plan_modal) %>"
-            data-modal-target="frame"
-            loading="lazy"
-          ></turbo-frame>
+          <button
+            type="button"
+            class="border-b-2 px-3 py-2 text-sm font-semibold transition"
+            data-club-settings-tabs-target="trigger"
+            data-action="click->club-settings-tabs#show"
+            data-club-settings-tabs-tab="medical"
+            id="<%= settings_tab_ids[:medical][:trigger] %>"
+            aria-controls="<%= settings_tab_ids[:medical][:panel] %>"
+            role="tab"
+          >
+            Medical
+          </button>
+          <button
+            type="button"
+            class="border-b-2 px-3 py-2 text-sm font-semibold transition"
+            data-club-settings-tabs-target="trigger"
+            data-action="click->club-settings-tabs#show"
+            data-club-settings-tabs-tab="survey"
+            id="<%= settings_tab_ids[:survey][:trigger] %>"
+            aria-controls="<%= settings_tab_ids[:survey][:panel] %>"
+            role="tab"
+          >
+            Survey
+          </button>
+          <button
+            type="button"
+            class="border-b-2 px-3 py-2 text-sm font-semibold transition"
+            data-club-settings-tabs-target="trigger"
+            data-action="click->club-settings-tabs#show"
+            data-club-settings-tabs-tab="terms"
+            id="<%= settings_tab_ids[:terms][:trigger] %>"
+            aria-controls="<%= settings_tab_ids[:terms][:panel] %>"
+            role="tab"
+          >
+            Terms
+          </button>
+          <button
+            type="button"
+            class="border-b-2 px-3 py-2 text-sm font-semibold transition"
+            data-club-settings-tabs-target="trigger"
+            data-action="click->club-settings-tabs#show"
+            data-club-settings-tabs-tab="messaging"
+            id="<%= settings_tab_ids[:messaging][:trigger] %>"
+            aria-controls="<%= settings_tab_ids[:messaging][:panel] %>"
+            role="tab"
+          >
+            Messaging
+          </button>
+          <button
+            type="button"
+            class="border-b-2 px-3 py-2 text-sm font-semibold transition"
+            data-club-settings-tabs-target="trigger"
+            data-action="click->club-settings-tabs#show"
+            data-club-settings-tabs-tab="payment"
+            id="<%= settings_tab_ids[:payment][:trigger] %>"
+            aria-controls="<%= settings_tab_ids[:payment][:panel] %>"
+            role="tab"
+          >
+            Payment
+          </button>
+        </div>
+
+        <div class="space-y-6 pt-4">
+          <div data-club-settings-tabs-target="panel" data-club-settings-tabs-panel="personal" id="<%= settings_tab_ids[:personal][:panel] %>" role="tabpanel" aria-labelledby="<%= settings_tab_ids[:personal][:trigger] %>">
+            <section
+              class="rounded-lg border border-slate-200 bg-white shadow-sm mb-4"
+              data-controller="modal"
+              data-action="turbo:submit-end->modal#handleSubmitEnd"
+            >
+              <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-slate-900">Default price tiers</h2>
+                  <p class="text-sm text-slate-500">Set templates for registration phases. New membership types will inherit these date ranges.</p>
+                </div>
+                <turbo-frame id="<%= dom_id(@club, :new_default_price_tier) %>">
+                  <%= render "admin/clubs/default_price_tiers/new_button", club: @club %>
+                </turbo-frame>
+              </header>
+
+              <div class="border-t border-slate-200">
+                <turbo-frame id="<%= dom_id(@club, :default_price_tiers) %>">
+                  <%= render "admin/clubs/default_price_tiers/list",
+                             club: @club,
+                             default_price_tiers: @default_price_tiers %>
+                </turbo-frame>
+              </div>
+
+              <div
+                class="fixed inset-0 z-50 hidden"
+                data-modal-target="wrapper"
+                data-action="keydown.esc->modal#close"
+                role="dialog"
+                aria-modal="true"
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+                <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+                  <div class="w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                      <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add default tier</h3>
+                      <button
+                        type="button"
+                        class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        data-action="modal#close"
+                        aria-label="Close modal"
+                        data-modal-initial-focus
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </header>
+                    <div class="px-4 py-4">
+                      <turbo-frame
+                        id="<%= dom_id(@club, :default_price_tier_modal) %>"
+                        data-modal-target="frame"
+                        loading="lazy"
+                      ></turbo-frame>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="rounded-lg border border-slate-200 bg-white shadow-sm"
+              data-controller="modal"
+              data-action="turbo:submit-end->modal#handleSubmitEnd"
+            >
+              <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-slate-900">Membership types</h2>
+                  <p class="text-sm text-slate-500">Configure the eligibility rules and pricing options that members see during registration.</p>
+                </div>
+                <turbo-frame id="<%= dom_id(@club, :new_membership_type) %>">
+                  <%= render "admin/clubs/membership_types/new_button", club: @club %>
+                </turbo-frame>
+              </header>
+
+              <div class="border-t border-slate-200">
+                <turbo-frame id="<%= dom_id(@club, :membership_types) %>">
+                  <%= render "admin/clubs/membership_types/list",
+                             club: @club,
+                             membership_types: @membership_types %>
+                </turbo-frame>
+              </div>
+
+              <div
+                class="fixed inset-0 z-50 hidden"
+                data-modal-target="wrapper"
+                data-action="keydown.esc->modal#close"
+                role="dialog"
+                aria-modal="true"
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+                <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+                  <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                      <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add membership type</h3>
+                      <button
+                        type="button"
+                        class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        data-action="modal#close"
+                        aria-label="Close modal"
+                        data-modal-initial-focus
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </header>
+                    <div class="px-4 py-4">
+                      <turbo-frame
+                        id="<%= dom_id(@club, :membership_type_modal) %>"
+                        data-modal-target="frame"
+                        loading="lazy"
+                      ></turbo-frame>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div data-club-settings-tabs-target="panel" data-club-settings-tabs-panel="medical" id="<%= settings_tab_ids[:medical][:panel] %>" role="tabpanel" aria-labelledby="<%= settings_tab_ids[:medical][:trigger] %>" hidden>
+            <section
+              class="rounded-lg border border-slate-200 bg-white shadow-sm"
+              data-controller="modal"
+              data-action="turbo:submit-end->modal#handleSubmitEnd"
+            >
+              <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-slate-900">Medical questions</h2>
+                  <p class="text-sm text-slate-500">Capture health disclosures or emergency details required before participation.</p>
+                </div>
+                <turbo-frame id="<%= dom_id(@club, :new_medical_question) %>">
+                  <%= render "admin/clubs/medical_questions/new_button", club: @club %>
+                </turbo-frame>
+              </header>
+              <div class="border-t border-slate-200">
+                <turbo-frame id="<%= dom_id(@club, :medical_questions) %>">
+                  <%= render "admin/clubs/medical_questions/list",
+                             club: @club,
+                             medical_questions: @medical_questions %>
+                </turbo-frame>
+              </div>
+
+              <div
+                class="fixed inset-0 z-50 hidden"
+                data-modal-target="wrapper"
+                data-action="keydown.esc->modal#close"
+                role="dialog"
+                aria-modal="true"
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+                <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+                  <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                      <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add medical question</h3>
+                      <button
+                        type="button"
+                        class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        data-action="modal#close"
+                        aria-label="Close modal"
+                        data-modal-initial-focus
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </header>
+                    <div class="px-4 py-4">
+                      <turbo-frame
+                        id="<%= dom_id(@club, :medical_question_modal) %>"
+                        data-modal-target="frame"
+                        loading="lazy"
+                      ></turbo-frame>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div data-club-settings-tabs-target="panel" data-club-settings-tabs-panel="survey" id="<%= settings_tab_ids[:survey][:panel] %>" role="tabpanel" aria-labelledby="<%= settings_tab_ids[:survey][:trigger] %>" hidden>
+            <section
+              class="rounded-lg border border-slate-200 bg-white shadow-sm"
+              data-controller="modal"
+              data-action="turbo:submit-end->modal#handleSubmitEnd"
+            >
+              <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-slate-900">Membership questions</h2>
+                  <p class="text-sm text-slate-500">Customise what members need to answer when they purchase memberships. Questions update instantly.</p>
+                </div>
+                <turbo-frame id="<%= dom_id(@club, :new_membership_question) %>">
+                  <%= render "admin/clubs/membership_questions/new_button", club: @club %>
+                </turbo-frame>
+              </header>
+              <div class="border-t border-slate-200">
+                <turbo-frame id="<%= dom_id(@club, :membership_questions) %>">
+                  <%= render "admin/clubs/membership_questions/list",
+                             club: @club,
+                             membership_questions: @membership_questions %>
+                </turbo-frame>
+              </div>
+
+              <div
+                class="fixed inset-0 z-50 hidden"
+                data-modal-target="wrapper"
+                data-action="keydown.esc->modal#close"
+                role="dialog"
+                aria-modal="true"
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+                <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+                  <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                      <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add membership question</h3>
+                      <button
+                        type="button"
+                        class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        data-action="modal#close"
+                        aria-label="Close modal"
+                        data-modal-initial-focus
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </header>
+                    <div class="px-4 py-4">
+                      <turbo-frame
+                        id="<%= dom_id(@club, :membership_question_modal) %>"
+                        data-modal-target="frame"
+                        loading="lazy"
+                      ></turbo-frame>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div data-club-settings-tabs-target="panel" data-club-settings-tabs-panel="terms" id="<%= settings_tab_ids[:terms][:panel] %>" role="tabpanel" aria-labelledby="<%= settings_tab_ids[:terms][:trigger] %>" hidden>
+            <section
+              class="rounded-lg border border-slate-200 bg-white shadow-sm"
+              data-controller="modal"
+              data-action="turbo:submit-end->modal#handleSubmitEnd"
+            >
+              <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-slate-900">Terms &amp; conditions</h2>
+                  <p class="text-sm text-slate-500">Collect members' acknowledgement of club rules, waivers, and other commitments.</p>
+                </div>
+                <turbo-frame id="<%= dom_id(@club, :new_club_term) %>">
+                  <%= render "admin/clubs/terms/new_button", club: @club %>
+                </turbo-frame>
+              </header>
+              <div class="border-t border-slate-200">
+                <turbo-frame id="<%= dom_id(@club, :club_terms) %>">
+                  <%= render "admin/clubs/terms/list",
+                             club: @club,
+                             terms: @club_terms %>
+                </turbo-frame>
+              </div>
+
+              <div
+                class="fixed inset-0 z-50 hidden"
+                data-modal-target="wrapper"
+                data-action="keydown.esc->modal#close"
+                role="dialog"
+                aria-modal="true"
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+                <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+                  <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                      <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add term</h3>
+                      <button
+                        type="button"
+                        class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        data-action="modal#close"
+                        aria-label="Close modal"
+                        data-modal-initial-focus
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </header>
+                    <div class="px-4 py-4">
+                      <turbo-frame
+                        id="<%= dom_id(@club, :club_term_modal) %>"
+                        data-modal-target="frame"
+                        loading="lazy"
+                      ></turbo-frame>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div data-club-settings-tabs-target="panel" data-club-settings-tabs-panel="messaging" id="<%= settings_tab_ids[:messaging][:panel] %>" role="tabpanel" aria-labelledby="<%= settings_tab_ids[:messaging][:trigger] %>" hidden>
+            <section class="space-y-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <header class="space-y-1">
+                <h2 class="text-base font-semibold text-slate-900">WhatsApp messaging</h2>
+                <p class="text-sm text-slate-500">Manage WhatsApp Business credentials and review available templates.</p>
+              </header>
+
+              <div class="grid gap-4 md:grid-cols-3">
+                <% token_source = @club.whatsapp_access_token.present? ? "Club specific" : "Default" %>
+                <% sender_source = @club.whatsapp_sender_id.present? ? "Club specific" : "Default" %>
+                <% business_source = @club.whatsapp_business_id.present? ? "Club specific" : "Default" %>
+                <div class="rounded border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Access token</p>
+                  <p class="mt-2 text-sm font-medium text-slate-900"><%= token_source %></p>
+                  <p class="mt-1 text-xs text-slate-500 break-all">
+                    <%= (@club.whatsapp_access_token_with_fallback&.first(6) || "—") %><%= "•••" if @club.whatsapp_access_token_with_fallback.present? %>
+                  </p>
+                </div>
+                <div class="rounded border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sender ID</p>
+                  <p class="mt-2 text-sm font-medium text-slate-900"><%= sender_source %></p>
+                  <p class="mt-1 text-xs text-slate-500 break-all"><%= @club.whatsapp_sender_id_with_fallback.presence || "—" %></p>
+                </div>
+                <div class="rounded border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Business ID</p>
+                  <p class="mt-2 text-sm font-medium text-slate-900"><%= business_source %></p>
+                  <p class="mt-1 text-xs text-slate-500 break-all"><%= @club.whatsapp_business_id_with_fallback.presence || "—" %></p>
+                </div>
+              </div>
+
+              <% template_options = @whatsapp_templates.each_with_object([]) do |template, array|
+                   next unless template.respond_to?(:[])
+                   template_hash = template.respond_to?(:with_indifferent_access) ? template.with_indifferent_access : template
+                   template_id = template_hash[:id] || template_hash["id"]
+                   next unless template_id.present?
+                   template_language = template_hash[:language] || template_hash.dig(:language, :code) || template_hash.dig("language", "code")
+                   template_name = template_hash[:name] || template_hash["name"] || template_id
+                   label_parts = [template_name, template_language].compact
+                   label = label_parts.join(" · ").presence || template_id
+                   array << [label, template_name]
+                 end.sort_by { |(label, _)| label.to_s.downcase } %>
+              <% otp_template_id = @club.whatsapp_otp_template_id_with_fallback.presence %>
+              <% order_template_id = @club.whatsapp_order_confirmation_template_id_with_fallback.presence %>
+              <% otp_template = otp_template_id && @whatsapp_templates_index[otp_template_id.to_s] %>
+              <% order_template = order_template_id && @whatsapp_templates_index[order_template_id.to_s] %>
+              <% otp_label = otp_template ? ([otp_template[:name] || otp_template["name"], otp_template[:language] || otp_template.dig(:language, :code) || otp_template.dig("language", "code")].compact.join(" · ").presence || otp_template[:id]) : otp_template_id %>
+              <% order_label = order_template ? ([order_template[:name] || order_template["name"], order_template[:language] || order_template.dig(:language, :code) || order_template.dig("language", "code")].compact.join(" · ").presence || order_template[:id]) : order_template_id %>
+              <div class="grid gap-4 rounded border border-slate-200 bg-white px-4 py-4 shadow-sm sm:grid-cols-2">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">OTP template</p>
+                  <p class="mt-1 text-sm font-medium text-slate-900"><%= @club.whatsapp_otp_template_id.present? ? "Club specific" : "Default" %></p>
+                  <p class="text-xs text-slate-500 break-all"><%= otp_label.presence || Settings.whatsapp.otp_template_id || "Not configured" %></p>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Order confirmation template</p>
+                  <p class="mt-1 text-sm font-medium text-slate-900"><%= @club.whatsapp_order_confirmation_template_id.present? ? "Club specific" : "Default" %></p>
+                  <p class="text-xs text-slate-500 break-all"><%= order_label.presence || Settings.whatsapp.order_confirmation_template_id || "Not configured" %></p>
+                </div>
+              </div>
+
+              <%= form_with model: [:admin, @club], url: admin_club_path(@club), method: :patch, local: true, class: "space-y-4 rounded border border-slate-200 bg-white p-4 shadow-sm" do |form| %>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <%= form.label :whatsapp_otp_template_id, "OTP template", class: "block text-sm font-medium text-slate-700" %>
+                    <%= form.select :whatsapp_otp_template_id,
+                      options_for_select([["Use default template", ""]] + template_options, @club.whatsapp_otp_template_id),
+                      {},
+                      class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+                    <p class="mt-1 text-xs text-slate-500">Fallback: <%= Settings.whatsapp.otp_template_id.presence || "Not configured" %></p>
+                  </div>
+                  <div>
+                    <%= form.label :whatsapp_order_confirmation_template_id, "Order confirmation template", class: "block text-sm font-medium text-slate-700" %>
+                    <%= form.select :whatsapp_order_confirmation_template_id,
+                      options_for_select([["Use default template", ""]] + template_options, @club.whatsapp_order_confirmation_template_id),
+                      {},
+                      class: "mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring" %>
+                    <p class="mt-1 text-xs text-slate-500">Fallback: <%= Settings.whatsapp.order_confirmation_template_id.presence || "Not configured" %></p>
+                  </div>
+                </div>
+                <div class="flex justify-end">
+                  <%= form.submit "Save messaging preferences", class: "inline-flex items-center rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
+                </div>
+              <% end %>
+
+
+              <% if @whatsapp_client.ready? %>
+                <% if @whatsapp_error.present? %>
+                  <div class="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    Unable to load templates: <%= @whatsapp_error.message %>
+                  </div>
+                <% else %>
+                  <% if @whatsapp_templates.any? %>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          <tr>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Language</th>
+                            <th class="px-4 py-3">Category</th>
+                            <th class="px-4 py-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                          <% @whatsapp_templates.each do |template| %>
+                            <% template_hash = template.respond_to?(:with_indifferent_access) ? template.with_indifferent_access : template %>
+                            <% template_name = template_hash[:name] || template_hash["name"] %>
+                            <% template_language = template_hash[:language] || template_hash.dig(:language, :code) || template_hash.dig("language", "code") %>
+                            <% template_category = template_hash[:category] || template_hash["category"] %>
+                            <% template_status = template_hash[:status] || template_hash.dig(:quality_score, :status) || template_hash.dig("quality_score", "status") %>
+                            <tr class="hover:bg-slate-50">
+                              <td class="px-4 py-2 font-medium text-slate-900"><%= template_name || "Unnamed template" %></td>
+                              <td class="px-4 py-2 text-slate-600"><%= template_language || "—" %></td>
+                              <td class="px-4 py-2 text-slate-600"><%= template_category || "—" %></td>
+                              <td class="px-4 py-2">
+                                <% badge_classes =
+                                  case template_status.to_s
+                                  when "APPROVED", "approved"
+                                    "bg-emerald-50 text-emerald-700"
+                                  when "PENDING", "pending"
+                                    "bg-amber-50 text-amber-700"
+                                  else
+                                    "bg-slate-100 text-slate-600"
+                                  end %>
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge_classes %>"><%= template_status.presence || "Unknown" %></span>
+                              </td>
+                            </tr>
+                          <% end %>
+                        </tbody>
+                      </table>
+                    </div>
+                  <% else %>
+                    <div class="rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      No templates found for the configured business account.
+                    </div>
+                  <% end %>
+                <% end %>
+              <% else %>
+                <div class="rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                  Add your WhatsApp credentials to unlock transactional messaging and template previews.
+                </div>
+              <% end %>
+            </section>
+          </div>
+
+          <div data-club-settings-tabs-target="panel" data-club-settings-tabs-panel="payment" id="<%= settings_tab_ids[:payment][:panel] %>" role="tabpanel" aria-labelledby="<%= settings_tab_ids[:payment][:trigger] %>" hidden>
+            <section
+              class="rounded-lg border border-slate-200 bg-white shadow-sm"
+              data-controller="modal"
+              data-action="turbo:submit-end->modal#handleSubmitEnd"
+            >
+              <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-slate-900">Staggered payment plans</h2>
+                  <p class="text-sm text-slate-500">Offer flexible installment schedules for high-value memberships or orders.</p>
+                </div>
+                <turbo-frame id="<%= dom_id(@club, :new_staggered_payment_plan) %>">
+                  <%= render "admin/clubs/staggered_payment_plans/new_button", club: @club %>
+                </turbo-frame>
+              </header>
+              <div class="border-t border-slate-200">
+                <turbo-frame id="<%= dom_id(@club, :staggered_payment_plans) %>">
+                  <%= render "admin/clubs/staggered_payment_plans/list",
+                             club: @club,
+                             plans: @staggered_payment_plans %>
+                </turbo-frame>
+              </div>
+
+              <div
+                class="fixed inset-0 z-50 hidden"
+                data-modal-target="wrapper"
+                data-action="keydown.esc->modal#close"
+                role="dialog"
+                aria-modal="true"
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
+                <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+                  <div class="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-xl">
+                    <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                      <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add staggered payment plan</h3>
+                      <button
+                        type="button"
+                        class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        data-action="modal#close"
+                        aria-label="Close modal"
+                        data-modal-initial-focus
+                      >
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </header>
+                    <div class="max-h-[calc(90vh-4.5rem)] overflow-y-auto px-4 py-4">
+                      <turbo-frame
+                        id="<%= dom_id(@club, :staggered_payment_plan_modal) %>"
+                        data-modal-target="frame"
+                        loading="lazy"
+                      ></turbo-frame>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</section>
-
-<section
-  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
-  data-controller="modal"
-  data-action="turbo:submit-end->modal#handleSubmitEnd"
->
-  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
-    <div>
-      <h2 class="text-base font-semibold text-slate-900">Membership types</h2>
-      <p class="text-sm text-slate-500">Configure the eligibility rules and pricing options that members see during registration.</p>
-    </div>
-    <turbo-frame id="<%= dom_id(@club, :new_membership_type) %>">
-      <%= render "admin/clubs/membership_types/new_button", club: @club %>
-    </turbo-frame>
-  </header>
-
-  <div class="border-t border-slate-200">
-    <turbo-frame id="<%= dom_id(@club, :membership_types) %>">
-      <%= render "admin/clubs/membership_types/list",
-                 club: @club,
-                 membership_types: @membership_types %>
-    </turbo-frame>
-  </div>
-
-  <div
-    class="fixed inset-0 z-50 hidden"
-    data-modal-target="wrapper"
-    data-action="keydown.esc->modal#close"
-    role="dialog"
-    aria-modal="true"
-    aria-hidden="true"
-    tabindex="-1"
-  >
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
-    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-      <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add membership type</h3>
-          <button
-            type="button"
-            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            data-action="modal#close"
-            aria-label="Close modal"
-            data-modal-initial-focus
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </header>
-        <div class="px-4 py-4">
-          <turbo-frame
-            id="<%= dom_id(@club, :membership_type_modal) %>"
-            data-modal-target="frame"
-            loading="lazy"
-          ></turbo-frame>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section
-  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
-  data-controller="modal"
-  data-action="turbo:submit-end->modal#handleSubmitEnd"
->
-  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
-    <div>
-      <h2 class="text-base font-semibold text-slate-900">Terms &amp; conditions</h2>
-      <p class="text-sm text-slate-500">Collect members' acknowledgement of club rules, waivers, and other commitments.</p>
-    </div>
-    <turbo-frame id="<%= dom_id(@club, :new_club_term) %>">
-      <%= render "admin/clubs/terms/new_button", club: @club %>
-    </turbo-frame>
-  </header>
-  <div class="border-t border-slate-200">
-    <turbo-frame id="<%= dom_id(@club, :club_terms) %>">
-      <%= render "admin/clubs/terms/list",
-                 club: @club,
-                 terms: @club_terms %>
-    </turbo-frame>
-  </div>
-
-  <div
-    class="fixed inset-0 z-50 hidden"
-    data-modal-target="wrapper"
-    data-action="keydown.esc->modal#close"
-    role="dialog"
-    aria-modal="true"
-    aria-hidden="true"
-    tabindex="-1"
-  >
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
-    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-      <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add term</h3>
-          <button
-            type="button"
-            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            data-action="modal#close"
-            aria-label="Close modal"
-            data-modal-initial-focus
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </header>
-        <div class="px-4 py-4">
-          <turbo-frame
-            id="<%= dom_id(@club, :club_term_modal) %>"
-            data-modal-target="frame"
-            loading="lazy"
-          ></turbo-frame>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section
-  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
-  data-controller="modal"
-  data-action="turbo:submit-end->modal#handleSubmitEnd"
->
-  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
-    <div>
-      <h2 class="text-base font-semibold text-slate-900">Medical questions</h2>
-      <p class="text-sm text-slate-500">Capture health disclosures or emergency details required before participation.</p>
-    </div>
-    <turbo-frame id="<%= dom_id(@club, :new_medical_question) %>">
-      <%= render "admin/clubs/medical_questions/new_button", club: @club %>
-    </turbo-frame>
-  </header>
-  <div class="border-t border-slate-200">
-    <turbo-frame id="<%= dom_id(@club, :medical_questions) %>">
-      <%= render "admin/clubs/medical_questions/list",
-                 club: @club,
-                 medical_questions: @medical_questions %>
-    </turbo-frame>
-  </div>
-
-  <div
-    class="fixed inset-0 z-50 hidden"
-    data-modal-target="wrapper"
-    data-action="keydown.esc->modal#close"
-    role="dialog"
-    aria-modal="true"
-    aria-hidden="true"
-    tabindex="-1"
-  >
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
-    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-      <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add medical question</h3>
-          <button
-            type="button"
-            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            data-action="modal#close"
-            aria-label="Close modal"
-            data-modal-initial-focus
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </header>
-        <div class="px-4 py-4">
-          <turbo-frame
-            id="<%= dom_id(@club, :medical_question_modal) %>"
-            data-modal-target="frame"
-            loading="lazy"
-          ></turbo-frame>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section
-  class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm"
-  data-controller="modal"
-  data-action="turbo:submit-end->modal#handleSubmitEnd"
->
-  <header class="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 md:flex-row md:items-center md:justify-between">
-    <div>
-      <h2 class="text-base font-semibold text-slate-900">Membership questions</h2>
-      <p class="text-sm text-slate-500">Customise what members need to answer when they purchase memberships. Questions update instantly.</p>
-    </div>
-    <turbo-frame id="<%= dom_id(@club, :new_membership_question) %>">
-      <%= render "admin/clubs/membership_questions/new_button", club: @club %>
-    </turbo-frame>
-  </header>
-  <div class="border-t border-slate-200">
-    <turbo-frame id="<%= dom_id(@club, :membership_questions) %>">
-      <%= render "admin/clubs/membership_questions/list",
-                 club: @club,
-                 membership_questions: @membership_questions %>
-    </turbo-frame>
-  </div>
-
-  <div
-    class="fixed inset-0 z-50 hidden"
-    data-modal-target="wrapper"
-    data-action="keydown.esc->modal#close"
-    role="dialog"
-    aria-modal="true"
-    aria-hidden="true"
-    tabindex="-1"
-  >
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-action="click->modal#close"></div>
-    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
-      <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl">
-        <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-          <h3 class="text-base font-semibold text-slate-900" data-modal-target="title">Add membership question</h3>
-          <button
-            type="button"
-            class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            data-action="modal#close"
-            aria-label="Close modal"
-            data-modal-initial-focus
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </header>
-        <div class="px-4 py-4">
-          <turbo-frame
-            id="<%= dom_id(@club, :membership_question_modal) %>"
-            data-modal-target="frame"
-            loading="lazy"
-          ></turbo-frame>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+</div>

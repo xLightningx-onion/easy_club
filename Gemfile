@@ -73,6 +73,9 @@ gem "sidekiq-unique-jobs", "~> 8.0"
 # HTTP client for integrations
 gem "httpx"
 
+# WhatsApp Business API client
+gem "whatsapp_sdk"
+
 # Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
 gem "kamal", require: false
 

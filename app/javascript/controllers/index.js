@@ -54,3 +54,7 @@ application.register("country-code-selector", CountryCodeSelectorController)
 
 import MobileNumberController from "./mobile_number_controller"
 application.register("mobile-number", MobileNumberController)
+
+import TabsController from "./tabs_controller"
+application.register("tabs", TabsController)
+application.register("club-settings-tabs", TabsController)

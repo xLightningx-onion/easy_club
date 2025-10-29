@@ -1,0 +1,31 @@
+<% content_for :title, "Verify your mobile number" %>
+
+<section class="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+  <h1 class="text-2xl font-semibold text-slate-900">Enter your verification code</h1>
+  <p class="mt-2 text-sm text-slate-600">
+    We sent a 6-digit code to <span class="font-medium text-slate-900">+<%= current_user.formatted_mobile_number %></span>.
+    Enter it below to confirm your mobile number.
+  </p>
+
+  <%= form_with url: confirm_users_mobile_verification_path, scope: :mobile_verification, class: "mt-6 space-y-5" do |f| %>
+    <div>
+      <%= f.label :code, "Verification code", class: "sr-only" %>
+      <%= f.text_field :code,
+                       inputmode: "numeric",
+                       autocomplete: "one-time-code",
+                       placeholder: "123456",
+                       maxlength: 6,
+                       class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-2xl tracking-widest text-slate-900 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+    </div>
+
+    <div class="space-y-3">
+      <%= f.submit "Verify number",
+                   class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300" %>
+
+      <%= link_to "Resend code",
+                  resend_users_mobile_verification_path,
+                  data: { turbo_method: :post },
+                  class: "block w-full rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+    </div>
+  <% end %>
+</section>

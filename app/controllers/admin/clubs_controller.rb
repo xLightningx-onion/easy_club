@@ -10,14 +10,26 @@ class Admin::ClubsController < Admin::BaseController
   def show
     @members_count = @club.members.count
     @invoices_count = @club.invoices.count
-    payments_cents = @club.payments.sum(:amount_cents).to_i
-    @payments_total = Money.new(payments_cents, default_currency)
-    @payments_total ||= Money.new(0, default_currency)
+    processed_transactions = @club.payment_transactions.status_succeeded
+    payments_cents = processed_transactions.sum(:amount_cents).to_i
+    payments_currency = processed_transactions.pick(:amount_currency) || default_currency
+    @payments_total = Money.new(payments_cents, payments_currency)
+    member_status_counts = @club.members.group(:status).count.transform_keys(&:to_s)
+    @member_status_counts = Member.statuses.keys.index_with { |status| member_status_counts.fetch(status, 0) }
     @membership_questions = @club.membership_questions
     @medical_questions = @club.medical_questions.order(:position, :created_at)
     @club_terms = @club.club_terms.order(:position, :created_at)
+    @default_price_tiers = @club.default_price_tiers.ordered
     @membership_types = @club.membership_types.includes(:price_tiers).order(:min_age_years, :label)
     @staggered_payment_plans = policy_scope(@club.staggered_payment_plans.includes(:installments)).order(:name)
+    @whatsapp_client = Whatsapp::Client.new(club: @club)
+    @whatsapp_templates = @whatsapp_client.templates
+    @whatsapp_templates_index = @whatsapp_templates.each_with_object({}) do |template, memo|
+      next unless template.respond_to?(:[])
+      template_id = template[:id] || template["id"]
+      memo[template_id.to_s] = template if template_id.present?
+    end
+    @whatsapp_error = @whatsapp_client.last_error
   end
 
   def new
@@ -97,6 +109,11 @@ class Admin::ClubsController < Admin::BaseController
       :latitude,
       :longitude,
       :google_place_id,
+      :whatsapp_access_token,
+      :whatsapp_sender_id,
+      :whatsapp_business_id,
+      :whatsapp_otp_template_id,
+      :whatsapp_order_confirmation_template_id,
       color_palette: %i[theme_hex theme_oklch],
       settings: {},
       membership_questions_attributes: %i[

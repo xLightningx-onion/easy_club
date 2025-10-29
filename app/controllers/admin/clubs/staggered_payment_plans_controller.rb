@@ -146,6 +146,7 @@ class Admin::Clubs::StaggeredPaymentPlansController < Admin::BaseController
     @membership_questions = @club.membership_questions
     @medical_questions = @club.medical_questions.order(:position, :created_at)
     @club_terms = @club.club_terms.order(:position, :created_at)
+    @default_price_tiers = @club.default_price_tiers.ordered
     @membership_types = @club.membership_types.includes(:price_tiers).order(:min_age_years, :label)
   end
 end

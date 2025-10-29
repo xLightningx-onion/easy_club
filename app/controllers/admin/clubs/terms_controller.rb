@@ -136,6 +136,7 @@ class Admin::Clubs::TermsController < Admin::BaseController
       end
       format.html do
         @terms = terms_scope
+        @default_price_tiers = @club.default_price_tiers.ordered
         render "admin/clubs/show", status: :unprocessable_entity
       end
     end

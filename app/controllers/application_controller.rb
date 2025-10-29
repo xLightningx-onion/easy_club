@@ -5,6 +5,9 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
+  # TODO: Activate this and get sms creds
+  before_action :redirect_to_mobile_verification_if_needed
+
   around_action :set_current_club_context
   helper_method :current_club
 
@@ -15,6 +18,33 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def redirect_to_mobile_verification_if_needed
+    return unless user_signed_in?
+    return unless current_user.mobile_details_missing?
+    return if devise_controller?
+    return if controller_path.start_with?("users/mobile_verifications")
+    return if current_user.staff?
+    return unless request.get? || request.head?
+
+    store_post_mobile_capture_path(request.fullpath)
+
+    respond_to do |format|
+      format.turbo_stream { redirect_to new_users_mobile_verification_path, status: :see_other }
+      format.html { redirect_to new_users_mobile_verification_path }
+      format.any { head :found, location: new_users_mobile_verification_path }
+    end
+  end
+
+  def store_post_mobile_capture_path(path)
+    return if path.blank? || path == new_users_mobile_verification_path
+
+    session[:post_mobile_capture_path] = path
+  end
+
+  def consume_post_mobile_capture_path(fallback)
+    session.delete(:post_mobile_capture_path) || fallback
+  end
 
   def default_signed_in_path_for(resource)
     if resource.respond_to?(:staff?) && resource.staff?

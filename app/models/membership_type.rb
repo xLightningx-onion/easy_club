@@ -22,6 +22,8 @@ class MembershipType < ApplicationRecord
 
   monetize :base_price_cents, allow_nil: false, numericality: { greater_than_or_equal_to: 0 }
 
+  attr_accessor :default_price_tier_amounts
+
   after_initialize :set_default_gender, if: :new_record?
 
   validates :label, presence: true, uniqueness: { scope: :club_id }

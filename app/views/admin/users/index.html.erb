@@ -3,31 +3,65 @@
 
 <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
   <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-    <h2 class="text-base font-semibold text-slate-900">Staff and club users</h2>
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">Super admins</h2>
+      <p class="text-sm text-slate-500">Users who can access the super admin dashboard.</p>
+    </div>
     <%= link_to "New user", new_admin_user_path, class: "rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800" %>
   </header>
 
-  <table class="min-w-full divide-y divide-slate-200 text-sm">
-    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-      <tr>
-        <th class="px-4 py-3">Email</th>
-        <th class="px-4 py-3">Staff</th>
-        <th class="px-4 py-3">Role</th>
-        <th class="px-4 py-3 text-right">Actions</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-slate-100">
-      <% @users.each do |user| %>
-        <tr class="hover:bg-slate-50">
-          <td class="px-4 py-3 font-medium text-slate-900"><%= link_to user.email, admin_user_path(user), class: "hover:text-slate-700" %></td>
-          <td class="px-4 py-3">
-            <% badge_classes = user.staff? ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600" %>
-            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium <%= badge_classes %>"><%= user.staff? ? "Yes" : "No" %></span>
-          </td>
-          <td class="px-4 py-3 text-slate-600"><%= user.role %></td>
-          <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_user_path(user), class: "text-sm font-medium text-slate-600 hover:text-slate-900" %></td>
+  <% if @super_admins.any? %>
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Email</th>
+          <th class="px-4 py-3">Role</th>
+          <th class="px-4 py-3 text-right">Actions</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @super_admins.each do |user| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-900"><%= link_to user.email, admin_user_path(user), class: "hover:text-slate-700" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= user.role %></td>
+            <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_user_path(user), class: "text-sm font-medium text-slate-600 hover:text-slate-900" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="px-4 py-6 text-sm text-slate-500">No super admins yet. Promote a user to grant dashboard access.</div>
+  <% end %>
+</section>
+
+<section class="mt-8 rounded-lg border border-slate-200 bg-white shadow-sm">
+  <header class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">Users</h2>
+      <p class="text-sm text-slate-500">Everyone else with access to clubs, memberships, and billing.</p>
+    </div>
+  </header>
+
+  <% if @users.any? %>
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Email</th>
+          <th class="px-4 py-3">Role</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @users.each do |user| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-900"><%= link_to user.email, admin_user_path(user), class: "hover:text-slate-700" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= user.role %></td>
+            <td class="px-4 py-3 text-right"><%= link_to "Edit", edit_admin_user_path(user), class: "text-sm font-medium text-slate-600 hover:text-slate-900" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="px-4 py-6 text-sm text-slate-500">No users have been added yet.</div>
+  <% end %>
 </section>

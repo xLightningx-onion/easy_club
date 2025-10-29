@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
+require "digest"
+
 class User < ApplicationRecord
+  MOBILE_VERIFICATION_CODE_LENGTH = 6
+  MOBILE_VERIFICATION_CODE_TTL = 10.minutes
+
   devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable,
          :two_factor_authenticatable,
          :two_factor_backupable,
@@ -64,6 +69,57 @@ class User < ApplicationRecord
     otp_required_for_login?
   end
 
+  def mobile_details_missing?
+    country_code.blank? || mobile_number.blank?
+  end
+
+  def mobile_verified?
+    mobile_verified_at.present?
+  end
+
+  def initiate_mobile_verification!
+    raise ArgumentError, "country_code and mobile_number are required" if mobile_details_missing?
+
+    verification_code = generate_mobile_verification_code
+    timestamp = Time.current
+    update!(
+      mobile_verification_code_digest: digest_for_code(verification_code, timestamp),
+      mobile_verification_sent_at: timestamp,
+      mobile_verified_at: nil
+    )
+
+    SendMobileVerificationJob.perform_later(id, verification_code)
+    verification_code
+  end
+
+  def verify_mobile_code(submitted_code)
+    return false if submitted_code.blank?
+    return false if mobile_verification_code_digest.blank?
+    return false if mobile_verification_sent_at.blank?
+    return false if mobile_verification_sent_at.present? && mobile_verification_expired?
+
+    if secure_compare_code(submitted_code)
+      update!(
+        mobile_verified_at: Time.current,
+        mobile_verification_code_digest: nil,
+        mobile_verification_sent_at: nil
+      )
+      true
+    else
+      false
+    end
+  end
+
+  def mobile_verification_expired?
+    return true if mobile_verification_sent_at.blank?
+
+    mobile_verification_sent_at < MOBILE_VERIFICATION_CODE_TTL.ago
+  end
+
+  def formatted_mobile_number
+    mobile_number.strip
+  end
+
   private
 
   def skip_terms_validation?
@@ -96,5 +152,24 @@ class User < ApplicationRecord
       user.mobile_number = normalized
       user.country_code ||= "+27"
     end
+  end
+
+  private
+
+  def generate_mobile_verification_code
+    Array.new(MOBILE_VERIFICATION_CODE_LENGTH) { rand(0..9) }.join
+  end
+
+  def secure_compare_code(code)
+    expected = mobile_verification_code_digest
+    actual_digest = digest_for_code(code, mobile_verification_sent_at)
+    ActiveSupport::SecurityUtils.secure_compare(expected, actual_digest)
+  rescue StandardError
+    false
+  end
+
+  def digest_for_code(code, timestamp)
+    ts = timestamp&.to_i || Time.current.to_i
+    Digest::SHA256.hexdigest("--#{code}--#{id}--#{ts}--")
   end
 end

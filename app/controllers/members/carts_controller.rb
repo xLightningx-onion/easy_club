@@ -6,7 +6,11 @@ class Members::CartsController < Members::ApplicationController
 
 
   def show
-    @cart = current_cart
+    @cart = requested_cart || current_cart
+    unless @cart&.user_id == current_user&.id
+      redirect_to members_dashboards_path, alert: "We couldn't find that cart." and return
+    end
+
     authorize! @cart, :show?
 
     @cart_items = @cart.cart_items.includes(member: [ :club, :membership_type ], plan: :product)

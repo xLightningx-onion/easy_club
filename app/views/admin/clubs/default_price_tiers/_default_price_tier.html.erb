@@ -1,0 +1,36 @@
+<turbo-frame id="<%= dom_id(default_price_tier) %>">
+  <article class="flex flex-col gap-3 px-4 py-4 transition hover:bg-slate-50 md:flex-row md:items-center md:justify-between">
+    <div class="space-y-1">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Default tier</p>
+      <h3 class="text-sm font-semibold text-slate-900"><%= default_price_tier.label %></h3>
+      <p class="text-sm text-slate-600">
+        <%= default_price_tier.starts_on.to_fs(:long) %>
+        &ndash;
+        <%= default_price_tier.ends_on.to_fs(:long) %>
+      </p>
+      <p class="text-xs text-slate-500">
+        Applied automatically to new membership types. Leave the amount blank if a tier shouldn't be created.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+        data-action="modal#open"
+        data-modal-url="<%= edit_admin_club_default_price_tier_path(club, default_price_tier) %>"
+        data-modal-frame="<%= dom_id(club, :default_price_tier_modal) %>"
+        data-modal-title="Edit default tier"
+      >
+        Edit
+      </button>
+      <%= link_to "Delete",
+                  admin_club_default_price_tier_path(club, default_price_tier),
+                  data: {
+                    turbo_method: :delete,
+                    turbo_confirm: "Remove this default tier? It will no longer be suggested on new membership types.",
+                    turbo_frame: dom_id(club, :default_price_tiers)
+                  },
+                  class: "inline-flex items-center gap-1 rounded bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-100" %>
+    </div>
+  </article>
+</turbo-frame>

@@ -127,6 +127,7 @@ class Admin::Clubs::MembershipTypes::PriceTiersController < Admin::BaseControlle
       format.html do
         flash.now[:alert] = @price_tier.errors.full_messages.to_sentence
         @membership_types = @club.membership_types.includes(:price_tiers).order(:min_age_years, :label)
+        @default_price_tiers = @club.default_price_tiers.ordered
         render "admin/clubs/show", status: :unprocessable_entity
       end
     end

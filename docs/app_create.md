@@ -1037,7 +1037,7 @@ export default class extends Controller {
 
   ```
   web: bundle exec puma -C config/puma.rb
-  worker: ./bin/rails solid_queue:start
+  worker: bundle exec sidekiq -C config/sidekiq.yml
   cable: ./bin/rails action_cable:server
   ```
 * Set `RAILS_ENV`, `DATABASE_URL`, `REDIS_URL`, payment keys, mail sender, WA keys.
