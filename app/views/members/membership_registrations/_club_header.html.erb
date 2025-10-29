@@ -7,6 +7,6 @@
 </div>
 <style>
     .club-header-color {
-        background-color: <%= club.oklch_color %>;
+        background-color: <%= club&.oklch_color || "var(--color-easyclub-primary)" %>;
     }
 </style>

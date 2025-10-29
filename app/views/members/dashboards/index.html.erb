@@ -1,7 +1,7 @@
 <% greeting_name = current_user.first_name.presence || current_user.email.split("@").first %>
 
 <section
-  class="mx-auto max-w-5xl space-y-10 px-4 py-10"
+  class="mx-auto max-w-5xl space-y-10 px-4 py-10 relative z-[2]"
   data-controller="modal membership-start"
   data-membership-start-url-value="<%= members_membership_registration_path %>"
   data-action="turbo:submit-end->modal#handleSubmitEnd memberships-selection:club-selected@window->membership-start#begin"
