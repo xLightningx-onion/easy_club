@@ -20757,6 +20757,32 @@ var mobile_number_controller_default = class extends Controller {
   }
 };
 
+// app/javascript/controllers/payment_processing_controller.js
+var payment_processing_controller_default = class extends Controller {
+  static targets = ["overlay", "submit"];
+  show() {
+    this.displayOverlay();
+    this.disableSubmitButton();
+  }
+  toggleTestOverlay(event) {
+    event.preventDefault();
+    if (this.hasOverlayTarget) {
+      this.overlayTarget.classList.toggle("hidden");
+    }
+  }
+  displayOverlay() {
+    if (!this.hasOverlayTarget) return;
+    this.overlayTarget.classList.remove("hidden");
+  }
+  disableSubmitButton() {
+    if (!this.hasSubmitTarget) return;
+    const button = this.submitTarget;
+    button.disabled = true;
+    button.classList.add("opacity-60", "cursor-not-allowed");
+    button.setAttribute("aria-busy", "true");
+  }
+};
+
 // app/javascript/controllers/tabs_controller.js
 var tabs_controller_default = class extends Controller {
   static targets = ["trigger", "panel"];
@@ -20839,6 +20865,7 @@ application.register("payment-plan-selector", payment_plan_selector_controller_d
 application.register("club-theme-color", club_theme_color_controller_default);
 application.register("country-code-selector", country_code_selector_controller_default);
 application.register("mobile-number", mobile_number_controller_default);
+application.register("payment-processing", payment_processing_controller_default);
 application.register("tabs", tabs_controller_default);
 application.register("club-settings-tabs", tabs_controller_default);
 

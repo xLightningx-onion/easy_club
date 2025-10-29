@@ -1043,7 +1043,7 @@ export default class extends Controller {
 * Set `RAILS_ENV`, `DATABASE_URL`, `REDIS_URL`, payment keys, mail sender, WA keys.
 * Nginx configured for **club subdomains** and **admin** root; force HTTPS; HSTS.
 * Run `db:migrate`, `db:seed` (minimal).
-* Apply cron/scheduler for nightly jobs (e.g., `bin/rails runner "Dunning::SchedulerJob.perform_later"` via systemd timer or Heroku Scheduler equivalent).
+* Apply cron/scheduler for nightly jobs (e.g., run `StaggeredPayments::SchedulerJob` every 10 minutes and `bin/rails runner "Dunning::SchedulerJob.perform_later"`).
 * Observability hooks for errors (Sentry/Rollbar) and uptime.
 
 ---

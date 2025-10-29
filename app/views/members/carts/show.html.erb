@@ -122,10 +122,21 @@
         <%= form_with url: members_checkout_path(club_id: @club.id, cart_id: @cart.id),
                       method: :post,
                       local: true,
-                      data: { controller: "payment-method" },
+                      data: { controller: "payment-method payment-processing", action: "submit->payment-processing#show" },
                       html: { id: "checkout-payment-form" },
                       class: "space-y-6" do %>
-          <%= hidden_field_tag :cart_id, @cart.id %>
+          <div data-payment-processing-target="overlay"
+               class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white/95 backdrop-blur w-[100dvw] h-[100dvh]">
+            <svg class="h-10 w-10 animate-spin text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <div class="text-center text-sm text-slate-600" aria-live="polite">
+              <p class="font-semibold text-slate-900">Processing payment…</p>
+              <p>Please keep this tab open while we confirm with your bank.</p>
+            </div>
+          </div>
+          <%= hidden_field_tag :cart_id, @cart.id, data: { payment_processing_target: "cartField" } %>
           <%= hidden_field_tag "checkout[payment_source]", default_source, data: { payment_method_target: "sourceInput" } %>
           <%= hidden_field_tag "checkout[payment_method_id]", default_source == "saved" ? default_method&.id : "", data: { payment_method_target: "methodInput" } %>
 
@@ -197,8 +208,14 @@
             <p>Payments are processed instantly via PayGate PayHost. Card data never touches Easy Club servers.</p>
           </div>
 
-          <div class="flex items-center justify-end">
-            <%= submit_tag "Pay now", class: "inline-flex min-w-[220px] items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>
+          <div class="flex items-center justify-end gap-3">
+            <button type="button"
+                    class="inline-flex min-w-[180px] items-center justify-center rounded border border-slate-300 px-5 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                    data-action="payment-processing#toggleTestOverlay">Test loader
+            </button>
+            <%= submit_tag "Pay now",
+                           class: "inline-flex min-w-[220px] items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary",
+                           data: { payment_processing_target: "submit" } %>
           </div>
         <% end %>
       </section>
