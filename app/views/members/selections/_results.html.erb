@@ -2,32 +2,40 @@
 <div class="max-h-72 space-y-2 overflow-y-auto pr-1" data-memberships-selection-target="list">
   <% clubs.each do |club| %>
     <% selected = selected_club_id.present? && selected_club_id.to_s == club.id.to_s %>
-    <button
-      type="button"
-      class="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-700 shadow-sm transition hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-200 <%= selected ? "border-slate-900 ring-2 ring-slate-200 shadow-md" : "" %>"
-      data-memberships-selection-target="club"
-      data-action="click->memberships-selection#choose"
-      data-club-id="<%= club.id %>"
-      data-club-name="<%= club.name %>"
-    >
-      <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
-        <% if club.logo&.attached? %>
-          <%= image_tag serve_image_remote_url(club.logo, resize_spec: "resize_to_fill", size_curves: [120, 120]),
-                        alt: "#{club.name} logo",
-                        class: "h-full w-full object-cover" %>
-        <% else %>
-          <div class="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-400">
-            <%= club.name.first(2) %>
+
+    <label for="<%= club.id %>" class="block cursor-pointer">
+        <div class="grid grid-cols-10 py-4 px-4 rounded-3xl border border-dark-grey 
+                    peer-checked:border-green-border peer-checked:bg-dark transition">
+          <input
+          type="radio"
+          name="hs-default-radio"
+          id="<%= club.id %>"
+          class="peer col-span-1 shrink-0 mt-2 border-green-border
+          rounded-2lg text-green-border focus:ring-transparent checked:border-green-border disabled:opacity-50 
+          disabled:pointer-events-none w-5 h-5 bg-size-[1.5em]"/>
+
+          <div class="col-span-9 flex flex-row gap-3">
+            <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
+              <% if club.logo&.attached? %>
+                <%= image_tag serve_image_remote_url(club.logo, resize_spec: "resize_to_fill", size_curves: [120, 120]),
+                              alt: "#{club.name} logo",
+                              class: "h-full w-full object-cover" %>
+              <% else %>
+                <div class="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <%= club.name.first(2) %>
+                </div>
+              <% end %>
+            </div>
+            <div class="flex flex-1 flex-col">
+              <span class="font-semibold text-slate-900"><%= club.name %></span>
+              <% if club.city.present? || club.country.present? %>
+                <span class="text-xs text-slate-500"><%= [club.city, club.country].compact_blank.join(", ") %></span>
+              <% end %>
+            </div>
           </div>
-        <% end %>
-      </div>
-      <div class="flex flex-1 flex-col">
-        <span class="font-semibold text-slate-900"><%= club.name %></span>
-        <% if club.city.present? || club.country.present? %>
-          <span class="text-xs text-slate-500"><%= [club.city, club.country].compact_blank.join(", ") %></span>
-        <% end %>
-      </div>
-    </button>
+        </div>
+    </label>
+
   <% end %>
   <% if clubs.blank? %>
     <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">

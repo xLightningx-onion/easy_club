@@ -22,8 +22,8 @@
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
-  <body>
-    <%= render 'shared/dashboard_header' %>
+  <body class="bg-light-blue-grey">
+    <%= yield :half_moon_header if content_for?(:half_moon_header) %>
     <%= yield %>
   </body>
 </html>

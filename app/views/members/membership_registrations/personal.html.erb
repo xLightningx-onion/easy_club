@@ -16,18 +16,20 @@
     </div>
 
     <div class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600">
-      <div class="grid gap-3 md:grid-cols-3 md:items-center">
+      <div class="grid gap-3 md:grid-cols-2 md:items-center">
         <div>
           <p class="text-xs uppercase tracking-wide text-slate-500">Name</p>
           <p class="font-semibold text-slate-900"><%= @form.first_name %> <%= @form.last_name %></p>
         </div>
-        <div>
-          <p class="text-xs uppercase tracking-wide text-slate-500">Date of birth</p>
-          <p class="font-semibold text-slate-900"><%= @form.date_of_birth.present? ? @form.date_of_birth.strftime("%d %B %Y") : "Derived from ID" %></p>
-        </div>
-        <div>
-          <p class="text-xs uppercase tracking-wide text-slate-500">Gender</p>
-          <p class="font-semibold text-slate-900"><%= @form.gender_label || "Derived from ID" %></p>
+        <div class="flex flex-row justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-500">Date of birth</p>
+            <p class="font-semibold text-slate-900"><%= @form.date_of_birth.present? ? @form.date_of_birth.strftime("%d %B %Y") : "Derived from ID" %></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-500">Gender</p>
+            <p class="font-semibold text-slate-900"><%= @form.gender_label || "Derived from ID" %></p>
+          </div>
         </div>
       </div>
     </div>

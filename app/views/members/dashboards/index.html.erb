@@ -1,35 +1,46 @@
 <% greeting_name = current_user.first_name.presence || current_user.email.split("@").first %>
-
+<% content_for :half_moon_header do %>
+  <div class="absolute top-0 left-0 w-full h-[40vw] md:h-[15vw] overflow-x-hidden flex justify-center z-[1]">
+    <div class="absolute w-[160vw] h-[200vw] left-1/2 -translate-x-1/2 club-header-color bg-easyclub-primary top-[-160vw] lg:top-[-185vw] rounded-[50%] z-0"></div>
+  </div>
+<% end %>
 <section
-  class="mx-auto max-w-5xl space-y-10 px-4 py-10 relative z-[2]"
+  class="mx-auto max-w-5xl space-y-10 px-4 pb-10 relative z-[2] "
   data-controller="modal membership-start"
   data-membership-start-url-value="<%= members_membership_registration_path %>"
   data-action="turbo:submit-end->modal#handleSubmitEnd memberships-selection:club-selected@window->membership-start#begin"
 >
-  <header class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg">
-    <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
-    <div class="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">My Profile</p>
-        <h1 class="mt-2 text-2xl font-semibold sm:text-3xl">Hi <%= greeting_name %></h1>
+  <header class="relative overflow-hidden p-6 text-dark-grey">
+    <%# <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div> %>
+    <div class="relative z-10 flex flex-col gap-2">
+      <div class="w-full flex justify-center">
+        <%= image_tag 'easyclub-logo.png', class: "w-[50%] md:w-[20%]" %>
       </div>
-      <div class="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          class="flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-slate-100"
-          data-action="modal#open"
-          data-modal-url="<%= new_members_selection_path %>"
-          data-modal-title="Select a club"
-        >
-          Add New Membership
-        </button>
-        <%= link_to "My Account",
+      <div>
+        <p class="text-xs text-center font-semibold text-white uppercase tracking-[0.3em] ">My Profile</p>
+        <h1 class="mt-2 text-2xl text-center text-white font-semibold sm:text-3xl">Hi <%= greeting_name %></h1>
+      </div>
+      <div class="flex flex-row gap-3 justify-center">
+        <div class="w-[25vw] md:w-[15vw]">
+          <button
+            type="button"
+            class="flex items-end w-full md:items-center aspect-square md:aspect-auto justify-center rounded-xl bg-white px-8 py-3 text-xs text-center text-slate-900 transition hover:bg-slate-100"
+            data-action="modal#open"
+            data-modal-url="<%= new_members_selection_path %>"
+            data-modal-title="Select a club">
+            Add New Membership
+          </button>
+        </div>
+
+        <div class="w-[25vw] md:w-[15vw]">
+          <%= link_to "My Account",
           "",
-          class: "flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10" %>
-        <%= link_to "Log out",
+          class: "flex items-end md:items-center w-full h-full aspect-square md:aspect-auto justify-center rounded-xl bg-white px-8 py-3 text-xs text-center transition hover:bg-white/10" %>
+        </div>
+        <%#= link_to "Log out",
           destroy_user_session_path,
           data: { turbo_method: :delete },
-          class: "flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10" %>
+          class: "flex items-center justify-center rounded-xl border border-white/40 px-6 py-3 text-sm font-semibold transition hover:bg-white/10" %>
       </div>
     </div>
   </header>

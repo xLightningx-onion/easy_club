@@ -49,8 +49,8 @@
                           class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
       </div>
 
-      <div class="space-y-4 md:flex md:gap-4 md:space-y-0">
-        <div data-controller="country-code-selector"
+      <div class="space-y-4 flex flex-row gap-4 md:space-y-0">
+        <div class="mb-0" data-controller="country-code-selector"
              data-country-code-selector-initial-value="<%= resource.country_code.presence || '+27' %>">
           <%= f.hidden_field :country_code,
                               value: (resource.country_code.presence || "+27"),
@@ -88,7 +88,7 @@
             </div>
           </div>
         </div>
-        <div class="md:flex-1"
+        <div class="flex-1"
              data-controller="mobile-number"
              data-mobile-number-code-value="<%= resource.country_code.presence || '+27' %>"
              data-mobile-number-country-input-value="<%= "#{f.object_name}_country_code" %>">
