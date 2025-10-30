@@ -19641,7 +19641,6 @@ var memberships_selection_controller_default = class extends Controller {
     this.updateState();
   }
   choose(event) {
-    event.preventDefault();
     const button = event.currentTarget;
     this.selectedIdValue = button.dataset.clubId;
     this.selectedNameValue = button.dataset.clubName;

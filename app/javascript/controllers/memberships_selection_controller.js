@@ -14,7 +14,7 @@ export default class extends Controller {
   }
 
   choose(event) {
-    event.preventDefault()
+    // event.preventDefault()
     const button = event.currentTarget
     this.selectedIdValue = button.dataset.clubId
     this.selectedNameValue = button.dataset.clubName

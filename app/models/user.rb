@@ -38,7 +38,7 @@ class User < ApplicationRecord
   # serialize :otp_backup_codes, Array
 
   validates :first_name, :last_name, presence: true
-  validates :country_code, :mobile_number, presence: true, unless: :omniauth_profile?
+  validates :country_code, :mobile_number, presence: true, unless: -> { omniauth_profile? || Rails.env.development? }
   validates :terms_agreement, acceptance: true, on: :create, unless: :skip_terms_validation?
 
   def self.from_omniauth(auth)
