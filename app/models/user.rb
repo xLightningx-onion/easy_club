@@ -230,9 +230,33 @@ class User < ApplicationRecord
       digits = raw_number.to_s.gsub(/\D+/, "")
       return if digits.blank?
 
-      where.not(country_code: [ nil, "" ], mobile_number: [ nil, "" ])
-        .where("regexp_replace(country_code, '\\\\D', '', 'g') || mobile_number = ?", digits)
-        .first
+      digits = digits.sub(/\A0+/, "")
+
+      relation = where.not(country_code: [ nil, "" ], mobile_number: [ nil, "" ])
+
+      # Exact match including country code concatenation
+      full_match = relation
+                   .where("regexp_replace(country_code, '\\\\D', '', 'g') || mobile_number = ?", digits)
+                   .first
+      return full_match if full_match
+
+      candidates = [ digits ]
+
+      # Try stripping up to 4 leading digits (possible country code already included)
+      1.upto(4) do |len|
+        break if len >= digits.length
+        candidates << digits[len..]
+      end
+
+      candidates.each do |candidate|
+        next if candidate.blank?
+
+        candidate = candidate.sub(/\A0+/, "")
+        user = relation.find_by(mobile_number: candidate)
+        return user if user
+      end
+
+      nil
     end
   end
 end

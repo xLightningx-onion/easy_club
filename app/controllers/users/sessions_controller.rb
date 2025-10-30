@@ -11,7 +11,18 @@ class Users::SessionsController < Devise::SessionsController
 
   def create
     normalize_login_params
-    self.resource = warden.authenticate!(auth_options)
+    self.resource = warden.authenticate(auth_options)
+
+    unless resource
+      self.resource = resource_class.new
+      resource.login = @login_input if resource.respond_to?(:login=)
+      resource.email = params[:user][:email] if resource.respond_to?(:email=)
+      resource.errors.add(:base, "Invalid email/mobile number or password.")
+      clean_up_passwords(resource)
+      set_minimum_password_length
+      return render(:new, status: :unauthorized)
+    end
+
     set_flash_message!(:notice, :signed_in)
     sign_in(resource_name, resource)
     store_membership_registration_club(resource)
@@ -46,27 +57,92 @@ class Users::SessionsController < Devise::SessionsController
   end
 
   def configure_sign_in_params
-    devise_parameter_sanitizer.permit(:sign_in, keys: [ :login ])
+    devise_parameter_sanitizer.permit(:sign_in, keys: [ :login, :country_code ])
   end
 
   def normalize_login_params
-    return unless params[:user].is_a?(ActionController::Parameters) || params[:user].is_a?(Hash)
+    return unless params[:user].respond_to?(:[]) && params[:user].respond_to?(:[]=)
 
-    login_input = params[:user][:login].presence || params[:user][:email].presence
-    login_input = login_input.to_s.strip
+    country_code_digits = delete_user_param(:country_code).to_s.gsub(/\D+/, "")
+    @login_country_code = country_code_digits.present? ? "+#{country_code_digits}" : nil
 
-    params[:user][:login] = login_input if params[:user].respond_to?(:[]=)
+    raw_login = params[:user][:login].presence || params[:user][:email].presence
+    raw_login = raw_login.to_s.strip
+    write_user_param(:login, raw_login)
+    @login_input = raw_login
 
-    if login_input.blank?
-      params[:user][:email] = login_input
+    if raw_login.blank?
+      write_user_param(:email, raw_login)
       return
     end
 
-    if login_input.include?("@")
-      params[:user][:email] = login_input.downcase
+    if raw_login.include?("@")
+      sanitized_email = raw_login.downcase
+      write_user_param(:login, sanitized_email)
+      write_user_param(:email, sanitized_email)
+      @login_mode = :email
     else
-      user = User.find_by_full_mobile(login_input)
-      params[:user][:email] = user&.email.presence || "__invalid_mobile__#{SecureRandom.hex(4)}"
+      digits_only = raw_login.gsub(/\D+/, "")
+      digits_only = digits_only.sub(/\A0+/, "")
+
+      if country_code_digits.present? && digits_only.present? &&
+         !digits_only.start_with?(country_code_digits)
+        digits_only = "#{country_code_digits}#{digits_only}"
+      end
+
+      write_user_param(:login, digits_only)
+      user = User.find_by_full_mobile(digits_only)
+
+      if user&.email.present?
+        write_user_param(:email, user.email.downcase)
+      else
+        delete_user_param(:email)
+      end
+
+      @login_mode = :mobile
     end
+  end
+
+  def write_user_param(key, value)
+    params[:user][key] = value
+    sync_request_user_param(key, value)
+  end
+
+  def delete_user_param(key)
+    value = params[:user].delete(key)
+    sync_request_user_param(key, nil, delete: true)
+    value
+  end
+
+  def sync_request_user_param(key, value, delete: false)
+    user_params = request_user_params
+    return unless user_params
+
+    key_string = key.to_s
+    key_symbol = key.to_sym
+
+    if delete
+      user_params.delete(key_string)
+      user_params.delete(key_symbol)
+    else
+      user_params[key_string] = value
+      user_params[key_symbol] = value if user_params.key?(key_symbol)
+    end
+  end
+
+  def request_user_params
+    return unless request.respond_to?(:request_parameters)
+
+    request_params = request.request_parameters
+    return unless request_params.is_a?(Hash)
+
+    user_params = request_params["user"] || request_params[:user]
+
+    unless user_params.is_a?(Hash)
+      user_params = {}
+      request_params["user"] = user_params
+    end
+
+    user_params
   end
 end

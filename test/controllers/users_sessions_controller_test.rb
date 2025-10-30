@@ -18,14 +18,28 @@ class UsersSessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "signs in with email" do
-    post user_session_path, params: { user: { login: @user.email, password: "Password123!" } }
+    post user_session_path,
+         params: {
+           user: {
+             login: @user.email,
+             password: "Password123!",
+             country_code: @user.country_code
+           }
+         }
 
     assert_response :redirect
     assert session.key?("warden.user.user.key"), "expected user session to be established"
   end
 
   test "signs in with mobile number" do
-    post user_session_path, params: { user: { login: "+27 #{@user.mobile_number}", password: "Password123!" } }
+    post user_session_path,
+         params: {
+           user: {
+             login: "+27 #{@user.mobile_number}",
+             password: "Password123!",
+             country_code: "+27"
+           }
+         }
 
     assert_response :redirect
     assert session.key?("warden.user.user.key"), "expected user session to be established"
