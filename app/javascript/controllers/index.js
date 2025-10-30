@@ -64,3 +64,9 @@ application.register("club-settings-tabs", TabsController)
 
 import EmailCheckController from "./email_check_controller"
 application.register("email-check", EmailCheckController)
+
+import MobileCheckController from "./mobile_check_controller"
+application.register("mobile-check", MobileCheckController)
+
+import LoginMethodController from "./login_method_controller"
+application.register("login-method", LoginMethodController)

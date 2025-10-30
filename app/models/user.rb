@@ -5,6 +5,7 @@ require "digest"
 class User < ApplicationRecord
   MOBILE_VERIFICATION_CODE_LENGTH = 6
   MOBILE_VERIFICATION_CODE_TTL = 10.minutes
+  MOBILE_PASSWORD_RESET_CODE_TTL = MOBILE_VERIFICATION_CODE_TTL
 
   devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable,
          :two_factor_authenticatable,
@@ -12,7 +13,7 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: [ :google_oauth2 ], otp_number_of_backup_codes: 10
 
 
-  attr_accessor :terms_agreement, :skip_terms_validation
+  attr_accessor :terms_agreement, :skip_terms_validation, :login
 
   before_validation :ensure_role_and_staff_defaults, on: :create
 
@@ -75,6 +76,42 @@ class User < ApplicationRecord
 
   def mobile_verified?
     mobile_verified_at.present?
+  end
+
+  def initiate_mobile_password_reset!(club: nil)
+    raise ArgumentError, "country_code and mobile_number are required" if mobile_details_missing?
+
+    reset_code = generate_mobile_verification_code
+    timestamp = Time.current
+    update!(
+      mobile_password_reset_code_digest: digest_for_code(reset_code, timestamp),
+      mobile_password_reset_sent_at: timestamp
+    )
+
+    SendMobilePasswordResetCodeJob.perform_later(id, reset_code, club&.to_param)
+    reset_code
+  end
+
+  def mobile_password_reset_expired?
+    return true if mobile_password_reset_sent_at.blank?
+
+    mobile_password_reset_sent_at < MOBILE_PASSWORD_RESET_CODE_TTL.ago
+  end
+
+  def verify_mobile_password_reset_code(submitted_code)
+    return false if submitted_code.blank?
+    return false if mobile_password_reset_code_digest.blank?
+    return false if mobile_password_reset_expired?
+
+    secure_compare_password_reset_code(submitted_code)
+  end
+
+  def consume_mobile_password_reset_code!(submitted_code)
+    return unless verify_mobile_password_reset_code(submitted_code)
+
+    raw_token = send(:set_reset_password_token)
+    clear_mobile_password_reset_code!
+    raw_token
   end
 
   def initiate_mobile_verification!
@@ -171,5 +208,31 @@ class User < ApplicationRecord
   def digest_for_code(code, timestamp)
     ts = timestamp&.to_i || Time.current.to_i
     Digest::SHA256.hexdigest("--#{code}--#{id}--#{ts}--")
+  end
+
+  def secure_compare_password_reset_code(code)
+    expected = mobile_password_reset_code_digest
+    actual_digest = digest_for_code(code, mobile_password_reset_sent_at)
+    ActiveSupport::SecurityUtils.secure_compare(expected, actual_digest)
+  rescue StandardError
+    false
+  end
+
+  def clear_mobile_password_reset_code!
+    update!(
+      mobile_password_reset_code_digest: nil,
+      mobile_password_reset_sent_at: nil
+    )
+  end
+
+  class << self
+    def find_by_full_mobile(raw_number)
+      digits = raw_number.to_s.gsub(/\D+/, "")
+      return if digits.blank?
+
+      where.not(country_code: [ nil, "" ], mobile_number: [ nil, "" ])
+        .where("regexp_replace(country_code, '\\\\D', '', 'g') || mobile_number = ?", digits)
+        .first
+    end
   end
 end

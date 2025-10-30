@@ -4,11 +4,16 @@ Rails.application.routes.draw do
   devise_for :users, controllers: {
     registrations: "users/registrations",
     sessions: "users/sessions",
-    omniauth_callbacks: "users/omniauth_callbacks"
+    omniauth_callbacks: "users/omniauth_callbacks",
+    passwords: "users/passwords"
   }
 
   devise_scope :user do
     get "users/email_lookup", to: "users/registrations#email_lookup", as: :users_email_lookup
+    get "users/mobile_lookup", to: "users/registrations#mobile_lookup", as: :users_mobile_lookup
+    get "users/password/mobile/verify", to: "users/passwords#verify_mobile", as: :verify_user_password_mobile
+    post "users/password/mobile/confirm", to: "users/passwords#confirm_mobile", as: :confirm_user_password_mobile
+    post "users/password/mobile/resend", to: "users/passwords#resend_mobile", as: :resend_user_password_mobile
   end
 
   namespace :users do

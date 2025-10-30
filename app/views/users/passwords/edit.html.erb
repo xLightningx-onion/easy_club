@@ -1,0 +1,98 @@
+<% content_for :title, "Choose a new password - Easy Club" %>
+
+<style>
+  .custom-gradient {
+    --tw-gradient-via-stops: var(--tw-gradient-position), <%= @club.present? ? @club.oklch_color : "var(--color-easyclub-primary)" %> var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+  }
+</style>
+
+<div class="min-h-screen bg-gradient-to-b from-sky-400 custom-gradient to-slate-900 flex flex-col">
+  <header class="px-4 pt-6 text-center">
+    <%= image_tag "easyclub-logo.png", class: "inline-block h-10 w-auto" %>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center px-4 pb-12">
+    <div class="relative mt-8 w-full max-w-md">
+      <% if @club&.logo.present? %>
+        <div class="rounded-3xl bg-white px-6 py-10 shadow-2xl ring-1 ring-sky-100 mb-8 flex justify-center">
+          <%= image_tag serve_image_remote_url(@club.logo), alt: "#{@club.name} logo", class: "max-h-32 w-auto" %>
+        </div>
+      <% end %>
+
+      <div class="rounded-3xl bg-white px-6 py-10 shadow-2xl ring-1 ring-sky-100">
+        <div class="mb-6 text-center">
+          <h1 class="text-2xl font-semibold text-slate-900">Choose a new password</h1>
+          <p class="mt-2 text-sm text-slate-500">
+            Create a strong password to keep your Easyclub account secure.
+          </p>
+        </div>
+
+        <%= form_for(resource,
+                     as: resource_name,
+                     url: password_path(resource_name),
+                     html: { method: :put, class: "space-y-4", data: { turbo: false } }) do |f| %>
+          <%= render "devise/shared/error_messages", resource: resource %>
+
+          <%= f.hidden_field :reset_password_token %>
+
+          <div>
+            <%= f.label :password, class: "sr-only" %>
+            <%= f.password_field :password,
+                                 autofocus: true,
+                                 autocomplete: "new-password",
+                                 placeholder: "New Password",
+                                 class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+            <% if @minimum_password_length %>
+              <p class="mt-1 text-xs text-slate-400">Use at least <%= @minimum_password_length %> characters.</p>
+            <% end %>
+          </div>
+
+          <div>
+            <%= f.label :password_confirmation, class: "sr-only" %>
+            <%= f.password_field :password_confirmation,
+                                 autocomplete: "new-password",
+                                 placeholder: "Confirm Password",
+                                 class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+          </div>
+
+          <div>
+            <%= f.submit "Update Password",
+                         class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300" %>
+          </div>
+        <% end %>
+
+        <div class="mt-6 text-center text-sm text-slate-500">
+          Remember your password?
+          <%= link_to "Log in",
+                      new_session_path(resource_name, club_id: @club&.to_param),
+                      class: "font-semibold text-sky-600 hover:text-sky-700",
+                      data: { turbo: false } %>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-auto bg-slate-900 text-slate-200">
+    <div class="bg-slate-800/80">
+      <div class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-6 py-10 text-center">
+        <p class="max-w-xl text-sm text-slate-300">
+          Manage your club memberships, payments, and communication all in one place with Easyclub's secure platform.
+        </p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <%= link_to "Explore Clubs", public_clubs_path,
+                      class: "rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-sky-600" %>
+          <%= link_to "Explore", root_path,
+                      class: "rounded-full border border-slate-500 px-5 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800" %>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-700 px-6 py-4 text-center text-xs text-slate-500">
+      Registration powered by EasyReg.co.za - info@easyreg.co.za - +27 87 135 2004
+      <br>
+      <%= link_to "Terms & Conditions", "#", class: "text-sky-400 hover:text-sky-300" %> |
+      <%= link_to "Frequently Asked Questions", "#", class: "text-sky-400 hover:text-sky-300" %>
+    </div>
+  </footer>
+</div>
+

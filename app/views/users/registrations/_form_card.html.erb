@@ -18,9 +18,11 @@
     <% form_html_options = { class: "space-y-4" }
        form_html_options[:data] = {
          turbo: false,
-         controller: "email-check",
+         controller: "email-check mobile-check",
          "email-check-url-value": users_email_lookup_path,
-         "email-check-login-url-value": login_path
+         "email-check-login-url-value": login_path,
+         "mobile-check-url-value": users_mobile_lookup_path,
+         "mobile-check-login-url-value": login_path
        } %>
 
     <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: form_html_options) do |f| %>
@@ -62,7 +64,10 @@
              data-country-code-selector-initial-value="<%= resource.country_code.presence || '+27' %>">
           <%= f.hidden_field :country_code,
                               value: (resource.country_code.presence || "+27"),
-                              data: { country_code_selector_target: "input" } %>
+                              data: {
+                                country_code_selector_target: "input",
+                                "mobile-check-target": "country"
+                              } %>
           <button type="button"
                   class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition hover:border-sky-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
                   data-country-code-selector-target="button"
@@ -105,9 +110,15 @@
                                 autocomplete: "tel-national",
                                 placeholder: "Mobile Number",
                                 class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200",
-                                data: { mobile_number_target: "input" } %>
+                                data: {
+                                  mobile_number_target: "input",
+                                  "mobile-check-target": "input",
+                                  action: "keyup->mobile-check#queueCheck input->mobile-check#queueCheck blur->mobile-check#queueCheck"
+                                } %>
         </div>
       </div>
+
+      <p class="mt-1 hidden text-xs text-rose-600" role="alert" data-mobile-check-target="message"></p>
 
       <div>
         <%= f.label :password, class: "sr-only" %>
@@ -132,7 +143,10 @@
       <div>
         <%= f.submit "Next",
                      class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300",
-                     data: { "email-check-target": "submit" } %>
+                     data: {
+                       "email-check-target": "submit",
+                       "mobile-check-target": "submit"
+                     } %>
       </div>
     <% end %>
 

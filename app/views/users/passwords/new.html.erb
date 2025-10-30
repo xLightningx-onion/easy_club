@@ -1,0 +1,189 @@
+<% content_for :title, "Reset your password - Easy Club" %>
+
+<style>
+  .custom-gradient {
+    --tw-gradient-via-stops: var(--tw-gradient-position), <%= @club.present? ? @club.oklch_color : "var(--color-easyclub-primary)" %> var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+  }
+</style>
+
+<div class="min-h-screen bg-gradient-to-b from-sky-400 custom-gradient to-slate-900 flex flex-col">
+  <header class="px-4 pt-6 text-center">
+    <%= image_tag "easyclub-logo.png", class: "inline-block h-10 w-auto" %>
+  </header>
+
+  <main class="flex-1 flex flex-col items-center px-4 pb-12">
+    <div class="relative mt-8 w-full max-w-3xl">
+      <% if @club&.logo.present? %>
+        <div class="rounded-3xl bg-white px-6 py-10 shadow-2xl ring-1 ring-sky-100 mb-8 flex justify-center">
+          <%= image_tag serve_image_remote_url(@club.logo), alt: "#{@club.name} logo", class: "max-h-32 w-auto" %>
+        </div>
+      <% end %>
+
+      <div class="rounded-3xl bg-white px-6 py-10 shadow-2xl ring-1 ring-sky-100">
+        <div class="mb-8 text-center">
+          <h1 class="text-2xl font-semibold text-slate-900">Reset your password</h1>
+          <p class="mt-2 text-sm text-slate-500">
+            Choose how you would like to reset your password. You can receive a WhatsApp code or use the standard email instructions.
+          </p>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+          <section class="rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="mb-4">
+              <h2 class="text-lg font-semibold text-slate-900">Reset with WhatsApp</h2>
+              <p class="mt-1 text-sm text-slate-500">
+                Enter the mobile number linked to your account. We will send a verification code via WhatsApp.
+              </p>
+            </div>
+
+            <% if @mobile_password_reset_form.errors.any? %>
+              <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                <ul class="list-disc pl-5 space-y-1">
+                  <% @mobile_password_reset_form.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <%= form_with model: @mobile_password_reset_form,
+                          url: password_path(resource_name),
+                          scope: :mobile_password_reset,
+                          local: true,
+                          authenticity_token: true,
+                          data: { turbo: false },
+                          html: { class: "space-y-4" } do |f| %>
+              <%= hidden_field_tag :reset_method, "mobile" %>
+              <% if @club.present? %>
+                <%= hidden_field_tag :club_id, @club.to_param %>
+              <% end %>
+
+              <div class="space-y-4 md:flex md:gap-4 md:space-y-0">
+                <div data-controller="country-code-selector"
+                     data-country-code-selector-initial-value="<%= @mobile_password_reset_form.country_code.presence || '+27' %>">
+                  <%= f.hidden_field :country_code,
+                                     value: (@mobile_password_reset_form.country_code.presence || "+27"),
+                                     data: { country_code_selector_target: "input" } %>
+                  <button type="button"
+                          class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition hover:border-sky-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          data-country-code-selector-target="button"
+                          data-action="country-code-selector#open">
+                    <span data-country-code-selector-target="buttonLabel" class="flex w-full items-center justify-between"></span>
+                  </button>
+
+                  <div class="fixed inset-0 z-50 hidden items-start justify-center bg-slate-900/50 px-4 py-16"
+                       data-country-code-selector-target="overlay"
+                       data-action="click->country-code-selector#overlayClick">
+                    <div class="w-full max-w-md rounded-3xl bg-white shadow-xl ring-1 ring-slate-200"
+                         data-country-code-selector-target="dialog">
+                      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                        <h2 class="text-sm font-semibold text-slate-900">Select country code</h2>
+                        <button type="button"
+                                class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                                data-action="country-code-selector#close">
+                          <span aria-hidden="true">&times;</span>
+                          <span class="sr-only">Close</span>
+                        </button>
+                      </div>
+                      <div class="px-5 py-4">
+                        <input type="search"
+                               placeholder="Search country or code"
+                               aria-label="Search country or dial code"
+                               class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                               data-country-code-selector-target="search"
+                               data-action="input->country-code-selector#filter">
+                      </div>
+                      <div class="max-h-80 overflow-y-auto" data-country-code-selector-target="list"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="md:flex-1"
+                     data-controller="mobile-number"
+                     data-mobile-number-code-value="<%= @mobile_password_reset_form.country_code.presence || '+27' %>"
+                     data-mobile-number-country-input-value="mobile_password_reset[country_code]">
+                  <%= f.label :mobile_number, class: "sr-only" %>
+                  <%= f.telephone_field :mobile_number,
+                                        autocomplete: "tel",
+                                        placeholder: "Mobile Number",
+                                        class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200",
+                                        data: { mobile_number_target: "input" } %>
+                </div>
+              </div>
+
+              <div>
+                <%= f.submit "Send WhatsApp Code",
+                             class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300" %>
+              </div>
+            <% end %>
+          </section>
+
+          <section class="rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div class="mb-4">
+              <h2 class="text-lg font-semibold text-slate-900">Reset with Email</h2>
+              <p class="mt-1 text-sm text-slate-500">
+                Receive the standard password reset email with a link to choose a new password.
+              </p>
+            </div>
+
+            <%= form_for(resource,
+                         as: resource_name,
+                         url: password_path(resource_name),
+                         html: { class: "space-y-4", data: { turbo: false } }) do |f| %>
+              <%= hidden_field_tag :reset_method, "email" %>
+              <% if @club.present? %>
+                <%= hidden_field_tag :club_id, @club.to_param %>
+              <% end %>
+
+              <%= render "devise/shared/error_messages", resource: resource %>
+
+              <div>
+                <%= f.label :email, class: "sr-only" %>
+                <%= f.email_field :email,
+                                  autocomplete: "email",
+                                  placeholder: "Email Address",
+                                  class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+              </div>
+
+              <div>
+                <%= f.submit "Send Reset Email",
+                             class: "w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300" %>
+              </div>
+            <% end %>
+          </section>
+        </div>
+
+        <div class="mt-6 text-center text-sm text-slate-500">
+          Remembered your password?
+          <%= link_to "Log in",
+                      new_session_path(resource_name, club_id: @club&.to_param),
+                      class: "font-semibold text-sky-600 hover:text-sky-700",
+                      data: { turbo: false } %>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-auto bg-slate-900 text-slate-200">
+    <div class="bg-slate-800/80">
+      <div class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-6 py-10 text-center">
+        <p class="max-w-xl text-sm text-slate-300">
+          Manage your club memberships, payments, and communication all in one place with Easyclub's secure platform.
+        </p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <%= link_to "Explore Clubs", public_clubs_path,
+                      class: "rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-sky-600" %>
+          <%= link_to "Explore", root_path,
+                      class: "rounded-full border border-slate-500 px-5 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800" %>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-700 px-6 py-4 text-center text-xs text-slate-500">
+      Registration powered by EasyReg.co.za - info@easyreg.co.za - +27 87 135 2004
+      <br>
+      <%= link_to "Terms & Conditions", "#", class: "text-sky-400 hover:text-sky-300" %> |
+      <%= link_to "Frequently Asked Questions", "#", class: "text-sky-400 hover:text-sky-300" %>
+    </div>
+  </footer>
+</div>

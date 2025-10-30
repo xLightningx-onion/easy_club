@@ -14,7 +14,10 @@
       </p>
     </div>
 
-    <% form_html_options = { class: "space-y-4" }
+    <% current_login = resource.login.presence || resource.email.presence || params.dig(:user, :login) %>
+    <% initial_mode = current_login.to_s.include?("@") ? "email" : "mobile" %>
+
+    <% form_html_options = { class: "space-y-6" }
        form_html_options[:data] = { turbo: false } %>
 
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: form_html_options) do |f| %>
@@ -24,22 +27,100 @@
 
       <%= render "devise/shared/error_messages", resource: resource %>
 
-      <div>
-        <%= f.label :email, class: "sr-only" %>
-        <%= f.email_field :email,
-                          autofocus: true,
-                          autocomplete: "email",
-                          placeholder: "Email Address",
-                          class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+      <div class="space-y-3" data-controller="login-method" data-login-method-mode-value="<%= initial_mode %>">
+        <div class="space-y-3 flex" data-login-method-target="mobileContainer">
+          <div data-controller="country-code-selector"
+               data-country-code-selector-initial-value="<%= resource.country_code.presence || '+27' %>">
+            <%= tag.input type: "hidden",
+                          value: (resource.country_code.presence || "+27"),
+                          id: "login_country_code_selector",
+                          data: {
+                            country_code_selector_target: "input"
+                          } %>
+            <button type="button"
+                    class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm transition hover:border-sky-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    data-country-code-selector-target="button"
+                    data-action="country-code-selector#open">
+              <span data-country-code-selector-target="buttonLabel" class="flex w-full items-center justify-between"></span>
+            </button>
+
+            <div class="fixed inset-0 z-50 hidden items-start justify-center bg-slate-900/50 px-4 py-16"
+                 data-country-code-selector-target="overlay"
+                 data-action="click->country-code-selector#overlayClick">
+              <div class="w-full max-w-md rounded-3xl bg-white shadow-xl ring-1 ring-slate-200"
+                   data-country-code-selector-target="dialog">
+                <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                  <h2 class="text-sm font-semibold text-slate-900">Select country code</h2>
+                  <button type="button"
+                          class="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                          data-action="country-code-selector#close">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                  </button>
+                </div>
+                <div class="px-5 py-4">
+                  <input type="search"
+                         placeholder="Search country or code"
+                         aria-label="Search country or dial code"
+                         class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                         data-country-code-selector-target="search"
+                         data-action="input->country-code-selector#filter">
+                </div>
+                <div class="max-h-80 overflow-y-auto" data-country-code-selector-target="list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:flex-1"
+               data-controller="mobile-number"
+               data-mobile-number-code-value="<%= resource.country_code.presence || '+27' %>"
+               data-mobile-number-country-input-value="login_country_code_selector">
+            <%= text_field_tag "user[login]",
+                               (initial_mode == "mobile" ? current_login : ""),
+                               autocomplete: "tel",
+                               inputmode: "tel",
+                               placeholder: "Enter your mobile number",
+                               class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200",
+                               data: {
+                                 mobile_number_target: "input",
+                                 "login-method-target": "mobileInput"
+                               } %>
+          </div>
+
+        </div>
+
+        <div class="space-y-2 hidden" data-login-method-target="emailContainer">
+          <%= text_field_tag "user[email_login]",
+                             (initial_mode == "email" ? current_login : ""),
+                             autocomplete: "email",
+                             placeholder: "Email address",
+                             class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200",
+                             data: { "login-method-target": "emailInput" } %>
+        </div>
+
+        <div>
+          <%= f.label :password, class: "sr-only" %>
+          <%= f.password_field :password,
+                              autocomplete: "current-password",
+                              placeholder: "Password",
+                              class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+        </div>
+
+        <div>
+          <%= f.submit "Log in",
+                        class: "w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300" %>
+        </div>
+
+        <div class="text-center">
+          <button type="button"
+                  class="mt-2 text-sm font-semibold text-sky-600 hover:text-sky-700"
+                  data-action="login-method#toggle"
+                  data-login-method-target="toggleButton">
+            Log in via email
+          </button>
+        </div>
       </div>
 
-      <div>
-        <%= f.label :password, class: "sr-only" %>
-        <%= f.password_field :password,
-                             autocomplete: "current-password",
-                             placeholder: "Password",
-                             class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
-      </div>
 
       <% if devise_mapping.rememberable? %>
         <div class="flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
@@ -55,10 +136,6 @@
       </div>
       <% end %>
 
-      <div>
-        <%= f.submit "Log in",
-                     class: "w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300" %>
-      </div>
     <% end %>
 
     <div class="mt-6 text-center text-sm text-slate-500">

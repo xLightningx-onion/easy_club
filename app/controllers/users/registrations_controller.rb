@@ -35,6 +35,16 @@ class Users::RegistrationsController < Devise::RegistrationsController
     render json: { exists: exists }
   end
 
+  def mobile_lookup
+    country_code = normalize_country_code(params[:country_code])
+    mobile_number = normalize_mobile_number(params[:mobile_number])
+
+    exists = country_code.present? && mobile_number.present? &&
+             User.where(country_code: country_code, mobile_number: mobile_number).exists?
+
+    render json: { exists: exists }
+  end
+
   private
 
   def set_club
@@ -91,5 +101,17 @@ class Users::RegistrationsController < Devise::RegistrationsController
     user_key = "user_#{resource.id}"
     session[:membership_registration][user_key] ||= {}
     session[:membership_registration][user_key][:club_id] = @club.to_param
+  end
+
+  def normalize_country_code(raw_code)
+    digits = raw_code.to_s.gsub(/\D+/, "")
+    return if digits.blank?
+
+    "+#{digits}"
+  end
+
+  def normalize_mobile_number(raw_number)
+    digits = raw_number.to_s.gsub(/\D+/, "")
+    digits.sub(/^0+/, "")
   end
 end
