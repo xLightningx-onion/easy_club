@@ -28,10 +28,17 @@ class Users::RegistrationsController < Devise::RegistrationsController
     end
   end
 
+  def email_lookup
+    email = params[:email].to_s.strip.downcase
+    exists = email.present? && User.where("LOWER(email) = ?", email).exists?
+
+    render json: { exists: exists }
+  end
+
   private
 
   def set_club
-    @club = Club.find_by_id(params["club_id"])
+    @club = Club.find_by_param(params["club_id"])
   end
 
   def handle_successful_signup(resource)
@@ -73,7 +80,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
     members_membership_registration_path(
       step: Members::MembershipRegistrationsController::STEPS.first,
-      club_id: @club.id
+      club_id: @club
     )
   end
 
@@ -83,6 +90,6 @@ class Users::RegistrationsController < Devise::RegistrationsController
     session[:membership_registration] ||= {}
     user_key = "user_#{resource.id}"
     session[:membership_registration][user_key] ||= {}
-    session[:membership_registration][user_key][:club_id] = @club.id
+    session[:membership_registration][user_key][:club_id] = @club.to_param
   end
 end

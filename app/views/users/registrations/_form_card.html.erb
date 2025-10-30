@@ -14,12 +14,18 @@
       </p>
     </div>
 
+    <% login_path = new_session_path(resource_name, club_id: club&.to_param) %>
     <% form_html_options = { class: "space-y-4" }
-       form_html_options[:data] = { turbo: false } %>
+       form_html_options[:data] = {
+         turbo: false,
+         controller: "email-check",
+         "email-check-url-value": users_email_lookup_path,
+         "email-check-login-url-value": login_path
+       } %>
 
     <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: form_html_options) do |f| %>
-      <% if club&.id.present? %>
-        <%= hidden_field_tag :club_id, club.id %>
+      <% if club.present? %>
+        <%= hidden_field_tag :club_id, club.to_param %>
       <% end %>
       <%= render "devise/shared/error_messages", resource: resource %>
 
@@ -46,7 +52,9 @@
         <%= f.email_field :email,
                           autocomplete: "email",
                           placeholder: "Email Address",
-                          class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200" %>
+                          class: "block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200",
+                          data: { action: "keyup->email-check#queueCheck input->email-check#queueCheck", "email-check-target": "input" } %>
+        <p class="mt-1 hidden text-xs text-rose-600" role="alert" data-email-check-target="message"></p>
       </div>
 
       <div class="space-y-4 md:flex md:gap-4 md:space-y-0">
@@ -123,14 +131,15 @@
 
       <div>
         <%= f.submit "Next",
-                     class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300" %>
+                     class: "w-full rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-lg transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-300",
+                     data: { "email-check-target": "submit" } %>
       </div>
     <% end %>
 
     <div class="mt-6 text-center text-sm text-slate-500">
       Already have an account?
       <%= link_to "Log in",
-                  new_session_path(resource_name, club_id: club&.id),
+                  login_path,
                   class: "font-semibold text-sky-600 hover:text-sky-700",
                   data: { turbo_frame: "_top" } %>
     </div>
@@ -143,7 +152,7 @@
 
     <div class="mt-4">
       <%= button_to user_google_oauth2_omniauth_authorize_path,
-                    params: { club_id: club&.id },
+                    params: { club_id: club&.to_param },
                     method: :post,
                     form: { data: { turbo: false }, class: "w-full" },
                     class: "flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200" do %>

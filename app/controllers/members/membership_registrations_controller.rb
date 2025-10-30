@@ -58,7 +58,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
       redirect_to members_dashboards_path, alert: "Please choose a club to start a membership." and return
     end
 
-    @club = Club.find(selected_club_id)
+    @club = Club.find_by_param(selected_club_id)
   end
 
   def set_step
@@ -266,7 +266,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
       return
     end
 
-    redirect_to members_cart_path(club_id: @club.id), status: :see_other
+    redirect_to members_cart_path(club_id: @club), status: :see_other
   end
 
   def prepare_payment_option_step
@@ -277,7 +277,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     @staggered_payment_plans = available_payment_plans
 
     if @staggered_payment_plans.blank?
-      redirect_to members_cart_path(club_id: @club.id) and return
+      redirect_to members_cart_path(club_id: @club) and return
     end
 
     preview_mode = params[:preview_payment_mode].presence_in(%w[full staggered])
@@ -465,7 +465,7 @@ class Members::MembershipRegistrationsController < Members::ApplicationControlle
     true
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
     Rails.logger.error("Membership finalization failed: #{e.message}")
-    redirect_to members_membership_registration_path(step: "terms", club_id: @club.id), alert: "We couldn't prepare your order. Please review the previous step."
+    redirect_to members_membership_registration_path(step: "terms", club_id: @club), alert: "We couldn't prepare your order. Please review the previous step."
     false
   end
 

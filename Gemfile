@@ -127,3 +127,4 @@ gem "active_storage_bunny",
     branch: "fix/direct-upload-and-upload_options"
 
 gem "redis-session-store", "~> 0.11.5"
+gem "friendly_id", "~> 5.5"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_121000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -220,8 +220,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
     t.string "whatsapp_otp_template_id"
     t.string "whatsapp_order_confirmation_template_id"
     t.string "whatsapp_payment_failure_template_id"
+    t.string "slug"
     t.index ["google_place_id"], name: "index_clubs_on_google_place_id", unique: true, where: "(google_place_id IS NOT NULL)"
     t.index ["public_listing"], name: "index_clubs_on_public_listing"
+    t.index ["slug"], name: "index_clubs_on_slug", unique: true
   end
 
   create_table "competitions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -480,7 +482,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
     t.uuid "club_id", null: false
     t.uuid "user_id", null: false
     t.uuid "cart_id"
-    t.uuid "payment_method_id"
     t.string "status", default: "draft", null: false
     t.string "number", null: false
     t.string "external_reference"
@@ -495,6 +496,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "payment_method_id"
     t.datetime "paid_time"
     t.string "payment_mode", default: "full", null: false
     t.uuid "staggered_payment_plan_id"
@@ -545,7 +547,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
 
   create_table "payment_transactions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "order_id", null: false
-    t.uuid "payment_method_id"
     t.string "gateway", default: "paygate", null: false
     t.string "status", default: "initialized", null: false
     t.integer "amount_cents", default: 0, null: false
@@ -558,6 +559,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
     t.datetime "processed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "payment_method_id"
     t.datetime "paid_time"
     t.index ["order_id"], name: "index_payment_transactions_on_order_id"
     t.index ["payment_method_id"], name: "index_payment_transactions_on_payment_method_id"

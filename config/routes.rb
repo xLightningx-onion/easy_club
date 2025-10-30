@@ -7,6 +7,10 @@ Rails.application.routes.draw do
     omniauth_callbacks: "users/omniauth_callbacks"
   }
 
+  devise_scope :user do
+    get "users/email_lookup", to: "users/registrations#email_lookup", as: :users_email_lookup
+  end
+
   namespace :users do
     resource :mobile_verification, only: %i[new create], controller: "mobile_verifications" do
       get :verify

@@ -61,7 +61,7 @@ class Admin::ClubsController < Admin::BaseController
   end
 
   def impersonate
-    session[:impersonated_club_id] = @club.id
+    session[:impersonated_club_id] = @club.to_param
     redirect_to root_path, notice: "Now impersonating #{@club.name}."
   end
 

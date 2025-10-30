@@ -22,7 +22,7 @@ class Users::SessionsController < Devise::SessionsController
   def after_sign_in_path_for(resource)
     return members_membership_registration_path(
       step: Members::MembershipRegistrationsController::STEPS.first,
-      club_id: @club.id
+      club_id: @club
     ) if @club&.id.present?
 
     super
@@ -31,7 +31,7 @@ class Users::SessionsController < Devise::SessionsController
   private
 
   def set_club
-    @club = Club.find_by_id(params[:club_id])
+    @club = Club.find_by_param(params[:club_id])
   end
 
   def store_membership_registration_club(user)
@@ -40,6 +40,6 @@ class Users::SessionsController < Devise::SessionsController
     session[:membership_registration] ||= {}
     user_key = "user_#{user.id}"
     session[:membership_registration][user_key] ||= {}
-    session[:membership_registration][user_key][:club_id] = @club.id
+    session[:membership_registration][user_key][:club_id] = @club.to_param
   end
 end

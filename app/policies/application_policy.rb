@@ -20,7 +20,7 @@ class ApplicationPolicy < ActionPolicy::Base
 
   def derive_club_from_record
     return record.club if record.respond_to?(:club)
-    return Club.find_by(id: record.club_id) if record.respond_to?(:club_id)
+    return Club.find_by_param(record.club_id) if record.respond_to?(:club_id)
 
     Club.current
   end

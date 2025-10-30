@@ -17,6 +17,6 @@ class Admin::Webhooks::WhatsappController < ActionController::Base
   private
 
   def resolve_club
-    Club.find_by(id: params[:club_id]) || Club.find_by(primary_domain: request.host)
+    Club.find_by_param(params[:club_id]) || Club.find_by(primary_domain: request.host)
   end
 end

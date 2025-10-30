@@ -3,6 +3,9 @@
 class Club < ApplicationRecord
   audited
   thread_mattr_accessor :current_id
+  extend FriendlyId
+
+  friendly_id :slug_candidates, use: %i[slugged finders]
 
   has_one_attached :logo
   has_one_attached :banner
@@ -58,6 +61,14 @@ class Club < ApplicationRecord
 
   def self.current
     find_by(id: current_id) if current_id
+  end
+
+  def self.find_by_param(value)
+    return if value.blank?
+
+    friendly.find(value)
+  rescue ActiveRecord::RecordNotFound
+    nil
   end
 
   scope :publicly_listed, -> { where(public_listing: true) }
@@ -118,5 +129,17 @@ class Club < ApplicationRecord
 
   def whatsapp_configured?
     whatsapp_credentials.values.all?(&:present?)
+  end
+
+  private
+
+  def slug_candidates
+    candidates = [name]
+    candidates << [city, name] if city.present?
+    candidates
+  end
+
+  def should_generate_new_friendly_id?
+    slug.blank? || will_save_change_to_name? || will_save_change_to_city?
   end
 end

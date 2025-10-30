@@ -66,7 +66,7 @@ class ApplicationController < ActionController::Base
 
   def resolve_club_from_request
     if (impersonated = session[:impersonated_club_id])
-      club = Club.find_by(id: impersonated)
+      club = Club.find_by_param(impersonated)
       return club if club
     end
 

@@ -25,7 +25,7 @@
       <p class="text-sm text-slate-500">Your cart is empty. Add a membership to continue.</p>
       <div class="mt-4 flex flex-wrap items-center justify-center gap-3">
         <%= link_to "Browse club plans", club_plans_path, class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
-        <%= link_to "Add membership", members_membership_registration_path(step: "personal", club_id: current_club.id, restart: true), class: "inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
+        <%= link_to "Add membership", members_membership_registration_path(step: "personal", club_id: current_club, restart: true), class: "inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
       </div>
     </div>
   <% else %>
@@ -78,7 +78,7 @@
                 <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                   <span>Unit price: <%= number_to_currency(display_unit_money.cents / 100.0, unit: display_unit_money.currency.iso_code) %></span>
                   <%= button_to "Remove",
-                                members_cart_item_path(item, club_id: @club.id),
+                                members_cart_item_path(item, club_id: @club),
                                 method: :delete,
                                 class: "text-xs font-semibold text-rose-600 hover:text-rose-700",
                                 data: { turbo_confirm: "Remove this membership?" } %>
@@ -119,7 +119,7 @@
           <p class="text-sm text-slate-600">PayGate securely processes the payment. We never store your full card number.</p>
         </header>
 
-        <%= form_with url: members_checkout_path(club_id: @club.id, cart_id: @cart.id),
+        <%= form_with url: members_checkout_path(club_id: @club, cart_id: @cart.id),
                       method: :post,
                       local: true,
                       data: { controller: "payment-method payment-processing", action: "submit->payment-processing#show" },

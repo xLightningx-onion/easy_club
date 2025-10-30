@@ -106,10 +106,10 @@
 
     <% if current_club.active_staggered_payment_plans.exists? %>
     <div class="flex justify-end">
-        <%#= link_to "Add another", members_membership_registration_path(step: "personal", club_id: current_club.id, restart: true), class: "text-sm font-semibold text-slate-600 transition hover:text-slate-900" %>
+        <%#= link_to "Add another", members_membership_registration_path(step: "personal", club_id: current_club, restart: true), class: "text-sm font-semibold text-slate-600 transition hover:text-slate-900" %>
 
         <%= link_to "Change payment option",
-                    members_membership_registration_path(step: "payment_option", club_id: current_club.id, cart_id: @cart.id),
+                    members_membership_registration_path(step: "payment_option", club_id: current_club, cart_id: @cart.id),
                     class: "inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
     </div>
     <% end %>

@@ -18,8 +18,8 @@
        form_html_options[:data] = { turbo: false } %>
 
     <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: form_html_options) do |f| %>
-      <% if club&.id.present? %>
-        <%= hidden_field_tag :club_id, club.id %>
+      <% if club.present? %>
+        <%= hidden_field_tag :club_id, club.to_param %>
       <% end %>
 
       <%= render "devise/shared/error_messages", resource: resource %>
@@ -49,7 +49,7 @@
             <span>Remember me</span>
           </label>
           <%= link_to "Forgot your password?",
-                      new_password_path(resource_name, club_id: club&.id),
+                      new_password_path(resource_name, club_id: club&.to_param),
                       class: "font-semibold text-sky-600 hover:text-sky-700",
                       data: { turbo_frame: "_top" } %>
       </div>
@@ -64,7 +64,7 @@
     <div class="mt-6 text-center text-sm text-slate-500">
       Need an account?
       <%= link_to "Create one",
-                  new_registration_path(resource_name, club_id: club&.id),
+                  new_registration_path(resource_name, club_id: club&.to_param),
                   class: "font-semibold text-sky-600 hover:text-sky-700",
                   data: { turbo_frame: "_top" } %>
     </div>
@@ -77,7 +77,7 @@
 
     <div class="mt-4">
       <%= button_to user_google_oauth2_omniauth_authorize_path,
-                    params: { club_id: club&.id },
+                    params: { club_id: club&.to_param },
                     method: :post,
                     form: { data: { turbo: false }, class: "w-full" },
                     class: "flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-200" do %>

@@ -26,7 +26,7 @@
             <p class="plans__detail">Once-off payment</p>
           <% end %>
 
-          <%= form_with url: members_cart_items_path(club_id: current_club.id), method: :post, class: "plans__form", local: true do %>
+          <%= form_with url: members_cart_items_path(club_id: current_club), method: :post, class: "plans__form", local: true do %>
             <%= hidden_field_tag :plan_id, plan.id %>
             <div class="plans__field">
               <%= label_tag :member_id, "Member", class: "plans__label" %>

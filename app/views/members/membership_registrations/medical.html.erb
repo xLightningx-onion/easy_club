@@ -14,7 +14,7 @@
   <div class="space-y-2 text-center lg:text-start">
     <p class="text-sm text-slate-600">To ensure your safety, we need some basic medical details.</p>
   </div>
-  <%= form_with model: @form, url: members_membership_registration_path(step: "medical", club_id: @club.id), method: :patch, class: "space-y-8" do |f| %>
+  <%= form_with model: @form, url: members_membership_registration_path(step: "medical", club_id: @club), method: :patch, class: "space-y-8" do |f| %>
     <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
 
     <div class="grid gap-6 md:grid-cols-2">
@@ -79,7 +79,7 @@
     <% end %>
 
     <div class="flex items-center justify-between">
-      <%= link_to "Previous", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "membership_type"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+      <%= link_to "Previous", members_membership_registration_path(step: "personal", club_id: @club, phase: "membership_type"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
       <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>
     </div>
   <% end %>

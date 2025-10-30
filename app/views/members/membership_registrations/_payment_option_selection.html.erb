@@ -4,7 +4,7 @@
   data-payment-plan-selector-mode-value="<%= @selected_payment_mode %>"
   data-payment-plan-selector-plan-id-value="<%= @selected_payment_plan_id %>"
   data-payment-plan-selector-preview-url-value="<%= members_membership_registration_path(step: "payment_option",
-                                                                                       club_id: @club.id,
+                                                                                       club_id: @club,
                                                                                        format: :turbo_stream) %>"
 >
   <%= hidden_field_tag "membership_registration_form[payment_mode]",

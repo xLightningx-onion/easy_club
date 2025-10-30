@@ -61,3 +61,6 @@ application.register("payment-processing", PaymentProcessingController)
 import TabsController from "./tabs_controller"
 application.register("tabs", TabsController)
 application.register("club-settings-tabs", TabsController)
+
+import EmailCheckController from "./email_check_controller"
+application.register("email-check", EmailCheckController)

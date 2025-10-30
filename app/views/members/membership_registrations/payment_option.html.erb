@@ -15,7 +15,7 @@
     <p class="text-sm text-slate-600">Select how you would like to pay.</p>
   </div>
 
-  <%= form_with url: members_membership_registration_path(step: "payment_option", club_id: @club.id),
+  <%= form_with url: members_membership_registration_path(step: "payment_option", club_id: @club),
                 method: :put,
                 scope: :membership_registration_form,
                 class: "space-y-6" do |form| %>
@@ -25,7 +25,7 @@
 
     <div class="flex justify-between mt-7">
       <%= link_to "Previous",
-                  members_membership_registration_path(step: "terms", club_id: @club.id),
+                  members_membership_registration_path(step: "terms", club_id: @club),
                   class: "inline-flex items-center justify-center rounded border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900" %>
       <%= form.submit "Continue",
                       class: "inline-flex items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary" %>

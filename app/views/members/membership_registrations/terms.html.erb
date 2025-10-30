@@ -7,7 +7,7 @@
 <% end %>
 
 <div class="py-3">
-  <%= form_with model: @form, url: members_membership_registration_path(step: "terms", club_id: @club.id), method: :patch, class: "space-y-8" do |f| %>
+  <%= form_with model: @form, url: members_membership_registration_path(step: "terms", club_id: @club), method: :patch, class: "space-y-8" do |f| %>
     <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
 
     <% if @club_terms.any? %>
@@ -61,7 +61,7 @@
     <% end %>
 
     <div class="flex items-center justify-between">
-      <%= link_to "Previous", members_membership_registration_path(step: "survey", club_id: @club.id), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+      <%= link_to "Previous", members_membership_registration_path(step: "survey", club_id: @club), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
       <%= f.submit(@club_terms.any? ? "Agree & continue" : "Continue", class: "inline-flex min-w-[160px] items-center justify-center rounded px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800 bg-easyclub-primary") %>
     </div>
   <% end %>

@@ -99,7 +99,7 @@
         <h2 class="text-base font-semibold text-slate-900"><%= memberships_heading %></h2>
         <% if current_club && current_club.id == @order.club_id %>
           <%= link_to "Add another membership",
-                      members_membership_registration_path(step: "personal", club_id: current_club.id, restart: true),
+                      members_membership_registration_path(step: "personal", club_id: current_club, restart: true),
                       class: "text-xs font-semibold text-slate-600 transition hover:text-slate-900" %>
         <% end %>
       </header>
@@ -273,7 +273,7 @@
           <% if @upcoming_installments.any? && @order.cart.present? %>
             <div class="flex flex-wrap items-center justify-end gap-3">
               <%= link_to "Pay next installment",
-                          members_cart_path(club_id: @order.club_id, cart_id: @order.cart_id, order_id: @order.id, resume: true),
+                          members_cart_path(club_id: (@order.club || @order.club_id), cart_id: @order.cart_id, order_id: @order.id, resume: true),
                           class: "inline-flex min-w-[200px] items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
             </div>
           <% end %>

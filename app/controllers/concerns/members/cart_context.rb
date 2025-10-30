@@ -31,7 +31,7 @@ module Members::CartContext
 
   def resolve_cart_club
     return requested_cart.club if requested_cart
-    return Club.find_by(id: params[:club_id]) if params[:club_id].present?
+    return Club.find_by_param(params[:club_id]) if params[:club_id].present?
     return current_club if current_club.present?
 
     Cart.where(user: current_user, status: %i[unpaid pending_payment partially_paid])
@@ -64,7 +64,7 @@ module Members::CartContext
     params_with_cart[:cart_id] ||= target_cart&.id if target_cart
 
     if @club
-      members_cart_path({ club_id: @club.id }.merge(params_with_cart))
+      members_cart_path({ club_id: @club }.merge(params_with_cart))
     else
       members_cart_path(params_with_cart)
     end

@@ -33,7 +33,7 @@
     </div>
 
     <% if @eligible_membership_types.any? %>
-      <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club.id), method: :patch, class: "space-y-5" do |f| %>
+      <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club), method: :patch, class: "space-y-5" do |f| %>
         <%= hidden_field_tag "membership_registration_form[phase]", "membership_type" %>
         <%= f.hidden_field :member_id %>
         <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>
@@ -57,7 +57,7 @@
         </div>
 
         <div class="flex items-center justify-between">
-          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club, phase: "details"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
           <%= f.submit "Next", class: "inline-flex min-w-[160px] items-center justify-center rounded bg-easyclub-primary px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-slate-800" %>
         </div>
       <% end %>
@@ -66,7 +66,7 @@
         <p class="font-semibold">No memberships available.</p>
         <p class="mt-1">Your age and gender do not match any membership types offered by <strong><%= @club.name %></strong>. Please adjust the personal details or contact the club.</p>
         <div class="mt-4">
-          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
+          <%= link_to "Edit details", members_membership_registration_path(step: "personal", club_id: @club, phase: "details"), class: "rounded border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900" %>
         </div>
       </div>
     <% end %>
@@ -82,7 +82,7 @@
         <div class="grid gap-3 grid-cols-1">
           <% @available_profiles.each do |profile| %>
             <% selected = @form.member_id.to_s == profile.id.to_s %>
-            <%= link_to members_membership_registration_path(step: "personal", club_id: @club.id, phase: "details", profile_member_id: profile.id),
+            <%= link_to members_membership_registration_path(step: "personal", club_id: @club, phase: "details", profile_member_id: profile.id),
                         class: [
                           "flex flex-col gap-2 rounded-xl border px-4 py-3 text-left transition",
                           selected ? "border-sky-500 bg-sky-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
@@ -101,7 +101,7 @@
         </div>
       </div>
     <% end %>
-    <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club.id), method: :patch, data: { controller: "sa-id" }, class: "space-y-8" do |f| %>
+    <%= form_with model: @form, url: members_membership_registration_path(step: "personal", club_id: @club), method: :patch, data: { controller: "sa-id" }, class: "space-y-8" do |f| %>
       <%= hidden_field_tag "membership_registration_form[phase]", "details" %>
       <%= f.hidden_field :member_id %>
       <%= render "shared/form_errors", resource: @form if @form.errors.any? && lookup_context.exists?("shared/_form_errors") %>

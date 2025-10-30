@@ -18,7 +18,7 @@
       data-controller="clubs-map"
       data-clubs-map-api-key-value="<%= Settings.google.places_api_key %>"
       data-clubs-map-clubs-value='<%= [{
-        id: @club.id,
+        id: @club.to_param,
         name: @club.name,
         lat: @club.latitude&.to_f,
         lng: @club.longitude&.to_f,

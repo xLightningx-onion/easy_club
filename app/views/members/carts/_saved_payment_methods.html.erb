@@ -36,7 +36,7 @@
             </span>
           </label>
           <%= link_to "Remove",
-                      members_payment_method_path(method, club_id: method.club_id),
+                      members_payment_method_path(method, club_id: (method.club || method.club_id)),
                       class: "text-xs font-semibold text-rose-600 transition hover:text-rose-700",
                       data: {
                         turbo_method: :delete,
