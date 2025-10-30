@@ -135,6 +135,7 @@ Rails.application.routes.draw do
     resources :payment_methods, only: :destroy
     resources :orders, only: :show
     get "checkout/success", to: "checkouts#success", as: :checkout_success
+    get "checkout/failure", to: "checkouts#failure", as: :checkout_failure
   end
 
   root "members/dashboards#index"

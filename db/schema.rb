@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_22_114500) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -219,6 +219,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_114500) do
     t.string "whatsapp_business_id"
     t.string "whatsapp_otp_template_id"
     t.string "whatsapp_order_confirmation_template_id"
+    t.string "whatsapp_payment_failure_template_id"
     t.index ["google_place_id"], name: "index_clubs_on_google_place_id", unique: true, where: "(google_place_id IS NOT NULL)"
     t.index ["public_listing"], name: "index_clubs_on_public_listing"
   end

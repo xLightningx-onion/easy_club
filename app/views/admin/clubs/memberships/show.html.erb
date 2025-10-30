@@ -147,6 +147,32 @@
                   <% if tx.response_reference.present? %>
                     <p class="text-xs text-slate-400 break-all">Reference: <%= tx.response_reference %></p>
                   <% end %>
+                  <details class="mt-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    <summary class="cursor-pointer font-semibold text-slate-700">View transaction details</summary>
+                    <div class="mt-2 space-y-2">
+                      <p><span class="font-medium text-slate-700">Status:</span> <%= tx.status %></p>
+                      <p><span class="font-medium text-slate-700">Request reference:</span> <%= tx.request_reference.presence || "–" %></p>
+                      <p><span class="font-medium text-slate-700">Response reference:</span> <%= tx.response_reference.presence || "–" %></p>
+                      <% if tx.metadata.present? %>
+                        <div>
+                          <p class="font-medium text-slate-700">Metadata</p>
+                          <%= pretty_json(tx.metadata) %>
+                        </div>
+                      <% end %>
+                      <% if tx.request_payload.present? %>
+                        <div>
+                          <p class="font-medium text-slate-700">Request payload</p>
+                          <%= pretty_json(tx.request_payload) %>
+                        </div>
+                      <% end %>
+                      <% if tx.response_payload.present? %>
+                        <div>
+                          <p class="font-medium text-slate-700">Response payload</p>
+                          <%= pretty_json(tx.response_payload) %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </details>
                 </li>
               <% end %>
             </ul>

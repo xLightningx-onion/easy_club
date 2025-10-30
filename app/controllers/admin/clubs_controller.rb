@@ -114,6 +114,7 @@ class Admin::ClubsController < Admin::BaseController
       :whatsapp_business_id,
       :whatsapp_otp_template_id,
       :whatsapp_order_confirmation_template_id,
+      :whatsapp_payment_failure_template_id,
       color_palette: %i[theme_hex theme_oklch],
       settings: {},
       membership_questions_attributes: %i[

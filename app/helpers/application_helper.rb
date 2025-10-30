@@ -1,3 +1,4 @@
+require "json"
 module ApplicationHelper
   def serve_image_remote_url(blob, resize_spec: "resize_to_limit", size_curves: [ 128, 128 ], format: :webp, return_url: true)
     return asset_path("team_placeholder.png") if blob.blank?
@@ -56,6 +57,21 @@ module ApplicationHelper
 
       "#{list_with_pos} membership"
     end
+  end
+
+  def pretty_json(data)
+    return content_tag(:p, "Not available", class: "text-xs text-slate-500") if data.blank?
+
+    json_object = if data.is_a?(String)
+                    JSON.parse(data) rescue data
+                  else
+                    data.to_unsafe_h rescue data
+                  end
+
+    json_string = json_object.is_a?(String) ? json_object : JSON.pretty_generate(json_object)
+    content_tag(:pre, json_string, class: "mt-2 overflow-x-auto rounded bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-slate-100")
+  rescue JSON::ParserError
+    content_tag(:pre, data, class: "mt-2 overflow-x-auto rounded bg-slate-900 px-3 py-2 text-[11px] leading-relaxed text-slate-100")
   end
 
   private
